@@ -22,15 +22,6 @@ async fn main() {
 
     *get_mut(&mut grid, 1, 2) = true;
 
-    for i_row in 0..SIZE {
-        for i_column in 0..SIZE {
-            let clicked = *get_mut(&mut grid, i_row, i_column);
-            let char = if clicked { "0" } else { "-" };
-            print!("{}", char)
-        }
-        println!()
-    }
-
     loop {
         clear_background(LIGHTGRAY);
         if is_key_pressed(KeyCode::Escape) {
@@ -75,7 +66,7 @@ async fn main() {
                         draw_line(start_x, start_y, end_x, end_y, CELL_PAD, GREEN);
                         let mid = (start_x + end_x) * 0.5;
                         let triangle_width = 2.0 * CELL_PAD;
-                        draw_triangle(
+                        draw_bordered_triangle(
                             vec2(mid, start_y - triangle_width),
                             vec2(mid, start_y + triangle_width),
                             vec2(
@@ -98,7 +89,7 @@ async fn main() {
 
                         let mid = (start_y + end_y) * 0.5;
                         let triangle_width = 2.0 * CELL_PAD;
-                        draw_triangle(
+                        draw_bordered_triangle(
                             vec2(start_x - triangle_width, mid),
                             vec2(start_x + triangle_width, mid),
                             vec2(
@@ -110,7 +101,6 @@ async fn main() {
                     }
                 }
             }
-            println!()
         }
 
         // draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
@@ -121,4 +111,9 @@ async fn main() {
 
         next_frame().await
     }
+}
+
+fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color) {
+    draw_triangle(p_1, p_2, p_3, color);
+    draw_triangle_lines(p_1, p_2, p_3, 1.0, BLACK);
 }

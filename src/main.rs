@@ -73,6 +73,17 @@ async fn main() {
                         let end_y =
                             GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
                         draw_line(start_x, start_y, end_x, end_y, CELL_PAD, GREEN);
+                        let mid = (start_x + end_x) * 0.5;
+                        let triangle_width = 2.0 * CELL_PAD;
+                        draw_triangle(
+                            vec2(mid, start_y - triangle_width),
+                            vec2(mid, start_y + triangle_width),
+                            vec2(
+                                mid + triangle_width * if current_cell { 1.0 } else { -1.0 },
+                                start_y,
+                            ),
+                            ORANGE,
+                        );
                     }
                     if current_cell != left {
                         let start_x =
@@ -84,6 +95,18 @@ async fn main() {
                         let end_y = GRID_PAD - CELL_PAD * 0.5
                             + (i_row + 1) as f32 * (CELL_HEIGHT + CELL_PAD);
                         draw_line(start_x, start_y, end_x, end_y, CELL_PAD, GREEN);
+
+                        let mid = (start_y + end_y) * 0.5;
+                        let triangle_width = 2.0 * CELL_PAD;
+                        draw_triangle(
+                            vec2(start_x - triangle_width, mid),
+                            vec2(start_x + triangle_width, mid),
+                            vec2(
+                                start_x,
+                                mid - triangle_width * if current_cell { 1.0 } else { -1.0 },
+                            ),
+                            ORANGE,
+                        );
                     }
                 }
             }

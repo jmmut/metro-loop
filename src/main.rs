@@ -19,14 +19,28 @@ const CELL_HEIGHT: f32 = 50.0;
 const CELL_PAD: f32 = 5.0;
 const GRID_PAD: f32 = 30.0;
 
-#[macroquad::main("metro-loop")]
+const DEFAULT_WINDOW_WIDTH: i32 = ((CELL_WIDTH + CELL_PAD) * SIZE as f32 + GRID_PAD * 2.0) as i32;
+const DEFAULT_WINDOW_HEIGHT: i32 = ((CELL_HEIGHT + CELL_PAD) * SIZE as f32 + GRID_PAD * 2.0) as i32;
+const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
+
+fn window_conf() -> Conf {
+    Conf {
+        window_title: DEFAULT_WINDOW_TITLE.to_owned(),
+        window_width: DEFAULT_WINDOW_WIDTH,
+        window_height: DEFAULT_WINDOW_HEIGHT,
+        high_dpi: true,
+        ..Default::default()
+    }
+}
+
+#[macroquad::main(window_conf)]
 async fn main() {
     let seed = now() as u64;
     srand(seed);
     let mut grid = reset().await;
-
+    let (_sw, _sh) = (screen_width(), screen_height());
     loop {
-        clear_background(LIGHTGRAY);
+        clear_background(Color::new(0.1, 0.1, 0.1, 1.00));
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
@@ -78,10 +92,9 @@ fn render_grid(mut grid: &mut Vec<Vec<bool>>) {
                         GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
                     let start_y =
                         GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
-                    let end_x = GRID_PAD - CELL_PAD * 0.5
-                        + (i_column + 1) as f32 * (CELL_WIDTH + CELL_PAD);
-                    let end_y =
-                        GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
+                    let end_x =
+                        GRID_PAD - CELL_PAD * 0.5 + (i_column + 1) as f32 * (CELL_WIDTH + CELL_PAD);
+                    let end_y = GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
                     draw_line(start_x, start_y, end_x, end_y, CELL_PAD, GREEN);
                     let mid = (start_x + end_x) * 0.5;
                     let triangle_width = 2.0 * CELL_PAD;
@@ -102,8 +115,8 @@ fn render_grid(mut grid: &mut Vec<Vec<bool>>) {
                         GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
                     let end_x =
                         GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
-                    let end_y = GRID_PAD - CELL_PAD * 0.5
-                        + (i_row + 1) as f32 * (CELL_HEIGHT + CELL_PAD);
+                    let end_y =
+                        GRID_PAD - CELL_PAD * 0.5 + (i_row + 1) as f32 * (CELL_HEIGHT + CELL_PAD);
                     draw_line(start_x, start_y, end_x, end_y, CELL_PAD, GREEN);
 
                     let mid = (start_y + end_y) * 0.5;
@@ -138,7 +151,7 @@ async fn reset() -> Vec<Vec<bool>> {
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
-        if is_key_pressed(KeyCode::Space) {
+        if is_key_pressed(KeyCode::Space) || true {
             i += 1;
             if i > 1000 {
                 break;
@@ -158,7 +171,10 @@ async fn reset() -> Vec<Vec<bool>> {
             }
             if neighbours < 3 {
                 let neighbour = rand() as usize % 4;
-                println!("index: {} ({}, {}), neighbour {}", index, row, column, neighbour);
+                println!(
+                    "index: {} ({}, {}), neighbour {}",
+                    index, row, column, neighbour
+                );
                 if row > 0 && column > 0 {
                     let (new_row, new_column) = match neighbour {
                         0 => (row - 1, column),
@@ -183,21 +199,19 @@ async fn reset() -> Vec<Vec<bool>> {
             //     println!()
             // }
             // println!()
-
         }
         render_grid(&mut grid);
         next_frame().await;
-
     }
     println!("tried {} iterations", i);
     grid
 }
 
 fn count_neighbours(grid: &Grid, row: usize, column: usize) -> i32 {
-    *get(grid, row +1, column) as i32
-    + *get(grid, row -1, column) as i32
-    + *get(grid, row, column+1) as i32
-    + *get(grid, row, column -1) as i32
+    *get(grid, row + 1, column) as i32
+        + *get(grid, row - 1, column) as i32
+        + *get(grid, row, column + 1) as i32
+        + *get(grid, row, column - 1) as i32
 }
 
 fn in_range(row: usize, column: usize) -> bool {

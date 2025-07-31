@@ -1,6 +1,7 @@
 use crate::{NUM_COLUMNS, NUM_ROWS};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::prelude::IVec2;
+use macroquad::rand::rand;
 
 pub struct Rails {
     pub horizontal: Vec<Vec<Horizontal>>,
@@ -8,8 +9,16 @@ pub struct Rails {
 }
 
 pub enum RailCoord {
-    Horizontal{row: i32, column: i32},
-    Vertical{row: i32, column: i32},
+    Horizontal {
+        row: i32,
+        column: i32,
+        direction: Horizontal,
+    },
+    Vertical {
+        row: i32,
+        column: i32,
+        direction: Vertical,
+    },
 }
 
 impl Rails {
@@ -42,16 +51,34 @@ impl Rails {
         self.vertical.get(0).unwrap().len() as i32
     }
     pub fn get_horiz(&self, row: i32, column: i32) -> Horizontal {
-        *self.horizontal.get(row as usize).unwrap().get(column as usize).unwrap()
+        *self
+            .horizontal
+            .get(row as usize)
+            .unwrap()
+            .get(column as usize)
+            .unwrap()
     }
     pub fn get_horiz_mut(&mut self, row: i32, column: i32) -> &mut Horizontal {
-        self.horizontal.get_mut(row as usize).unwrap().get_mut(column as usize).unwrap()
+        self.horizontal
+            .get_mut(row as usize)
+            .unwrap()
+            .get_mut(column as usize)
+            .unwrap()
     }
     pub fn get_vert(&self, row: i32, column: i32) -> Vertical {
-        *self.vertical.get(row as usize).unwrap().get(column as usize).unwrap()
+        *self
+            .vertical
+            .get(row as usize)
+            .unwrap()
+            .get(column as usize)
+            .unwrap()
     }
     pub fn get_vert_mut(&mut self, row: i32, column: i32) -> &mut Vertical {
-        self.vertical.get_mut(row as usize).unwrap().get_mut(column as usize).unwrap()
+        self.vertical
+            .get_mut(row as usize)
+            .unwrap()
+            .get_mut(column as usize)
+            .unwrap()
     }
 }
 
@@ -80,18 +107,26 @@ impl Grid {
         for i_row in 1..NUM_ROWS {
             for i_column in 1..NUM_COLUMNS {
                 let current = *get(&self, i_row, i_column);
-                let above = *get(&self, i_row -1, i_column);
-                let left = *get(&self, i_row, i_column -1);
+                let above = *get(&self, i_row - 1, i_column);
+                let left = *get(&self, i_row, i_column - 1);
 
                 let direction = if current != above {
-                    if current { Horizontal::Right } else { Horizontal::Left }
+                    if current {
+                        Horizontal::Right
+                    } else {
+                        Horizontal::Left
+                    }
                 } else {
                     Horizontal::Center
                 };
                 *self.rails.get_horiz_mut(i_row, i_column) = direction;
 
                 let direction = if current != left {
-                    if current { Vertical::Top } else { Vertical::Bottom }
+                    if current {
+                        Vertical::Top
+                    } else {
+                        Vertical::Bottom
+                    }
                 } else {
                     Vertical::Center
                 };
@@ -133,5 +168,41 @@ pub fn in_range(row: i32, column: i32) -> bool {
 }
 
 pub fn choose_constraints(grid: &Grid) -> Vec<RailCoord> {
-    todo!()
+    let mut constraints = Vec::new();
+    {
+        let row = grid.root.y;
+        let column = grid.root.x;
+        let direction = grid.rails.get_horiz(row, column);
+        constraints.push(RailCoord::Horizontal {
+            row,
+            column,
+            direction,
+        });
+    }
+    for row in 1..grid.rails.horiz_rows() - 1 {
+        for column in 1..grid.rails.horiz_columns() - 1 {
+            let is_root = row == grid.root.y && column == grid.root.x; // avoid adding the root twice
+            if rand() % 100 < 30 && !is_root {
+                let direction = grid.rails.get_horiz(row, column);
+                constraints.push(RailCoord::Horizontal {
+                    row,
+                    column,
+                    direction,
+                });
+            }
+        }
+    }
+    for row in 1..grid.rails.vert_rows() - 1 {
+        for column in 1..grid.rails.vert_columns() - 1 {
+            if rand() % 100 < 30 {
+                let direction = grid.rails.get_vert(row, column);
+                constraints.push(RailCoord::Vertical {
+                    row,
+                    column,
+                    direction,
+                });
+            }
+        }
+    }
+    constraints
 }

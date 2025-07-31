@@ -1,6 +1,6 @@
 mod rails;
 
-use crate::rails::{count_neighbours, get_mut, in_range, Grid, RailCoord};
+use crate::rails::{choose_constraints, count_neighbours, get_mut, in_range, Grid, RailCoord};
 use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
 use juquad::widgets::{StateStyle, Style};
@@ -53,8 +53,8 @@ const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 async fn main() {
     let seed = now() as u64;
     srand(seed);
-    let (mut _solution, mut grid) = reset(false).await;
-    // let constraints = choose_constraints(&solution);
+    let (mut solution, mut grid) = reset(false).await;
+    let constraints = choose_constraints(&solution);
 
     let (_sw, _sh) = (screen_width(), screen_height());
     let button_panel = Rect::new(
@@ -71,18 +71,19 @@ async fn main() {
         let mut reset_button =
             new_button("Reset", Anchor::top_left(button_panel.x, button_panel.y));
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
-            (_solution, grid) = reset(false).await;
+            (solution, grid) = reset(false).await;
         }
         let pos = Vec2::from(mouse_position());
         let grid_indexes =
             (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
         let i_row = grid_indexes.y as i32;
         let i_column = grid_indexes.x as i32;
-        let hovered_cell = if i_column > 0 && i_column < NUM_COLUMNS - 1 && i_row > 0 && i_row < NUM_ROWS - 1 {
-            Some((i_row, i_column))
-        } else {
-            None
-        };
+        let hovered_cell =
+            if i_column > 0 && i_column < NUM_COLUMNS - 1 && i_row > 0 && i_row < NUM_ROWS - 1 {
+                Some((i_row, i_column))
+            } else {
+                None
+            };
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
         if is_mouse_button_pressed(MouseButton::Left) {
             if let Some((i_row, i_column)) = hovered_cell.clone() {
@@ -91,8 +92,11 @@ async fn main() {
                 grid.recalculate_rails();
             }
         }
+
+        // let satisfaction = compute_satisfaction();
+
         render_grid(&mut grid, &hovered_cell);
-        // render_constraints(&constraints);
+        render_constraints(&constraints);
         render_button(&reset_button);
         // draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
         // draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
@@ -102,10 +106,6 @@ async fn main() {
 
         next_frame().await
     }
-}
-
-fn render_constraints(constraints: &Vec<RailCoord>) {
-    todo!()
 }
 
 fn new_button(text: &str, anchor: Anchor) -> Button {
@@ -151,90 +151,141 @@ fn render_grid(mut grid: &mut Grid, hovered_cell: &Option<(i32, i32)>) {
             } else {
                 color
             };
-            draw_rectangle(
-                GRID_PAD + i_column as f32 * (CELL_WIDTH + CELL_PAD),
-                GRID_PAD + i_row as f32 * (CELL_HEIGHT + CELL_PAD),
-                CELL_WIDTH,
-                CELL_HEIGHT,
-                color,
-            );
+            let cell_pos = cell_top_left(i_row, i_column);
+            draw_rectangle(cell_pos.x, cell_pos.y, CELL_WIDTH, CELL_HEIGHT, color);
         }
     }
 
-    for i_row in 1..grid.rails.horiz_rows() -1 {
-        for i_column in 1..grid.rails.horiz_columns() -1 {
-            let start_x = GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
-            let y = GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
-            let end_x = GRID_PAD - CELL_PAD * 0.5 + (i_column + 1) as f32 * (CELL_WIDTH + CELL_PAD);
+    for i_row in 1..grid.rails.horiz_rows() - 1 {
+        for i_column in 1..grid.rails.horiz_columns() - 1 {
             let direction = grid.rails.get_horiz(i_row, i_column);
             if direction != Horizontal::Center {
-                draw_line(start_x, y, end_x, y, CELL_PAD, RAIL);
+                let start = top_left_rail_intersection(i_row, i_column);
+                let end = top_left_rail_intersection(i_row, i_column + 1);
+                draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
                 let sign = match direction {
                     Horizontal::Left => -1.0,
                     Horizontal::Center => 0.0,
                     Horizontal::Right => 1.0,
                 };
-                let mid = (start_x + end_x) * 0.5;
+                let mid = (start.x + end.x) * 0.5;
                 let triangle_width = 2.0 * CELL_PAD;
-                let above = vec2(mid, y - triangle_width);
-                let below = vec2(mid, y + triangle_width);
-                let tip = vec2(mid + triangle_width * sign, y);
+                let above = vec2(mid, start.y - triangle_width);
+                let below = vec2(mid, start.y + triangle_width);
+                let tip = vec2(mid + triangle_width * sign, start.y);
                 draw_bordered_triangle(above, below, tip, TRIANGLE, TRIANGLE_BORDER);
             }
         }
     }
-    for i_row in 1..grid.rails.vert_rows() -1 {
-        for i_column in 1..grid.rails.vert_columns() -1 {
-            let x = GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
-            let start_y = GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
-            let end_y = GRID_PAD - CELL_PAD * 0.5 + (i_row + 1) as f32 * (CELL_HEIGHT + CELL_PAD);
+    for i_row in 1..grid.rails.vert_rows() - 1 {
+        for i_column in 1..grid.rails.vert_columns() - 1 {
             let direction = grid.rails.get_vert(i_row, i_column);
-
             if direction != Vertical::Center {
-                draw_line(x, start_y, x, end_y, CELL_PAD, RAIL);
+                let start = top_left_rail_intersection(i_row, i_column);
+                let end = top_left_rail_intersection(i_row + 1, i_column);
+                draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
                 let sign = match direction {
                     Vertical::Top => -1.0,
                     Vertical::Center => 0.0,
                     Vertical::Bottom => 1.0,
                 };
-                let mid = (start_y + end_y) * 0.5;
+                let mid = (start.y + end.y) * 0.5;
                 let triangle_width = 2.0 * CELL_PAD;
-                let left = vec2(x - triangle_width, mid);
-                let right = vec2(x + triangle_width, mid);
-                let tip = vec2(x, mid + triangle_width * sign);
+                let left = vec2(start.x - triangle_width, mid);
+                let right = vec2(start.x + triangle_width, mid);
+                let tip = vec2(start.x, mid + triangle_width * sign);
                 draw_bordered_triangle(left, right, tip, TRIANGLE, TRIANGLE_BORDER);
             }
         }
     }
-    // for i_row in 1..grid.rails.vert_rows() -1 {
-    //     for i_column in 1..grid.rails.vert_columns() -1 {
-    //             if current_cell != left {
-    //                 let start_x =
-    //                     GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
-    //                 let start_y =
-    //                     GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
-    //                 let end_x =
-    //                     GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
-    //                 let end_y =
-    //                     GRID_PAD - CELL_PAD * 0.5 + (i_row + 1) as f32 * (CELL_HEIGHT + CELL_PAD);
-    //                 draw_line(start_x, start_y, end_x, end_y, CELL_PAD, RAIL);
-    //
-    //                 let mid = (start_y + end_y) * 0.5;
-    //                 let triangle_width = 2.0 * CELL_PAD;
-    //                 draw_bordered_triangle(
-    //                     vec2(start_x - triangle_width, mid),
-    //                     vec2(start_x + triangle_width, mid),
-    //                     vec2(
-    //                         start_x,
-    //                         mid - triangle_width * if current_cell { 1.0 } else { -1.0 },
-    //                     ),
-    //                     TRIANGLE,
-    //                     TRIANGLE_BORDER,
-    //                 );
-    //             }
-    //         }
-    //     }
-    // }
+}
+
+fn render_constraints(constraints: &Vec<RailCoord>) {
+    let triangle_width = 4.0 * CELL_PAD;
+    for constraint in constraints {
+        match *constraint {
+            RailCoord::Horizontal {
+                row,
+                column,
+                direction,
+            } => {
+                let start_corner = top_left_rail_intersection(row, column);
+                let end_corner = top_left_rail_intersection(row, column + 1);
+                let mid = (start_corner + end_corner) * 0.5;
+                match direction {
+                    Horizontal::Left => {
+                        let (back, tip) = (CELL_PAD, -triangle_width);
+                        render_constraint_horiz(triangle_width, mid, back, tip);
+                    }
+                    Horizontal::Center => {
+                        let sideways = vec2(0.0, CELL_PAD * 2.0);
+                        let start = (start_corner + mid) * 0.5 - sideways;
+                        let end = (mid + end_corner) * 0.5 - sideways;
+                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+                        let start = (start_corner + mid) * 0.5 + sideways;
+                        let end = (mid + end_corner) * 0.5 + sideways;
+                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+                    }
+                    Horizontal::Right => {
+                        let (back, tip) = (-CELL_PAD, triangle_width);
+                        render_constraint_horiz(triangle_width, mid, back, tip);
+                    }
+                };
+            }
+            RailCoord::Vertical {
+                row,
+                column,
+                direction,
+            } => {
+                let start_corner = top_left_rail_intersection(row, column);
+                let end_corner = top_left_rail_intersection(row + 1, column);
+                let mid = (start_corner + end_corner) * 0.5;
+                match direction {
+                    Vertical::Top => {
+                        let (back, tip) = (CELL_PAD, -triangle_width);
+                        render_constraint_vert(triangle_width, mid, back, tip);
+                    }
+                    Vertical::Center => {
+                        let sideways = vec2(CELL_PAD * 2.0, 0.0);
+                        let start = (start_corner + mid) * 0.5 - sideways;
+                        let end = (mid + end_corner) * 0.5 - sideways;
+                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+                        let start = (start_corner + mid) * 0.5 + sideways;
+                        let end = (mid + end_corner) * 0.5 + sideways;
+                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+                    }
+                    Vertical::Bottom => {
+                        let (back, tip) = (-CELL_PAD, triangle_width);
+                        render_constraint_vert(triangle_width, mid, back, tip);
+                    }
+                };
+            }
+        }
+    }
+}
+
+fn render_constraint_horiz(triangle_width: f32, mid: Vec2, back: f32, tip: f32) {
+    let above = mid + vec2(back, triangle_width);
+    let below = mid + vec2(back, -triangle_width);
+    let tip = mid + vec2(tip, 0.0);
+    draw_triangle_lines(above, below, tip, CELL_PAD, TRIANGLE);
+}
+
+fn render_constraint_vert(triangle_width: f32, mid: Vec2, back: f32, tip: f32) {
+    let left = mid + vec2(-triangle_width, back);
+    let right = mid + vec2(triangle_width, back);
+    let tip = mid + vec2(0.0, tip);
+    draw_triangle_lines(left, right, tip, CELL_PAD, TRIANGLE);
+}
+
+fn top_left_rail_intersection(i_row: i32, i_column: i32) -> Vec2 {
+    cell_top_left(i_row, i_column) - CELL_PAD * 0.5
+}
+
+fn cell_top_left(i_row: i32, i_column: i32) -> Vec2 {
+    let x = GRID_PAD + i_column as f32 * (CELL_WIDTH + CELL_PAD);
+    let y = GRID_PAD + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
+    vec2(x, y)
 }
 
 async fn reset(visualize: bool) -> (Grid, Grid) {
@@ -280,7 +331,10 @@ async fn reset(visualize: bool) -> (Grid, Grid) {
                         _ => panic!(),
                     };
                     // if the chosen neighbour is already enabled, choose another neighbour
-                    if in_range(new_row, new_column) {
+                    if in_range(new_row, new_column)
+                        && new_row + 1 != solution.root.y
+                        && new_column != solution.root.x
+                    {
                         *get_mut(&mut solution, new_row, new_column) = true;
                         enabled.push((new_row, new_column));
                     }

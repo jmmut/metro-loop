@@ -19,8 +19,19 @@ const CELL_HEIGHT: f32 = 50.0;
 const CELL_PAD: f32 = 5.0;
 const GRID_PAD: f32 = 30.0;
 
-const DEFAULT_WINDOW_WIDTH: i32 = ((CELL_WIDTH + CELL_PAD) * SIZE as f32 - CELL_PAD + GRID_PAD * 2.0) as i32;
-const DEFAULT_WINDOW_HEIGHT: i32 = ((CELL_HEIGHT + CELL_PAD) * SIZE as f32 - CELL_PAD + GRID_PAD * 2.0) as i32;
+const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
+const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
+const TRIANGLE: Color = ORANGE;
+const TRIANGLE_BORDER: Color = Color::new(0.5, 0.3, 0.00, 1.00);
+const RAIL: Color = GREEN;
+const ENABLED_CELL: Color = DARKGREEN;
+const DISABLED_CELL: Color = DARKGRAY;
+const HOVERED_CELL: Color = Color::new(0.15, 0.38, 0.22, 1.0);
+
+const DEFAULT_WINDOW_WIDTH: i32 =
+    ((CELL_WIDTH + CELL_PAD) * SIZE as f32 - CELL_PAD + GRID_PAD * 2.0) as i32;
+const DEFAULT_WINDOW_HEIGHT: i32 =
+    ((CELL_HEIGHT + CELL_PAD) * SIZE as f32 - CELL_PAD + GRID_PAD * 2.0) as i32;
 const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 
 fn window_conf() -> Conf {
@@ -39,27 +50,33 @@ async fn main() {
     srand(seed);
     let mut grid = reset().await;
     let (_sw, _sh) = (screen_width(), screen_height());
+    let mut hovered_cell = None;
     loop {
-        clear_background(Color::new(0.1, 0.1, 0.1, 1.00));
+        clear_background(BACKGROUND);
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
         if is_key_pressed(KeyCode::R) {
             grid = reset().await;
         }
+        let pos = Vec2::from(mouse_position());
+        let grid_indexes =
+            (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
+        let i_row = grid_indexes.y as usize;
+        let i_column = grid_indexes.x as usize;
+        if i_column > 0 && i_column < SIZE - 1 && i_row > 0 && i_row < SIZE - 1 {
+            hovered_cell = Some((i_row, i_column));
+        } else {
+            hovered_cell = None;
+        }
+        // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
         if is_mouse_button_pressed(MouseButton::Left) {
-            let pos = Vec2::from(mouse_position());
-            let grid_indexes =
-                (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
-            let i_row = grid_indexes.y as usize;
-            let i_column = grid_indexes.x as usize;
-            if i_column > 0 && i_column < SIZE - 1 && i_row > 0 && i_row < SIZE -1 {
+            if let Some((i_row, i_column)) = hovered_cell.clone() {
                 let cell = get_mut(&mut grid, i_row, i_column);
                 *cell = !*cell;
             }
-            // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
         }
-        render_grid(&mut grid);
+        render_grid(&mut grid, &hovered_cell);
 
         // draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
         // draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
@@ -71,11 +88,26 @@ async fn main() {
     }
 }
 
-fn render_grid(mut grid: &mut Vec<Vec<bool>>) {
+fn render_grid(mut grid: &mut Vec<Vec<bool>>, hovered_cell: &Option<(usize, usize)>) {
     for i_row in 0..SIZE {
         for i_column in 0..SIZE {
             let current_cell = *get_mut(&mut grid, i_row, i_column);
-            let color = if current_cell { DARKGREEN } else { DARKGRAY };
+
+            let color = if current_cell {
+                ENABLED_CELL
+            } else {
+                DISABLED_CELL
+            };
+            let color = if let Some((hovered_row, hovered_column)) = hovered_cell.clone() {
+                if i_row == hovered_row && i_column == hovered_column {
+                    // BLUE
+                    HOVERED_CELL
+                } else {
+                    color
+                }
+            } else {
+                color
+            };
             draw_rectangle(
                 GRID_PAD + i_column as f32 * (CELL_WIDTH + CELL_PAD),
                 GRID_PAD + i_row as f32 * (CELL_HEIGHT + CELL_PAD),
@@ -95,7 +127,7 @@ fn render_grid(mut grid: &mut Vec<Vec<bool>>) {
                     let end_x =
                         GRID_PAD - CELL_PAD * 0.5 + (i_column + 1) as f32 * (CELL_WIDTH + CELL_PAD);
                     let end_y = GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
-                    draw_line(start_x, start_y, end_x, end_y, CELL_PAD, GREEN);
+                    draw_line(start_x, start_y, end_x, end_y, CELL_PAD, RAIL);
                     let mid = (start_x + end_x) * 0.5;
                     let triangle_width = 2.0 * CELL_PAD;
                     draw_bordered_triangle(
@@ -105,7 +137,8 @@ fn render_grid(mut grid: &mut Vec<Vec<bool>>) {
                             mid + triangle_width * if current_cell { 1.0 } else { -1.0 },
                             start_y,
                         ),
-                        ORANGE,
+                        TRIANGLE,
+                        TRIANGLE_BORDER,
                     );
                 }
                 if current_cell != left {
@@ -117,7 +150,7 @@ fn render_grid(mut grid: &mut Vec<Vec<bool>>) {
                         GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
                     let end_y =
                         GRID_PAD - CELL_PAD * 0.5 + (i_row + 1) as f32 * (CELL_HEIGHT + CELL_PAD);
-                    draw_line(start_x, start_y, end_x, end_y, CELL_PAD, GREEN);
+                    draw_line(start_x, start_y, end_x, end_y, CELL_PAD, RAIL);
 
                     let mid = (start_y + end_y) * 0.5;
                     let triangle_width = 2.0 * CELL_PAD;
@@ -128,7 +161,8 @@ fn render_grid(mut grid: &mut Vec<Vec<bool>>) {
                             start_x,
                             mid - triangle_width * if current_cell { 1.0 } else { -1.0 },
                         ),
-                        ORANGE,
+                        TRIANGLE,
+                        TRIANGLE_BORDER,
                     );
                 }
             }
@@ -148,6 +182,7 @@ async fn reset() -> Vec<Vec<bool>> {
     enabled.push((SIZE / 2, SIZE / 2));
     let mut i = 0;
     while enabled.len() < 30 {
+        clear_background(BACKGROUND_2);
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
@@ -200,7 +235,7 @@ async fn reset() -> Vec<Vec<bool>> {
             // }
             // println!()
         }
-        render_grid(&mut grid);
+        render_grid(&mut grid, &None);
         next_frame().await;
     }
     println!("tried {} iterations", i);
@@ -218,7 +253,7 @@ fn in_range(row: usize, column: usize) -> bool {
     row > 0 && row < SIZE - 1 && column > 0 && column < SIZE - 1
 }
 
-fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color) {
+fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, border: Color) {
     draw_triangle(p_1, p_2, p_3, color);
-    draw_triangle_lines(p_1, p_2, p_3, 1.0, BLACK);
+    draw_triangle_lines(p_1, p_2, p_3, 2.0, border);
 }

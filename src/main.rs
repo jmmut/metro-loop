@@ -1,3 +1,6 @@
+use juquad::widgets::anchor::Anchor;
+use juquad::widgets::button::Button;
+use juquad::widgets::{StateStyle, Style};
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
@@ -13,12 +16,6 @@ fn get(grid: &Grid, row: usize, column: usize) -> &Cell {
     grid.get(row).unwrap().get(column).unwrap()
 }
 
-const SIZE: usize = 10;
-const CELL_WIDTH: f32 = 50.0;
-const CELL_HEIGHT: f32 = 50.0;
-const CELL_PAD: f32 = 5.0;
-const GRID_PAD: f32 = 30.0;
-
 const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
 const TRIANGLE: Color = ORANGE;
@@ -28,47 +25,70 @@ const ENABLED_CELL: Color = DARKGREEN;
 const DISABLED_CELL: Color = DARKGRAY;
 const HOVERED_CELL: Color = Color::new(0.15, 0.38, 0.22, 1.0);
 
-const DEFAULT_WINDOW_WIDTH: i32 =
-    ((CELL_WIDTH + CELL_PAD) * SIZE as f32 - CELL_PAD + GRID_PAD * 2.0) as i32;
-const DEFAULT_WINDOW_HEIGHT: i32 =
-    ((CELL_HEIGHT + CELL_PAD) * SIZE as f32 - CELL_PAD + GRID_PAD * 2.0) as i32;
-const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
+const STYLE: Style = Style {
+    at_rest: StateStyle {
+        bg_color: LIGHTGRAY,
+        text_color: BLACK,
+        border_color: DARKGRAY,
+    },
+    hovered: StateStyle {
+        bg_color: WHITE,
+        text_color: BLACK,
+        border_color: LIGHTGRAY,
+    },
+    pressed: StateStyle {
+        bg_color: GRAY,
+        text_color: WHITE,
+        border_color: DARKGRAY,
+    },
+};
 
-fn window_conf() -> Conf {
-    Conf {
-        window_title: DEFAULT_WINDOW_TITLE.to_owned(),
-        window_width: DEFAULT_WINDOW_WIDTH,
-        window_height: DEFAULT_WINDOW_HEIGHT,
-        high_dpi: true,
-        ..Default::default()
-    }
-}
+const FONT_SIZE: f32 = 16.0;
+
+const SIZE: usize = 10;
+const CELL_WIDTH: f32 = 50.0;
+const CELL_HEIGHT: f32 = 50.0;
+const CELL_PAD: f32 = 5.0;
+const GRID_PAD: f32 = 30.0;
+const BUTTON_PANEL_WIDTH: f32 = 300.0;
+
+const DEFAULT_WINDOW_WIDTH: i32 = (grid_width() + BUTTON_PANEL_WIDTH + 3.0 * GRID_PAD) as i32;
+const DEFAULT_WINDOW_HEIGHT: i32 = (grid_height() + 2.0 * GRID_PAD) as i32;
+const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 
 #[macroquad::main(window_conf)]
 async fn main() {
     let seed = now() as u64;
     srand(seed);
-    let mut grid = reset().await;
+    let mut grid = reset(false).await;
+
     let (_sw, _sh) = (screen_width(), screen_height());
-    let mut hovered_cell = None;
+    let button_panel = Rect::new(
+        grid_width() + GRID_PAD * 2.0,
+        GRID_PAD,
+        BUTTON_PANEL_WIDTH,
+        grid_height(),
+    );
     loop {
         clear_background(BACKGROUND);
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
-        if is_key_pressed(KeyCode::R) {
-            grid = reset().await;
+        let mut reset_button =
+            new_button("Reset", Anchor::top_left(button_panel.x, button_panel.y));
+        if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
+            grid = reset(false).await;
         }
         let pos = Vec2::from(mouse_position());
         let grid_indexes =
             (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
         let i_row = grid_indexes.y as usize;
         let i_column = grid_indexes.x as usize;
-        if i_column > 0 && i_column < SIZE - 1 && i_row > 0 && i_row < SIZE - 1 {
-            hovered_cell = Some((i_row, i_column));
+        let hovered_cell = if i_column > 0 && i_column < SIZE - 1 && i_row > 0 && i_row < SIZE - 1 {
+            Some((i_row, i_column))
         } else {
-            hovered_cell = None;
-        }
+            None
+        };
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
         if is_mouse_button_pressed(MouseButton::Left) {
             if let Some((i_row, i_column)) = hovered_cell.clone() {
@@ -77,7 +97,7 @@ async fn main() {
             }
         }
         render_grid(&mut grid, &hovered_cell);
-
+        render_button(&reset_button);
         // draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
         // draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
         // draw_circle(screen_width() - 30.0, screen_height() - 30.0, 15.0, YELLOW);
@@ -85,6 +105,29 @@ async fn main() {
         // draw_text("IT WORKS!", 20.0, 20.0, 30.0, DARKGRAY);
 
         next_frame().await
+    }
+}
+
+fn new_button(text: &str, anchor: Anchor) -> Button {
+    Button::new(text, anchor, FONT_SIZE)
+}
+fn render_button(button: &Button) {
+    button.render_default(&STYLE);
+}
+const fn grid_width() -> f32 {
+    (CELL_WIDTH + CELL_PAD) * SIZE as f32 - CELL_PAD
+}
+const fn grid_height() -> f32 {
+    (CELL_HEIGHT + CELL_PAD) * SIZE as f32 - CELL_PAD
+}
+
+fn window_conf() -> Conf {
+    Conf {
+        window_title: DEFAULT_WINDOW_TITLE.to_owned(),
+        window_width: DEFAULT_WINDOW_WIDTH,
+        window_height: DEFAULT_WINDOW_HEIGHT,
+        high_dpi: true,
+        ..Default::default()
     }
 }
 
@@ -170,7 +213,7 @@ fn render_grid(mut grid: &mut Vec<Vec<bool>>, hovered_cell: &Option<(usize, usiz
     }
 }
 
-async fn reset() -> Vec<Vec<bool>> {
+async fn reset(visualize: bool) -> Vec<Vec<bool>> {
     let mut grid = Vec::new();
     for _ in 0..SIZE {
         grid.push(Vec::from([false; SIZE]))
@@ -182,11 +225,10 @@ async fn reset() -> Vec<Vec<bool>> {
     enabled.push((SIZE / 2, SIZE / 2));
     let mut i = 0;
     while enabled.len() < 30 {
-        clear_background(BACKGROUND_2);
-        if is_key_pressed(KeyCode::Escape) {
+        if visualize && is_key_pressed(KeyCode::Escape) {
             break;
         }
-        if is_key_pressed(KeyCode::Space) || true {
+        if is_key_pressed(KeyCode::Space) || !visualize {
             i += 1;
             if i > 1000 {
                 break;
@@ -235,8 +277,11 @@ async fn reset() -> Vec<Vec<bool>> {
             // }
             // println!()
         }
-        render_grid(&mut grid, &None);
-        next_frame().await;
+        if visualize {
+            clear_background(BACKGROUND_2);
+            render_grid(&mut grid, &None);
+            next_frame().await;
+        }
     }
     println!("tried {} iterations", i);
     grid

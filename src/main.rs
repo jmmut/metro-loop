@@ -219,11 +219,8 @@ fn render_constraints(constraints: &Vec<RailCoord>) {
                     }
                     Horizontal::Center => {
                         let sideways = vec2(0.0, CELL_PAD * 2.0);
-                        let start = (start_corner + mid) * 0.5 - sideways;
-                        let end = (mid + end_corner) * 0.5 - sideways;
-                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
-                        let start = (start_corner + mid) * 0.5 + sideways;
-                        let end = (mid + end_corner) * 0.5 + sideways;
+                        let start = mid - sideways;
+                        let end = mid + sideways;
                         draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
                     }
                     Horizontal::Right => {
@@ -247,11 +244,8 @@ fn render_constraints(constraints: &Vec<RailCoord>) {
                     }
                     Vertical::Center => {
                         let sideways = vec2(CELL_PAD * 2.0, 0.0);
-                        let start = (start_corner + mid) * 0.5 - sideways;
-                        let end = (mid + end_corner) * 0.5 - sideways;
-                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
-                        let start = (start_corner + mid) * 0.5 + sideways;
-                        let end = (mid + end_corner) * 0.5 + sideways;
+                        let start = mid - sideways;
+                        let end = mid + sideways;
                         draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
                     }
                     Vertical::Bottom => {

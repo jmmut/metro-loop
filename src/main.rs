@@ -1,20 +1,12 @@
+mod rails;
+
+use crate::rails::{count_neighbours, get_mut, in_range};
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
 use juquad::widgets::{StateStyle, Style};
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
-
-pub type Grid = Vec<Vec<bool>>;
-pub type Cell = bool;
-
-fn get_mut(grid: &mut Grid, row: usize, column: usize) -> &mut Cell {
-    grid.get_mut(row).unwrap().get_mut(column).unwrap()
-}
-
-fn get(grid: &Grid, row: usize, column: usize) -> &Cell {
-    grid.get(row).unwrap().get(column).unwrap()
-}
 
 const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
@@ -240,7 +232,7 @@ async fn reset(visualize: bool) -> Vec<Vec<bool>> {
             let mut neighbours = count_neighbours(&grid, row, column);
             for _ in 0..20 {
                 if neighbours > 2 {
-                    println!("rejected: ({}, {}), neighbours {}", row, column, neighbours);
+                    // println!("rejected: ({}, {}), neighbours {}", row, column, neighbours);
                     index = rand() as usize % enabled.len();
                     (row, column) = enabled[index];
                     neighbours = count_neighbours(&grid, row, column);
@@ -248,10 +240,10 @@ async fn reset(visualize: bool) -> Vec<Vec<bool>> {
             }
             if neighbours < 3 {
                 let neighbour = rand() as usize % 4;
-                println!(
-                    "index: {} ({}, {}), neighbour {}",
-                    index, row, column, neighbour
-                );
+                // println!(
+                //     "index: {} ({}, {}), neighbour {}",
+                //     index, row, column, neighbour
+                // );
                 if row > 0 && column > 0 {
                     let (new_row, new_column) = match neighbour {
                         0 => (row - 1, column),
@@ -283,19 +275,8 @@ async fn reset(visualize: bool) -> Vec<Vec<bool>> {
             next_frame().await;
         }
     }
-    println!("tried {} iterations", i);
+    // println!("tried {} iterations", i);
     grid
-}
-
-fn count_neighbours(grid: &Grid, row: usize, column: usize) -> i32 {
-    *get(grid, row + 1, column) as i32
-        + *get(grid, row - 1, column) as i32
-        + *get(grid, row, column + 1) as i32
-        + *get(grid, row, column - 1) as i32
-}
-
-fn in_range(row: usize, column: usize) -> bool {
-    row > 0 && row < SIZE - 1 && column > 0 && column < SIZE - 1
 }
 
 fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, border: Color) {

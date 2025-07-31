@@ -1,7 +1,7 @@
 mod rails;
 
-use crate::rails::{count_neighbours, get_mut, in_range, Grid};
-use juquad::widgets::anchor::Anchor;
+use crate::rails::{count_neighbours, get_mut, in_range, Grid, RailCoord};
+use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
 use juquad::widgets::{StateStyle, Style};
 use macroquad::miniquad::date::now;
@@ -37,7 +37,8 @@ const STYLE: Style = Style {
 
 const FONT_SIZE: f32 = 16.0;
 
-const SIZE: i32 = 10;
+const NUM_ROWS: i32 = 11;
+const NUM_COLUMNS: i32 = 11;
 const CELL_WIDTH: f32 = 50.0;
 const CELL_HEIGHT: f32 = 50.0;
 const CELL_PAD: f32 = 5.0;
@@ -52,7 +53,8 @@ const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 async fn main() {
     let seed = now() as u64;
     srand(seed);
-    let mut grid = reset(false).await;
+    let (mut _solution, mut grid) = reset(false).await;
+    // let constraints = choose_constraints(&solution);
 
     let (_sw, _sh) = (screen_width(), screen_height());
     let button_panel = Rect::new(
@@ -69,14 +71,14 @@ async fn main() {
         let mut reset_button =
             new_button("Reset", Anchor::top_left(button_panel.x, button_panel.y));
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
-            grid = reset(false).await;
+            (_solution, grid) = reset(false).await;
         }
         let pos = Vec2::from(mouse_position());
         let grid_indexes =
             (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
         let i_row = grid_indexes.y as i32;
         let i_column = grid_indexes.x as i32;
-        let hovered_cell = if i_column > 0 && i_column < SIZE - 1 && i_row > 0 && i_row < SIZE - 1 {
+        let hovered_cell = if i_column > 0 && i_column < NUM_COLUMNS - 1 && i_row > 0 && i_row < NUM_ROWS - 1 {
             Some((i_row, i_column))
         } else {
             None
@@ -86,9 +88,11 @@ async fn main() {
             if let Some((i_row, i_column)) = hovered_cell.clone() {
                 let cell = get_mut(&mut grid, i_row, i_column);
                 *cell = !*cell;
+                grid.recalculate_rails();
             }
         }
         render_grid(&mut grid, &hovered_cell);
+        // render_constraints(&constraints);
         render_button(&reset_button);
         // draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
         // draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
@@ -100,6 +104,10 @@ async fn main() {
     }
 }
 
+fn render_constraints(constraints: &Vec<RailCoord>) {
+    todo!()
+}
+
 fn new_button(text: &str, anchor: Anchor) -> Button {
     Button::new(text, anchor, FONT_SIZE)
 }
@@ -107,10 +115,10 @@ fn render_button(button: &Button) {
     button.render_default(&STYLE);
 }
 const fn grid_width() -> f32 {
-    (CELL_WIDTH + CELL_PAD) * SIZE as f32 - CELL_PAD
+    (CELL_WIDTH + CELL_PAD) * NUM_COLUMNS as f32 - CELL_PAD
 }
 const fn grid_height() -> f32 {
-    (CELL_HEIGHT + CELL_PAD) * SIZE as f32 - CELL_PAD
+    (CELL_HEIGHT + CELL_PAD) * NUM_ROWS as f32 - CELL_PAD
 }
 
 fn window_conf() -> Conf {
@@ -124,8 +132,8 @@ fn window_conf() -> Conf {
 }
 
 fn render_grid(mut grid: &mut Grid, hovered_cell: &Option<(i32, i32)>) {
-    for i_row in 0..SIZE {
-        for i_column in 0..SIZE {
+    for i_row in 0..NUM_ROWS {
+        for i_column in 0..NUM_COLUMNS {
             let current_cell = *get_mut(&mut grid, i_row, i_column);
 
             let color = if current_cell {
@@ -150,67 +158,90 @@ fn render_grid(mut grid: &mut Grid, hovered_cell: &Option<(i32, i32)>) {
                 CELL_HEIGHT,
                 color,
             );
+        }
+    }
 
-            if i_row > 0 && i_column > 0 {
-                let left = *get_mut(&mut grid, i_row, i_column - 1);
-                let above = *get_mut(&mut grid, i_row - 1, i_column);
-                if current_cell != above {
-                    let start_x =
-                        GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
-                    let start_y =
-                        GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
-                    let end_x =
-                        GRID_PAD - CELL_PAD * 0.5 + (i_column + 1) as f32 * (CELL_WIDTH + CELL_PAD);
-                    let end_y = GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
-                    draw_line(start_x, start_y, end_x, end_y, CELL_PAD, RAIL);
-                    let mid = (start_x + end_x) * 0.5;
-                    let triangle_width = 2.0 * CELL_PAD;
-                    draw_bordered_triangle(
-                        vec2(mid, start_y - triangle_width),
-                        vec2(mid, start_y + triangle_width),
-                        vec2(
-                            mid + triangle_width * if current_cell { 1.0 } else { -1.0 },
-                            start_y,
-                        ),
-                        TRIANGLE,
-                        TRIANGLE_BORDER,
-                    );
-                }
-                if current_cell != left {
-                    let start_x =
-                        GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
-                    let start_y =
-                        GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
-                    let end_x =
-                        GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
-                    let end_y =
-                        GRID_PAD - CELL_PAD * 0.5 + (i_row + 1) as f32 * (CELL_HEIGHT + CELL_PAD);
-                    draw_line(start_x, start_y, end_x, end_y, CELL_PAD, RAIL);
-
-                    let mid = (start_y + end_y) * 0.5;
-                    let triangle_width = 2.0 * CELL_PAD;
-                    draw_bordered_triangle(
-                        vec2(start_x - triangle_width, mid),
-                        vec2(start_x + triangle_width, mid),
-                        vec2(
-                            start_x,
-                            mid - triangle_width * if current_cell { 1.0 } else { -1.0 },
-                        ),
-                        TRIANGLE,
-                        TRIANGLE_BORDER,
-                    );
-                }
+    for i_row in 1..grid.rails.horiz_rows() -1 {
+        for i_column in 1..grid.rails.horiz_columns() -1 {
+            let start_x = GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
+            let y = GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
+            let end_x = GRID_PAD - CELL_PAD * 0.5 + (i_column + 1) as f32 * (CELL_WIDTH + CELL_PAD);
+            let direction = grid.rails.get_horiz(i_row, i_column);
+            if direction != Horizontal::Center {
+                draw_line(start_x, y, end_x, y, CELL_PAD, RAIL);
+                let sign = match direction {
+                    Horizontal::Left => -1.0,
+                    Horizontal::Center => 0.0,
+                    Horizontal::Right => 1.0,
+                };
+                let mid = (start_x + end_x) * 0.5;
+                let triangle_width = 2.0 * CELL_PAD;
+                let above = vec2(mid, y - triangle_width);
+                let below = vec2(mid, y + triangle_width);
+                let tip = vec2(mid + triangle_width * sign, y);
+                draw_bordered_triangle(above, below, tip, TRIANGLE, TRIANGLE_BORDER);
             }
         }
     }
+    for i_row in 1..grid.rails.vert_rows() -1 {
+        for i_column in 1..grid.rails.vert_columns() -1 {
+            let x = GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
+            let start_y = GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
+            let end_y = GRID_PAD - CELL_PAD * 0.5 + (i_row + 1) as f32 * (CELL_HEIGHT + CELL_PAD);
+            let direction = grid.rails.get_vert(i_row, i_column);
+
+            if direction != Vertical::Center {
+                draw_line(x, start_y, x, end_y, CELL_PAD, RAIL);
+                let sign = match direction {
+                    Vertical::Top => -1.0,
+                    Vertical::Center => 0.0,
+                    Vertical::Bottom => 1.0,
+                };
+                let mid = (start_y + end_y) * 0.5;
+                let triangle_width = 2.0 * CELL_PAD;
+                let left = vec2(x - triangle_width, mid);
+                let right = vec2(x + triangle_width, mid);
+                let tip = vec2(x, mid + triangle_width * sign);
+                draw_bordered_triangle(left, right, tip, TRIANGLE, TRIANGLE_BORDER);
+            }
+        }
+    }
+    // for i_row in 1..grid.rails.vert_rows() -1 {
+    //     for i_column in 1..grid.rails.vert_columns() -1 {
+    //             if current_cell != left {
+    //                 let start_x =
+    //                     GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
+    //                 let start_y =
+    //                     GRID_PAD - CELL_PAD * 0.5 + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
+    //                 let end_x =
+    //                     GRID_PAD - CELL_PAD * 0.5 + i_column as f32 * (CELL_WIDTH + CELL_PAD);
+    //                 let end_y =
+    //                     GRID_PAD - CELL_PAD * 0.5 + (i_row + 1) as f32 * (CELL_HEIGHT + CELL_PAD);
+    //                 draw_line(start_x, start_y, end_x, end_y, CELL_PAD, RAIL);
+    //
+    //                 let mid = (start_y + end_y) * 0.5;
+    //                 let triangle_width = 2.0 * CELL_PAD;
+    //                 draw_bordered_triangle(
+    //                     vec2(start_x - triangle_width, mid),
+    //                     vec2(start_x + triangle_width, mid),
+    //                     vec2(
+    //                         start_x,
+    //                         mid - triangle_width * if current_cell { 1.0 } else { -1.0 },
+    //                     ),
+    //                     TRIANGLE,
+    //                     TRIANGLE_BORDER,
+    //                 );
+    //             }
+    //         }
+    //     }
+    // }
 }
 
-async fn reset(visualize: bool) -> Grid {
-    let mut grid = Grid::new(SIZE, SIZE);
+async fn reset(visualize: bool) -> (Grid, Grid) {
+    let mut solution = Grid::new(NUM_ROWS, NUM_COLUMNS, ivec2(NUM_ROWS / 2, NUM_COLUMNS / 2));
     let mut enabled = Vec::new();
 
-    *get_mut(&mut grid, SIZE / 2, SIZE / 2) = true;
-    enabled.push((SIZE / 2, SIZE / 2));
+    enabled.push((solution.root.y, solution.root.x));
     let mut i = 0;
     while enabled.len() < 30 {
         if visualize && is_key_pressed(KeyCode::Escape) {
@@ -225,13 +256,13 @@ async fn reset(visualize: bool) -> Grid {
             // let index = rand() % enabled.len();
             let mut index = enabled.len() - 1;
             let (mut row, mut column) = enabled[index];
-            let mut neighbours = count_neighbours(&grid, row, column);
+            let mut neighbours = count_neighbours(&solution, row, column);
             for _ in 0..20 {
                 if neighbours > 2 {
                     // println!("rejected: ({}, {}), neighbours {}", row, column, neighbours);
                     index = rand() as usize % enabled.len();
                     (row, column) = enabled[index];
-                    neighbours = count_neighbours(&grid, row, column);
+                    neighbours = count_neighbours(&solution, row, column);
                 }
             }
             if neighbours < 3 {
@@ -250,7 +281,7 @@ async fn reset(visualize: bool) -> Grid {
                     };
                     // if the chosen neighbour is already enabled, choose another neighbour
                     if in_range(new_row, new_column) {
-                        *get_mut(&mut grid, new_row, new_column) = true;
+                        *get_mut(&mut solution, new_row, new_column) = true;
                         enabled.push((new_row, new_column));
                     }
                 }
@@ -267,12 +298,15 @@ async fn reset(visualize: bool) -> Grid {
         }
         if visualize {
             clear_background(BACKGROUND_2);
-            render_grid(&mut grid, &None);
+            render_grid(&mut solution, &None);
             next_frame().await;
         }
     }
     // println!("tried {} iterations", i);
-    grid
+    solution.recalculate_rails();
+    let mut grid = Grid::new(NUM_ROWS, NUM_COLUMNS, solution.root);
+    grid.recalculate_rails();
+    (solution, grid)
 }
 
 fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, border: Color) {

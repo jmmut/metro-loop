@@ -19,8 +19,8 @@ const CELL_HEIGHT: f32 = 50.0;
 const CELL_PAD: f32 = 5.0;
 const GRID_PAD: f32 = 30.0;
 
-const DEFAULT_WINDOW_WIDTH: i32 = ((CELL_WIDTH + CELL_PAD) * SIZE as f32 + GRID_PAD * 2.0) as i32;
-const DEFAULT_WINDOW_HEIGHT: i32 = ((CELL_HEIGHT + CELL_PAD) * SIZE as f32 + GRID_PAD * 2.0) as i32;
+const DEFAULT_WINDOW_WIDTH: i32 = ((CELL_WIDTH + CELL_PAD) * SIZE as f32 - CELL_PAD + GRID_PAD * 2.0) as i32;
+const DEFAULT_WINDOW_HEIGHT: i32 = ((CELL_HEIGHT + CELL_PAD) * SIZE as f32 - CELL_PAD + GRID_PAD * 2.0) as i32;
 const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 
 fn window_conf() -> Conf {
@@ -53,7 +53,7 @@ async fn main() {
                 (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
             let i_row = grid_indexes.y as usize;
             let i_column = grid_indexes.x as usize;
-            if i_column > 0 && i_column < SIZE && i_row > 0 && i_row < SIZE {
+            if i_column > 0 && i_column < SIZE - 1 && i_row > 0 && i_row < SIZE -1 {
                 let cell = get_mut(&mut grid, i_row, i_column);
                 *cell = !*cell;
             }

@@ -2,8 +2,8 @@ use crate::SIZE;
 use juquad::widgets::anchor::{Horizontal, Vertical};
 
 pub struct Rails {
-    horizontal: Vec<Vec<Horizontal>>,
-    vertical: Vec<Vec<Vertical>>,
+    pub horizontal: Vec<Vec<Horizontal>>,
+    pub vertical: Vec<Vec<Vertical>>,
 }
 
 impl Rails {
@@ -25,24 +25,51 @@ impl Rails {
     }
 }
 
-pub type Grid = Vec<Vec<bool>>;
 pub type Cell = bool;
-
-pub fn get_mut(grid: &mut Grid, row: usize, column: usize) -> &mut Cell {
-    grid.get_mut(row).unwrap().get_mut(column).unwrap()
+pub struct Grid {
+    cells: Vec<Vec<Cell>>,
+    rails: Rails,
 }
 
-pub fn get(grid: &Grid, row: usize, column: usize) -> &Cell {
-    grid.get(row).unwrap().get(column).unwrap()
+impl Grid {
+    pub fn new(num_rows: i32, num_columns: i32) -> Self {
+        let mut row = Vec::new();
+        row.resize(num_columns as usize, false);
+        let mut cells = Vec::new();
+        cells.resize(num_rows as usize, row);
+
+        let rails = Rails::new(num_rows, num_columns);
+        Self { cells, rails }
+    }
 }
 
-pub fn count_neighbours(grid: &Grid, row: usize, column: usize) -> i32 {
+pub fn get_mut(grid: &mut Grid, row: i32, column: i32) -> &mut Cell {
+    assert!(row >= 0);
+    assert!(column >= 0);
+    grid.cells
+        .get_mut(row as usize)
+        .unwrap()
+        .get_mut(column as usize)
+        .unwrap()
+}
+
+pub fn get(grid: &Grid, row: i32, column: i32) -> &Cell {
+    assert!(row >= 0);
+    assert!(column >= 0);
+    grid.cells
+        .get(row as usize)
+        .unwrap()
+        .get(column as usize)
+        .unwrap()
+}
+
+pub fn count_neighbours(grid: &Grid, row: i32, column: i32) -> i32 {
     *get(grid, row + 1, column) as i32
         + *get(grid, row - 1, column) as i32
         + *get(grid, row, column + 1) as i32
         + *get(grid, row, column - 1) as i32
 }
 
-pub fn in_range(row: usize, column: usize) -> bool {
+pub fn in_range(row: i32, column: i32) -> bool {
     row > 0 && row < SIZE - 1 && column > 0 && column < SIZE - 1
 }

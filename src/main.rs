@@ -1,6 +1,6 @@
 mod rails;
 
-use crate::rails::{count_neighbours, get_mut, in_range};
+use crate::rails::{count_neighbours, get_mut, in_range, Grid};
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
 use juquad::widgets::{StateStyle, Style};
@@ -37,7 +37,7 @@ const STYLE: Style = Style {
 
 const FONT_SIZE: f32 = 16.0;
 
-const SIZE: usize = 10;
+const SIZE: i32 = 10;
 const CELL_WIDTH: f32 = 50.0;
 const CELL_HEIGHT: f32 = 50.0;
 const CELL_PAD: f32 = 5.0;
@@ -74,8 +74,8 @@ async fn main() {
         let pos = Vec2::from(mouse_position());
         let grid_indexes =
             (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
-        let i_row = grid_indexes.y as usize;
-        let i_column = grid_indexes.x as usize;
+        let i_row = grid_indexes.y as i32;
+        let i_column = grid_indexes.x as i32;
         let hovered_cell = if i_column > 0 && i_column < SIZE - 1 && i_row > 0 && i_row < SIZE - 1 {
             Some((i_row, i_column))
         } else {
@@ -123,7 +123,7 @@ fn window_conf() -> Conf {
     }
 }
 
-fn render_grid(mut grid: &mut Vec<Vec<bool>>, hovered_cell: &Option<(usize, usize)>) {
+fn render_grid(mut grid: &mut Grid, hovered_cell: &Option<(i32, i32)>) {
     for i_row in 0..SIZE {
         for i_column in 0..SIZE {
             let current_cell = *get_mut(&mut grid, i_row, i_column);
@@ -205,12 +205,8 @@ fn render_grid(mut grid: &mut Vec<Vec<bool>>, hovered_cell: &Option<(usize, usiz
     }
 }
 
-async fn reset(visualize: bool) -> Vec<Vec<bool>> {
-    let mut grid = Vec::new();
-    for _ in 0..SIZE {
-        grid.push(Vec::from([false; SIZE]))
-    }
-
+async fn reset(visualize: bool) -> Grid {
+    let mut grid = Grid::new(SIZE, SIZE);
     let mut enabled = Vec::new();
 
     *get_mut(&mut grid, SIZE / 2, SIZE / 2) = true;
@@ -226,7 +222,7 @@ async fn reset(visualize: bool) -> Vec<Vec<bool>> {
                 break;
             }
 
-            // let index = rand() as usize % enabled.len();
+            // let index = rand() % enabled.len();
             let mut index = enabled.len() - 1;
             let (mut row, mut column) = enabled[index];
             let mut neighbours = count_neighbours(&grid, row, column);
@@ -239,7 +235,7 @@ async fn reset(visualize: bool) -> Vec<Vec<bool>> {
                 }
             }
             if neighbours < 3 {
-                let neighbour = rand() as usize % 4;
+                let neighbour = rand() % 4;
                 // println!(
                 //     "index: {} ({}, {}), neighbour {}",
                 //     index, row, column, neighbour

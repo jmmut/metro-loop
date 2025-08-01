@@ -1,9 +1,12 @@
+use juquad::draw::draw_rect;
+use juquad::widgets::Widget;
 mod rails;
 
-use crate::rails::{choose_constraints, count_neighbours, get_mut, in_range, Grid, RailCoord};
+use crate::rails::{choose_constraints, count_neighbours, get, get_mut, in_range, Grid, RailCoord};
 use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
 use juquad::widgets::{StateStyle, Style};
+use juquad::widgets::text::TextRect;
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
@@ -30,7 +33,7 @@ const STYLE: Style = Style {
     },
     pressed: StateStyle {
         bg_color: GRAY,
-        text_color: WHITE,
+        text_color: GREEN,
         border_color: DARKGRAY,
     },
 };
@@ -63,13 +66,14 @@ async fn main() {
         BUTTON_PANEL_WIDTH,
         grid_height(),
     );
+    let mut show_solution = false;
     loop {
         clear_background(BACKGROUND);
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
         let mut reset_button =
-            new_button("Reset", Anchor::top_left(button_panel.x, button_panel.y));
+            new_button("New Game", Anchor::top_center(button_panel.x + button_panel.w * 0.5, button_panel.y + GRID_PAD));
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
             (solution, grid) = reset(false).await;
         }
@@ -93,11 +97,11 @@ async fn main() {
             }
         }
 
-        // let satisfaction = compute_satisfaction();
+        let failures = compute_failures(&grid, &constraints);
 
-        render_grid(&mut grid, &hovered_cell);
-        render_constraints(&constraints);
+        draw_rect(button_panel, GRAY);
         render_button(&reset_button);
+        render_satisfaction(failures, reset_button.rect(), &grid, &solution, &constraints, &hovered_cell, &mut show_solution);
         // draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
         // draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
         // draw_circle(screen_width() - 30.0, screen_height() - 30.0, 15.0, YELLOW);
@@ -105,6 +109,51 @@ async fn main() {
         // draw_text("IT WORKS!", 20.0, 20.0, 30.0, DARKGRAY);
 
         next_frame().await
+    }
+}
+
+fn render_satisfaction(failures: i32, previous_rect: Rect, grid: &Grid, solution: &Grid, constraints: &Vec<RailCoord>, hovered_cell: &Option<(i32, i32)>, show_solution: &mut bool) {
+    let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
+    if failures == 0 {
+        let text = TextRect::new(&"SOLVED!", anchor, FONT_SIZE * 2.0);
+        text.render_default(&STYLE.at_rest);
+        let show_anchor = Anchor::below(text.rect(), Horizontal::Center, 10.0);
+        let mut show = new_button("Show solution", show_anchor);
+        if show.interact().is_clicked() {
+            *show_solution = !*show_solution;
+        }
+        render_button(&show);
+        if *show_solution {
+            render_grid(solution, &hovered_cell);
+        } else {
+            render_grid(grid, &hovered_cell);
+            render_constraints(&constraints);
+        }
+    } else {
+        TextRect::new(&format!("{} incorrect rails", failures), anchor, FONT_SIZE).render_default(&STYLE.at_rest);
+        render_grid(grid, &hovered_cell);
+        render_constraints(&constraints);
+    }
+}
+
+fn compute_failures(grid: &Grid, constraints: &Vec<RailCoord>) -> i32 {
+    let mut failures = 0;
+    for constraint in constraints {
+        if !matches_constraint(grid, constraint) {
+            failures += 1;
+        }
+    }
+    failures
+}
+
+fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
+    match *constraint {
+        RailCoord::Horizontal { row, column, direction } => {
+            grid.rails.get_horiz(row, column) == direction
+        }
+        RailCoord::Vertical { row, column, direction } => {
+            grid.rails.get_vert(row, column) == direction
+        }
     }
 }
 
@@ -131,10 +180,10 @@ fn window_conf() -> Conf {
     }
 }
 
-fn render_grid(mut grid: &mut Grid, hovered_cell: &Option<(i32, i32)>) {
+fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
     for i_row in 0..NUM_ROWS {
         for i_column in 0..NUM_COLUMNS {
-            let current_cell = *get_mut(&mut grid, i_row, i_column);
+            let current_cell = *get(grid, i_row, i_column);
 
             let color = if current_cell {
                 ENABLED_CELL

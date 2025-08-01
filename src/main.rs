@@ -19,12 +19,12 @@ use macroquad::rand::{rand, srand};
 
 const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
-const TRIANGLE: Color = SKYBLUE;
+const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue
 const TRIANGLE_BORDER: Color = BLUE;
 const RAIL: Color = SKYBLUE;
 
 const FAILING: Color = ORANGE;
-const SUCCESS: Color = GREEN;
+const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
 
 const ENABLED_CELL: Color = TRIANGLE_BORDER;
 const DISABLED_CELL: Color = DARKGRAY;
@@ -67,7 +67,7 @@ async fn main() {
     let seed = now() as u64;
     srand(seed);
     let (mut solution, mut grid) = reset(false).await;
-    let constraints = choose_constraints(&solution);
+    let mut constraints = choose_constraints(&solution);
 
     let (_sw, _sh) = (screen_width(), screen_height());
     let button_panel = Rect::new(
@@ -91,6 +91,8 @@ async fn main() {
         );
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
             (solution, grid) = reset(false).await;
+            constraints = choose_constraints(&solution);
+            show_solution = false;
         }
         let pos = Vec2::from(mouse_position());
         let grid_indexes =

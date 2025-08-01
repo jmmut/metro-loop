@@ -104,7 +104,7 @@ fn compute_rail_failures(grid: &Grid, rail_constraints: &Vec<RailCoord>) -> i32 
     failures
 }
 
-fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
+pub fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
     match *constraint {
         RailCoord::Horizontal {
             row,

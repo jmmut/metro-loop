@@ -3,9 +3,7 @@ use juquad::widgets::Widget;
 mod constraints;
 mod rails;
 
-use crate::constraints::{
-    choose_constraints, compute_satisfaction, Constraints, RailCoord, Satisfaction,
-};
+use crate::constraints::{choose_constraints, compute_satisfaction, matches_constraint, Constraints, RailCoord, Satisfaction};
 use crate::rails::{count_neighbours, get, get_mut, in_range, Grid};
 use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
@@ -18,12 +16,16 @@ use macroquad::rand::{rand, srand};
 
 const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
-const TRIANGLE: Color = ORANGE;
-const TRIANGLE_BORDER: Color = Color::new(0.5, 0.3, 0.00, 1.00);
-const RAIL: Color = GREEN;
-const ENABLED_CELL: Color = DARKGREEN;
+const TRIANGLE: Color = SKYBLUE;
+const TRIANGLE_BORDER: Color = BLUE;
+const RAIL: Color = SKYBLUE;
+
+const FAILING: Color = ORANGE;
+const SUCCESS: Color = GREEN;
+
+const ENABLED_CELL: Color = TRIANGLE_BORDER;
 const DISABLED_CELL: Color = DARKGRAY;
-const HOVERED_CELL: Color = Color::new(0.15, 0.38, 0.22, 1.0);
+const HOVERED_CELL: Color = color_average(ENABLED_CELL, DISABLED_CELL);
 
 const STYLE: Style = Style {
     at_rest: StateStyle {
@@ -116,7 +118,7 @@ async fn main() {
             render_grid(&solution, &hovered_cell);
         } else {
             render_grid(&grid, &hovered_cell);
-            render_constraints(&constraints);
+            render_constraints(&constraints, &grid);
         }
         // draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
         // draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
@@ -250,9 +252,10 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
     }
 }
 
-fn render_constraints(constraints: &Constraints) {
+fn render_constraints(constraints: &Constraints, grid: &Grid) {
     let triangle_width = 4.0 * CELL_PAD;
     for constraint in &constraints.rails {
+        let color = if matches_constraint(grid, constraint) {SUCCESS} else {FAILING};
         match *constraint {
             RailCoord::Horizontal {
                 row,
@@ -265,17 +268,17 @@ fn render_constraints(constraints: &Constraints) {
                 match direction {
                     Horizontal::Left => {
                         let (back, tip) = (CELL_PAD, -triangle_width);
-                        render_constraint_horiz(triangle_width, mid, back, tip);
+                        render_constraint_horiz(triangle_width, mid, back, tip, color);
                     }
                     Horizontal::Center => {
                         let sideways = vec2(0.0, CELL_PAD * 2.0);
                         let start = mid - sideways;
                         let end = mid + sideways;
-                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, color);
                     }
                     Horizontal::Right => {
                         let (back, tip) = (-CELL_PAD, triangle_width);
-                        render_constraint_horiz(triangle_width, mid, back, tip);
+                        render_constraint_horiz(triangle_width, mid, back, tip, color);
                     }
                 };
             }
@@ -290,17 +293,17 @@ fn render_constraints(constraints: &Constraints) {
                 match direction {
                     Vertical::Top => {
                         let (back, tip) = (CELL_PAD, -triangle_width);
-                        render_constraint_vert(triangle_width, mid, back, tip);
+                        render_constraint_vert(triangle_width, mid, back, tip, color);
                     }
                     Vertical::Center => {
                         let sideways = vec2(CELL_PAD * 2.0, 0.0);
                         let start = mid - sideways;
                         let end = mid + sideways;
-                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, color);
                     }
                     Vertical::Bottom => {
                         let (back, tip) = (-CELL_PAD, triangle_width);
-                        render_constraint_vert(triangle_width, mid, back, tip);
+                        render_constraint_vert(triangle_width, mid, back, tip, color);
                     }
                 };
             }
@@ -308,18 +311,18 @@ fn render_constraints(constraints: &Constraints) {
     }
 }
 
-fn render_constraint_horiz(triangle_width: f32, mid: Vec2, back: f32, tip: f32) {
+fn render_constraint_horiz(triangle_width: f32, mid: Vec2, back: f32, tip: f32, color: Color) {
     let above = mid + vec2(back, triangle_width);
     let below = mid + vec2(back, -triangle_width);
     let tip = mid + vec2(tip, 0.0);
-    draw_triangle_lines(above, below, tip, CELL_PAD, TRIANGLE);
+    draw_triangle_lines(above, below, tip, CELL_PAD, color);
 }
 
-fn render_constraint_vert(triangle_width: f32, mid: Vec2, back: f32, tip: f32) {
+fn render_constraint_vert(triangle_width: f32, mid: Vec2, back: f32, tip: f32, color: Color) {
     let left = mid + vec2(-triangle_width, back);
     let right = mid + vec2(triangle_width, back);
     let tip = mid + vec2(0.0, tip);
-    draw_triangle_lines(left, right, tip, CELL_PAD, TRIANGLE);
+    draw_triangle_lines(left, right, tip, CELL_PAD, color);
 }
 
 fn top_left_rail_intersection(i_row: i32, i_column: i32) -> Vec2 {
@@ -410,4 +413,8 @@ async fn reset(visualize: bool) -> (Grid, Grid) {
 fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, border: Color) {
     draw_triangle(p_1, p_2, p_3, color);
     draw_triangle_lines(p_1, p_2, p_3, 2.0, border);
+}
+
+const fn color_average(color_1: Color, color_2: Color) -> Color {
+    Color::new((color_1.r + color_2.r) * 0.5, (color_1.g + color_2.g) * 0.5, (color_1.b + color_2.b) * 0.5, (color_1.a + color_2.a) * 0.5)
 }

@@ -3,7 +3,10 @@ use juquad::widgets::Widget;
 mod constraints;
 mod rails;
 
-use crate::constraints::{choose_constraints, compute_satisfaction, matches_constraint, Constraints, RailCoord, Satisfaction};
+use crate::constraints::{
+    choose_constraints, compute_satisfaction, matches_constraint, Constraints, RailCoord,
+    Satisfaction,
+};
 use crate::rails::{count_neighbours, get, get_mut, in_range, Grid};
 use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
@@ -255,7 +258,11 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
 fn render_constraints(constraints: &Constraints, grid: &Grid) {
     let triangle_width = 4.0 * CELL_PAD;
     for constraint in &constraints.rails {
-        let color = if matches_constraint(grid, constraint) {SUCCESS} else {FAILING};
+        let color = if matches_constraint(grid, constraint) {
+            SUCCESS
+        } else {
+            FAILING
+        };
         match *constraint {
             RailCoord::Horizontal {
                 row,
@@ -416,5 +423,10 @@ fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, border:
 }
 
 const fn color_average(color_1: Color, color_2: Color) -> Color {
-    Color::new((color_1.r + color_2.r) * 0.5, (color_1.g + color_2.g) * 0.5, (color_1.b + color_2.b) * 0.5, (color_1.a + color_2.a) * 0.5)
+    Color::new(
+        (color_1.r + color_2.r) * 0.5,
+        (color_1.g + color_2.g) * 0.5,
+        (color_1.b + color_2.b) * 0.5,
+        (color_1.a + color_2.a) * 0.5,
+    )
 }

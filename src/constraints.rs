@@ -1,4 +1,4 @@
-use crate::rails::Grid;
+use crate::rails::{get, Grid};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::rand::rand;
 
@@ -86,12 +86,26 @@ fn count_cells(grid: &Grid) -> i32 {
 pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfaction {
     let failing_rails = compute_rail_failures(grid, &constraints.rails);
     let cell_diff = constraints.cell_count - count_cells(grid);
-    let unconnected_loops = 0; // TODO
+    let unconnected_loops = count_loops(grid) - 1;
     Satisfaction {
         failing_rails,
         cell_diff,
         unconnected_loops,
     }
+}
+
+fn count_loops(grid: &Grid) -> i32 {
+    let active = count_cells(grid);
+    let mut adjacents = 0;
+    for row in 1..grid.rows() {
+        for column in 1..grid.columns() {
+            let current = *get(grid, row, column);
+            let left = *get(grid, row, column - 1);
+            let above = *get(grid, row - 1, column);
+            adjacents += (current && left) as i32 + (current && above) as i32;
+        }
+    }
+    active - adjacents
 }
 
 fn compute_rail_failures(grid: &Grid, rail_constraints: &Vec<RailCoord>) -> i32 {
@@ -116,5 +130,91 @@ pub fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
             column,
             direction,
         } => grid.rails.get_vert(row, column) == direction,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::rails::{Cell, Rails};
+    use macroquad::prelude::IVec2;
+
+    fn mock_grid(cells: Vec<Vec<Cell>>) -> Grid {
+        let rails = Rails::new(0, 0);
+        let root = IVec2::default();
+        Grid { cells, rails, root }
+    }
+    const CLICK: bool = true;
+
+    #[test]
+    fn test_count_loops_none() {
+        let grid = mock_grid(vec![
+            vec![false, false, false],
+            vec![false, false, false],
+            vec![false, false, false],
+        ]);
+        let loops = count_loops(&grid);
+        assert_eq!(loops, 0);
+    }
+
+    #[test]
+    fn test_count_loops_one() {
+        let grid = mock_grid(vec![
+            vec![false, false, false],
+            vec![false, CLICK, false],
+            vec![false, false, false],
+        ]);
+        let loops = count_loops(&grid);
+        assert_eq!(loops, 1);
+    }
+    #[test]
+    fn test_count_loops_two() {
+        let grid = mock_grid(vec![
+            vec![false, false, false, false, false],
+            vec![false, CLICK, false, CLICK, false],
+            vec![false, false, false, false, false],
+        ]);
+        let loops = count_loops(&grid);
+        assert_eq!(loops, 2);
+    }
+    #[test]
+    fn test_count_loops_border() {
+        #[rustfmt::skip]
+        let grid = mock_grid(vec![
+            vec![false, CLICK],
+            vec![false, false],
+        ]);
+        let loops = count_loops(&grid);
+        assert_eq!(loops, 1);
+    }
+    #[test]
+    fn test_count_loops_top_left() {
+        #[rustfmt::skip]
+        let grid = mock_grid(vec![
+            vec![CLICK, false],
+            vec![false, false],
+        ]);
+        let loops = count_loops(&grid);
+        assert_eq!(loops, 1);
+    }
+    #[test]
+    fn test_count_loops_one_big() {
+        let grid = mock_grid(vec![
+            vec![false, false, CLICK, false, false],
+            vec![false, CLICK, CLICK, CLICK, false],
+            vec![false, CLICK, false, false, false],
+        ]);
+        let loops = count_loops(&grid);
+        assert_eq!(loops, 1);
+    }
+    #[test]
+    fn test_count_loops_two_big() {
+        let grid = mock_grid(vec![
+            vec![false, false, CLICK, false, false],
+            vec![false, CLICK, CLICK, CLICK, false],
+            vec![CLICK, false, false, false, false],
+        ]);
+        let loops = count_loops(&grid);
+        assert_eq!(loops, 2);
     }
 }

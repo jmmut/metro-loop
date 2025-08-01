@@ -88,7 +88,12 @@ impl Grid {
         *get_mut(&mut grid, NUM_ROWS / 2, NUM_COLUMNS / 2) = true;
         grid
     }
-
+    pub fn rows(&self) -> i32 {
+        self.cells.len() as i32
+    }
+    pub fn columns(&self) -> i32 {
+        self.cells.get(0).unwrap().len() as i32
+    }
     pub fn recalculate_rails(&mut self) {
         for i_row in 1..NUM_ROWS {
             for i_column in 1..NUM_COLUMNS {

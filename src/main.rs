@@ -1,12 +1,17 @@
 use juquad::draw::draw_rect;
 use juquad::widgets::Widget;
+mod constraints;
 mod rails;
 
-use crate::rails::{choose_constraints, count_neighbours, get, get_mut, in_range, Grid, RailCoord};
+use crate::constraints::{
+    choose_constraints, compute_satisfaction, Constraints, RailCoord, Satisfaction,
+};
+use crate::rails::{count_neighbours, get, get_mut, in_range, Grid};
 use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
-use juquad::widgets::{StateStyle, Style};
+use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::text::TextRect;
+use juquad::widgets::{StateStyle, Style};
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
@@ -72,8 +77,13 @@ async fn main() {
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
-        let mut reset_button =
-            new_button("New Game", Anchor::top_center(button_panel.x + button_panel.w * 0.5, button_panel.y + GRID_PAD));
+        let mut reset_button = new_button(
+            "New Game",
+            Anchor::top_center(
+                button_panel.x + button_panel.w * 0.5,
+                button_panel.y + GRID_PAD,
+            ),
+        );
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
             (solution, grid) = reset(false).await;
         }
@@ -97,11 +107,17 @@ async fn main() {
             }
         }
 
-        let failures = compute_failures(&grid, &constraints);
+        let satisfaction = compute_satisfaction(&grid, &constraints);
 
         draw_rect(button_panel, GRAY);
         render_button(&reset_button);
-        render_satisfaction(failures, reset_button.rect(), &grid, &solution, &constraints, &hovered_cell, &mut show_solution);
+        render_satisfaction(&satisfaction, reset_button.rect(), &mut show_solution);
+        if show_solution {
+            render_grid(&solution, &hovered_cell);
+        } else {
+            render_grid(&grid, &hovered_cell);
+            render_constraints(&constraints);
+        }
         // draw_line(40.0, 40.0, 100.0, 200.0, 15.0, BLUE);
         // draw_rectangle(screen_width() / 2.0 - 60.0, 100.0, 120.0, 60.0, GREEN);
         // draw_circle(screen_width() - 30.0, screen_height() - 30.0, 15.0, YELLOW);
@@ -112,9 +128,9 @@ async fn main() {
     }
 }
 
-fn render_satisfaction(failures: i32, previous_rect: Rect, grid: &Grid, solution: &Grid, constraints: &Vec<RailCoord>, hovered_cell: &Option<(i32, i32)>, show_solution: &mut bool) {
+fn render_satisfaction(satisfaction: &Satisfaction, previous_rect: Rect, show_solution: &mut bool) {
     let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
-    if failures == 0 {
+    if satisfaction.success() {
         let text = TextRect::new(&"SOLVED!", anchor, FONT_SIZE * 2.0);
         text.render_default(&STYLE.at_rest);
         let show_anchor = Anchor::below(text.rect(), Horizontal::Center, 10.0);
@@ -123,37 +139,22 @@ fn render_satisfaction(failures: i32, previous_rect: Rect, grid: &Grid, solution
             *show_solution = !*show_solution;
         }
         render_button(&show);
-        if *show_solution {
-            render_grid(solution, &hovered_cell);
-        } else {
-            render_grid(grid, &hovered_cell);
-            render_constraints(&constraints);
-        }
     } else {
-        TextRect::new(&format!("{} incorrect rails", failures), anchor, FONT_SIZE).render_default(&STYLE.at_rest);
-        render_grid(grid, &hovered_cell);
-        render_constraints(&constraints);
-    }
-}
-
-fn compute_failures(grid: &Grid, constraints: &Vec<RailCoord>) -> i32 {
-    let mut failures = 0;
-    for constraint in constraints {
-        if !matches_constraint(grid, constraint) {
-            failures += 1;
+        let labels = LabelGroup::new(FONT_SIZE, anchor);
+        let text_rects = labels.create([
+            &format!("{} incorrect rails", satisfaction.failing_rails),
+            &format!("{} cells to activate", satisfaction.cell_diff),
+            &format!("{} unconnected loops", satisfaction.unconnected_loops),
+        ]);
+        for text_rect in text_rects {
+            text_rect.render_default(&STYLE.at_rest);
         }
-    }
-    failures
-}
-
-fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
-    match *constraint {
-        RailCoord::Horizontal { row, column, direction } => {
-            grid.rails.get_horiz(row, column) == direction
-        }
-        RailCoord::Vertical { row, column, direction } => {
-            grid.rails.get_vert(row, column) == direction
-        }
+        // let rails = TextRect::new(&format!("{} incorrect rails", failures), anchor, FONT_SIZE);
+        // rails.render_default(&STYLE.at_rest);
+        // let anchor = Anchor::below(rails.rect(), Horizontal::Left, FONT_SIZE);
+        // let cells = TextRect::new(&format!("{} cells to activate", failures), anchor, FONT_SIZE);
+        // cells.render_default(&STYLE.at_rest);
+        // let anchor = Anchor::below(cells.rect(), Horizontal::Left, FONT_SIZE);
     }
 }
 
@@ -249,9 +250,9 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
     }
 }
 
-fn render_constraints(constraints: &Vec<RailCoord>) {
+fn render_constraints(constraints: &Constraints) {
     let triangle_width = 4.0 * CELL_PAD;
-    for constraint in constraints {
+    for constraint in &constraints.rails {
         match *constraint {
             RailCoord::Horizontal {
                 row,

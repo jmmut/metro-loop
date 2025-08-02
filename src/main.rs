@@ -1,15 +1,14 @@
-use juquad::draw::{draw_rect, draw_rect_lines};
+use juquad::draw::draw_rect;
 use juquad::widgets::Widget;
 mod constraints;
 mod rails;
 
 use crate::constraints::{
-    choose_constraints, compute_satisfaction, matches_constraint, Constraints, RailCoord,
-    Satisfaction,
+    choose_constraints, compute_satisfaction, count_loops, matches_constraint, Constraints,
+    RailCoord, Satisfaction,
 };
 use crate::rails::{count_neighbours, get, get_mut, in_range, Grid};
-use juquad::widgets::anchor::{Anchor, Horizontal, Layout, Vertical};
-use juquad::widgets::anchorer::Anchorer;
+use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::text::TextRect;
@@ -17,6 +16,10 @@ use juquad::widgets::{StateStyle, Style};
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
+
+const DEFAULT_SHOW_SOLUTION: bool = false;
+const VISUALIZE: bool = true;
+const STEP_GENERATION: bool = false;
 
 const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
@@ -44,7 +47,7 @@ const STYLE: Style = Style {
     },
     pressed: StateStyle {
         bg_color: GRAY,
-        text_color: GREEN,
+        text_color: WHITE,
         border_color: DARKGRAY,
     },
 };
@@ -67,8 +70,7 @@ const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 async fn main() {
     let seed = now() as u64;
     srand(seed);
-    let (mut solution, mut grid) = reset(false).await;
-    let mut constraints = choose_constraints(&solution);
+    let (mut solution, mut grid, mut constraints, mut show_solution) = reset(VISUALIZE).await;
 
     let (_sw, _sh) = (screen_width(), screen_height());
     let button_panel = Rect::new(
@@ -77,7 +79,6 @@ async fn main() {
         BUTTON_PANEL_WIDTH,
         grid_height(),
     );
-    let mut show_solution = false;
     loop {
         clear_background(BACKGROUND);
         if is_key_pressed(KeyCode::Escape) {
@@ -91,9 +92,7 @@ async fn main() {
             ),
         );
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
-            (solution, grid) = reset(false).await;
-            constraints = choose_constraints(&solution);
-            show_solution = false;
+            (solution, grid, constraints, show_solution) = reset(VISUALIZE).await;
         }
         let pos = Vec2::from(mouse_position());
         let grid_indexes =
@@ -372,7 +371,21 @@ fn cell_top_left(i_row: i32, i_column: i32) -> Vec2 {
     vec2(x, y)
 }
 
-async fn reset(visualize: bool) -> (Grid, Grid) {
+async fn reset(visualize: bool) -> (Grid, Grid, Constraints, bool) {
+    let mut solution = generate_grid(visualize).await;
+    while count_loops(&solution) != 1 {
+        solution = generate_grid(visualize).await;
+    }
+    // println!("tried {} iterations", i);
+    solution.recalculate_rails();
+    let mut grid = Grid::new(NUM_ROWS, NUM_COLUMNS, solution.root);
+    grid.recalculate_rails();
+    let constraints = choose_constraints(&solution);
+    let show_solution = DEFAULT_SHOW_SOLUTION;
+    (solution, grid, constraints, show_solution)
+}
+
+async fn generate_grid(visualize: bool) -> Grid {
     let mut solution = Grid::new(NUM_ROWS, NUM_COLUMNS, ivec2(NUM_ROWS / 2, NUM_COLUMNS / 2));
     let mut enabled = Vec::new();
 
@@ -382,7 +395,7 @@ async fn reset(visualize: bool) -> (Grid, Grid) {
         if visualize && is_key_pressed(KeyCode::Escape) {
             break;
         }
-        if is_key_pressed(KeyCode::Space) || !visualize {
+        if is_key_pressed(KeyCode::Space) || !STEP_GENERATION {
             i += 1;
             if i > 1000 {
                 break;
@@ -392,13 +405,16 @@ async fn reset(visualize: bool) -> (Grid, Grid) {
             let mut index = enabled.len() - 1;
             let (mut row, mut column) = enabled[index];
             let mut neighbours = count_neighbours(&solution, row, column);
-            for _ in 0..20 {
-                if neighbours > 2 {
-                    // println!("rejected: ({}, {}), neighbours {}", row, column, neighbours);
-                    index = rand() as usize % enabled.len();
-                    (row, column) = enabled[index];
-                    neighbours = count_neighbours(&solution, row, column);
+            let mut low_neighbours_attempts = 0;
+            while neighbours > 2 {
+                low_neighbours_attempts += 1;
+                if low_neighbours_attempts > 20 {
+                    break;
                 }
+                // println!("rejected: ({}, {}), neighbours {}", row, column, neighbours);
+                index = rand() as usize % enabled.len();
+                (row, column) = enabled[index];
+                neighbours = count_neighbours(&solution, row, column);
             }
             if neighbours < 3 {
                 let neighbour = rand() % 4;
@@ -414,11 +430,9 @@ async fn reset(visualize: bool) -> (Grid, Grid) {
                         3 => (row, column - 1),
                         _ => panic!(),
                     };
+                    let above_root = (solution.root.y - 1, solution.root.x);
                     // if the chosen neighbour is already enabled, choose another neighbour
-                    if in_range(new_row, new_column)
-                        && new_row + 1 != solution.root.y
-                        && new_column != solution.root.x
-                    {
+                    if in_range(new_row, new_column) && (new_row, new_column) != above_root {
                         *get_mut(&mut solution, new_row, new_column) = true;
                         enabled.push((new_row, new_column));
                     }
@@ -440,11 +454,7 @@ async fn reset(visualize: bool) -> (Grid, Grid) {
             next_frame().await;
         }
     }
-    // println!("tried {} iterations", i);
-    solution.recalculate_rails();
-    let mut grid = Grid::new(NUM_ROWS, NUM_COLUMNS, solution.root);
-    grid.recalculate_rails();
-    (solution, grid)
+    solution
 }
 
 fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, border: Color) {

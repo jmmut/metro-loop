@@ -94,7 +94,7 @@ pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfact
     }
 }
 
-fn count_loops(grid: &Grid) -> i32 {
+pub fn count_loops(grid: &Grid) -> i32 {
     let active = count_cells(grid);
     let mut adjacents = 0;
     for row in 0..grid.rows() {

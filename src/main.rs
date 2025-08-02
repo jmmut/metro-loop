@@ -100,14 +100,13 @@ async fn main() {
             (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
         let i_row = grid_indexes.y as i32;
         let i_column = grid_indexes.x as i32;
-        let hovered_cell =
-            if i_column > 0 && i_column < NUM_COLUMNS - 1 && i_row > 0 && i_row < NUM_ROWS - 1 {
-                Some((i_row, i_column))
-            } else {
-                None
-            };
+        let hovered_cell = if in_range(i_row, i_column) {
+            Some((i_row, i_column))
+        } else {
+            None
+        };
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
-        if is_mouse_button_pressed(MouseButton::Left) {
+        if is_mouse_button_pressed(MouseButton::Left) && !show_solution {
             if let Some((i_row, i_column)) = hovered_cell.clone() {
                 let cell = get_mut(&mut grid, i_row, i_column);
                 *cell = !*cell;

@@ -18,19 +18,19 @@ use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
 
 const DEFAULT_SHOW_SOLUTION: bool = false;
-const VISUALIZE: bool = true;
+const VISUALIZE: bool = false;
 const STEP_GENERATION: bool = false;
 
 const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
 const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue
-const TRIANGLE_BORDER: Color = BLUE;
+const TRIANGLE_BORDER: Color = color_average_weight(BLACK, BLUE, 0.25);
 const RAIL: Color = SKYBLUE;
 
 const FAILING: Color = ORANGE;
 const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
 
-const ENABLED_CELL: Color = TRIANGLE_BORDER;
+const ENABLED_CELL: Color = BLUE;
 const DISABLED_CELL: Color = DARKGRAY;
 const HOVERED_CELL: Color = color_average(ENABLED_CELL, DISABLED_CELL);
 
@@ -459,15 +459,18 @@ async fn generate_grid(visualize: bool) -> Grid {
 
 fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, border: Color) {
     draw_triangle(p_1, p_2, p_3, color);
-    draw_triangle_lines(p_1, p_2, p_3, 2.0, border);
+    draw_triangle_lines(p_1, p_2, p_3, 1.0, border);
 }
 
 const fn color_average(color_1: Color, color_2: Color) -> Color {
+    color_average_weight(color_1, color_2, 0.5)
+}
+const fn color_average_weight(color_1: Color, color_2: Color, weight: f32) -> Color {
     Color::new(
-        (color_1.r + color_2.r) * 0.5,
-        (color_1.g + color_2.g) * 0.5,
-        (color_1.b + color_2.b) * 0.5,
-        (color_1.a + color_2.a) * 0.5,
+        color_1.r * (1.0 - weight) + color_2.r * weight,
+        color_1.g * (1.0 - weight) + color_2.g * weight,
+        color_1.b * (1.0 - weight) + color_2.b * weight,
+        color_1.a * (1.0 - weight) + color_2.a * weight,
     )
 }
 fn render_tick(anchor: Anchor, size: f32) {

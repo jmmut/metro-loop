@@ -1,4 +1,4 @@
-use crate::rails::{get, Grid};
+use crate::grid::{get, Grid};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::rand::rand;
 
@@ -147,7 +147,8 @@ pub fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rails::{Cell, Rails};
+    use crate::grid::Cell;
+    use crate::rails::Rails;
     use macroquad::prelude::IVec2;
 
     fn mock_grid(cells: Vec<Vec<Cell>>) -> Grid {

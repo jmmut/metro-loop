@@ -23,12 +23,15 @@ const STEP_GENERATION: bool = false;
 
 const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
+const PANEL_BACKGROUND: Color = LIGHTGRAY;
 const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue
 const TRIANGLE_BORDER: Color = color_average_weight(BLACK, BLUE, 0.25);
 const RAIL: Color = TRIANGLE;
 
 const FAILING: Color = ORANGE;
 const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
+const FAILING_DARK: Color = color_average(FAILING, BLACK);
+const SUCCESS_DARK: Color = color_average(SUCCESS, BLACK);
 
 const ENABLED_CELL: Color = BLUE;
 const DISABLED_CELL: Color = DARKGRAY;
@@ -36,7 +39,7 @@ const HOVERED_CELL: Color = color_average(ENABLED_CELL, DISABLED_CELL);
 
 const STYLE: Style = Style {
     at_rest: StateStyle {
-        bg_color: LIGHTGRAY,
+        bg_color: color_average(LIGHTGRAY, WHITE),
         text_color: BLACK,
         border_color: DARKGRAY,
     },
@@ -115,7 +118,7 @@ async fn main() {
 
         let satisfaction = compute_satisfaction(&grid, &constraints);
 
-        draw_rect(button_panel, GRAY);
+        draw_rect(button_panel, PANEL_BACKGROUND);
         render_button(&reset_button);
         render_satisfaction(
             &satisfaction,
@@ -150,7 +153,12 @@ fn render_satisfaction(
         let text = TextRect::new(&"SOLVED!", anchor, FONT_SIZE * 2.0);
         text.render_default(&STYLE.at_rest);
         let show_anchor = Anchor::below(text.rect(), Horizontal::Center, 10.0);
-        let mut show = new_button("Show solution", show_anchor);
+        let show_text = if *show_solution {
+            "Hide solution"
+        } else {
+            "Show solution"
+        };
+        let mut show = new_button(show_text, show_anchor);
         if show.interact().is_clicked() {
             *show_solution = !*show_solution;
         }
@@ -225,9 +233,8 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
             } else {
                 DISABLED_CELL
             };
-            let color = if let Some((hovered_row, hovered_column)) = hovered_cell.clone() {
-                if i_row == hovered_row && i_column == hovered_column {
-                    // BLUE
+            let color = if let Some(hovered) = hovered_cell.clone() {
+                if (i_row, i_column) == hovered {
                     HOVERED_CELL
                 } else {
                     color
@@ -250,10 +257,10 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
 
                 let top_left = cell_top_left(i_row, i_column);
                 let second_corner = top_left + vec2(CELL_WIDTH, 0.0);
-                draw_line(top_left.x, top_left.y, second_corner.x, second_corner.y, 1.0, TRIANGLE_BORDER);
+                draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
                 let top_left = top_left - vec2(0.0, CELL_PAD + 1.0);
                 let second_corner = second_corner - vec2(0.0, CELL_PAD + 1.0);
-                draw_line(top_left.x, top_left.y, second_corner.x, second_corner.y, 1.0, TRIANGLE_BORDER);
+                draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
 
                 let sign = match direction {
                     Horizontal::Left => -1.0,
@@ -279,10 +286,10 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
 
                 let top_left = cell_top_left(i_row, i_column) + vec2(1.0, 0.0);
                 let second_corner = top_left + vec2(0.0, CELL_WIDTH);
-                draw_line(top_left.x, top_left.y, second_corner.x, second_corner.y, 1.0, TRIANGLE_BORDER);
+                draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
                 let top_left = top_left - vec2(CELL_PAD + 1.0, 0.0);
                 let second_corner = second_corner - vec2(CELL_PAD + 1.0, 0.0);
-                draw_line(top_left.x, top_left.y, second_corner.x, second_corner.y, 1.0, TRIANGLE_BORDER);
+                draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
 
                 let intersection = Rect::new(top_left.x, top_left.y, CELL_PAD, CELL_PAD);
                 draw_rect(intersection, RAIL);
@@ -305,9 +312,9 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
     for i_row in 1..NUM_ROWS {
         for i_column in 1..NUM_COLUMNS {
             let below = grid.rails.get_vert(i_row, i_column);
-            let above = grid.rails.get_vert(i_row -1 , i_column);
+            let above = grid.rails.get_vert(i_row - 1, i_column);
             let right = grid.rails.get_horiz(i_row, i_column);
-            let left = grid.rails.get_horiz(i_row, i_column -1 );
+            let left = grid.rails.get_horiz(i_row, i_column - 1);
 
             let current_cell = *get(grid, i_row, i_column);
             let above_cell = *get(grid, i_row - 1, i_column);
@@ -338,80 +345,81 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
 }
 
 fn render_constraints(constraints: &Constraints, grid: &Grid) {
-    let triangle_width = 4.0 * CELL_PAD;
+    let triangle_half_width = 4.0 * CELL_PAD;
+    let small_triangle_half_width = 2.0 * CELL_PAD;
+    let thickness = 1.5 * CELL_PAD;
+    // let offset = thickness * 0.8;
+    enum Constraint {
+        Station,
+        Blockade,
+    }
     for constraint in &constraints.rails {
-        let color = if matches_constraint(grid, constraint) {
-            SUCCESS
+        let (color, color_border) = if matches_constraint(grid, constraint) {
+            (SUCCESS, SUCCESS_DARK)
         } else {
-            FAILING
+            (FAILING, FAILING_DARK)
         };
-        match *constraint {
+
+        let (row, column, direction, constraint_render) = match *constraint {
             RailCoord::Horizontal {
                 row,
                 column,
                 direction,
-            } => {
-                let start_corner = top_left_rail_intersection(row, column);
-                let end_corner = top_left_rail_intersection(row, column + 1);
-                let mid = (start_corner + end_corner) * 0.5;
-                match direction {
-                    Horizontal::Left => {
-                        let (back, tip) = (CELL_PAD, -triangle_width);
-                        render_constraint_horiz(triangle_width, mid, back, tip, color);
-                    }
-                    Horizontal::Center => {
-                        let sideways = vec2(0.0, CELL_PAD * 2.0);
-                        let start = mid - sideways;
-                        let end = mid + sideways;
-                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, color);
-                    }
-                    Horizontal::Right => {
-                        let (back, tip) = (-CELL_PAD, triangle_width);
-                        render_constraint_horiz(triangle_width, mid, back, tip, color);
-                    }
-                };
-            }
+            } => match direction {
+                Horizontal::Left => (row, column, vec2(-1.0, 0.0), Constraint::Station),
+                Horizontal::Center => (row, column, vec2(1.0, 0.0), Constraint::Blockade),
+                Horizontal::Right => (row, column, vec2(1.0, 0.0), Constraint::Station),
+            },
             RailCoord::Vertical {
                 row,
                 column,
                 direction,
-            } => {
-                let start_corner = top_left_rail_intersection(row, column);
-                let end_corner = top_left_rail_intersection(row + 1, column);
-                let mid = (start_corner + end_corner) * 0.5;
-                match direction {
-                    Vertical::Top => {
-                        let (back, tip) = (CELL_PAD, -triangle_width);
-                        render_constraint_vert(triangle_width, mid, back, tip, color);
-                    }
-                    Vertical::Center => {
-                        let sideways = vec2(CELL_PAD * 2.0, 0.0);
-                        let start = mid - sideways;
-                        let end = mid + sideways;
-                        draw_line(start.x, start.y, end.x, end.y, CELL_PAD, color);
-                    }
-                    Vertical::Bottom => {
-                        let (back, tip) = (-CELL_PAD, triangle_width);
-                        render_constraint_vert(triangle_width, mid, back, tip, color);
-                    }
-                };
+            } => match direction {
+                Vertical::Top => (row, column, vec2(0.0, -1.0), Constraint::Station),
+                Vertical::Center => (row, column, vec2(0.0, 1.0), Constraint::Blockade),
+                Vertical::Bottom => (row, column, vec2(0.0, 1.0), Constraint::Station),
+            },
+        };
+
+        let corner = top_left_rail_intersection(row, column);
+        let reverse = direction.x + direction.y < 0.0;
+        let start = corner - reverse as i32 as f32 * direction * (CELL_WIDTH + CELL_PAD);
+        let end = start + direction * (CELL_WIDTH + CELL_PAD);
+        let mid = (start + end) * 0.5;
+        let diff = (end - start).normalize();
+        let to_left = vec2(diff.y, -diff.x);
+
+        match constraint_render {
+            Constraint::Station => {
+                let left = mid + to_left * small_triangle_half_width;
+                let right = mid - to_left * small_triangle_half_width;
+                let outer_left = mid + to_left * triangle_half_width;
+                let outer_right = mid - to_left * triangle_half_width;
+                let tip = mid + diff * small_triangle_half_width;
+                let outer_tip = mid + diff * triangle_half_width;
+
+                draw_triangle(outer_left, left, outer_tip, color);
+                draw_triangle(left, tip, outer_tip, color);
+                draw_triangle(right, outer_tip, tip, color);
+                draw_triangle(right, outer_right, outer_tip, color);
+                draw_lines(
+                    &[tip, left, outer_left, outer_tip, outer_right, right, tip],
+                    color_border,
+                );
+            }
+            Constraint::Blockade => {
+                let forward = diff * thickness * 0.5;
+                let leftward = to_left * small_triangle_half_width;
+                let a = mid + forward + leftward;
+                let b = mid + forward - leftward;
+                let c = mid - forward + leftward;
+                let d = mid - forward - leftward;
+                draw_triangle(a, c, b, color);
+                draw_triangle(b, c, d, color);
+                draw_lines(&[a, b, d, c, a], color_border);
             }
         }
     }
-}
-
-fn render_constraint_horiz(triangle_width: f32, mid: Vec2, back: f32, tip: f32, color: Color) {
-    let above = mid + vec2(back, triangle_width);
-    let below = mid + vec2(back, -triangle_width);
-    let tip = mid + vec2(tip, 0.0);
-    draw_triangle_lines(above, below, tip, CELL_PAD, color);
-}
-
-fn render_constraint_vert(triangle_width: f32, mid: Vec2, back: f32, tip: f32, color: Color) {
-    let left = mid + vec2(-triangle_width, back);
-    let right = mid + vec2(triangle_width, back);
-    let tip = mid + vec2(0.0, tip);
-    draw_triangle_lines(left, right, tip, CELL_PAD, color);
 }
 
 fn top_left_rail_intersection(i_row: i32, i_column: i32) -> Vec2 {
@@ -528,6 +536,7 @@ const fn color_average_weight(color_1: Color, color_2: Color, weight: f32) -> Co
 }
 fn render_tick(anchor: Anchor, size: f32) {
     let rect = anchor.get_rect(vec2(size, size));
+    draw_rect(rect, SUCCESS_DARK);
     // draw_rect_lines(rect, 2.0, BLUE);
     let start = rect.point() + rect.size() * 0.25;
     let mid = rect.point() + rect.size() * 0.5;
@@ -544,9 +553,24 @@ fn render_tick(anchor: Anchor, size: f32) {
 }
 fn render_cross(anchor: Anchor, font_size: f32) {
     let rect = anchor.get_rect(vec2(font_size, font_size));
+    draw_rect(rect, FAILING_DARK);
     // draw_rect_lines(rect, 2.0, BLUE);
     let start = rect.point() + rect.size() * 0.25;
     let end = rect.point() + rect.size() * 0.75;
     draw_line(start.x, start.y, end.x, end.y, CELL_PAD, FAILING);
     draw_line(start.x, end.y, end.x, start.y, CELL_PAD, FAILING);
+}
+
+fn draw_line_v(start: Vec2, end: Vec2, color: Color) {
+    draw_line_thickness(start, end, 1.0, color)
+}
+fn draw_line_thickness(start: Vec2, end: Vec2, thickness: f32, color: Color) {
+    draw_line(start.x, start.y, end.x, end.y, thickness, color)
+}
+
+fn draw_lines(points: &[Vec2], color: Color) {
+    assert!(points.len() >= 2);
+    for i in 1..points.len() {
+        draw_line_v(points[i - 1], points[i], color);
+    }
 }

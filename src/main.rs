@@ -25,7 +25,7 @@ const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
 const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue
 const TRIANGLE_BORDER: Color = color_average_weight(BLACK, BLUE, 0.25);
-const RAIL: Color = SKYBLUE;
+const RAIL: Color = TRIANGLE;
 
 const FAILING: Color = ORANGE;
 const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
@@ -54,7 +54,7 @@ const STYLE: Style = Style {
 
 const FONT_SIZE: f32 = 16.0;
 
-const NUM_ROWS: i32 = 11;
+const NUM_ROWS: i32 = 10;
 const NUM_COLUMNS: i32 = 11;
 const CELL_WIDTH: f32 = 50.0;
 const CELL_HEIGHT: f32 = 50.0;
@@ -247,6 +247,14 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let start = top_left_rail_intersection(i_row, i_column);
                 let end = top_left_rail_intersection(i_row, i_column + 1);
                 draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+
+                let top_left = cell_top_left(i_row, i_column);
+                let second_corner = top_left + vec2(CELL_WIDTH, 0.0);
+                draw_line(top_left.x, top_left.y, second_corner.x, second_corner.y, 1.0, TRIANGLE_BORDER);
+                let top_left = top_left - vec2(0.0, CELL_PAD + 1.0);
+                let second_corner = second_corner - vec2(0.0, CELL_PAD + 1.0);
+                draw_line(top_left.x, top_left.y, second_corner.x, second_corner.y, 1.0, TRIANGLE_BORDER);
+
                 let sign = match direction {
                     Horizontal::Left => -1.0,
                     Horizontal::Center => 0.0,
@@ -268,6 +276,17 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let start = top_left_rail_intersection(i_row, i_column);
                 let end = top_left_rail_intersection(i_row + 1, i_column);
                 draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+
+                let top_left = cell_top_left(i_row, i_column) + vec2(1.0, 0.0);
+                let second_corner = top_left + vec2(0.0, CELL_WIDTH);
+                draw_line(top_left.x, top_left.y, second_corner.x, second_corner.y, 1.0, TRIANGLE_BORDER);
+                let top_left = top_left - vec2(CELL_PAD + 1.0, 0.0);
+                let second_corner = second_corner - vec2(CELL_PAD + 1.0, 0.0);
+                draw_line(top_left.x, top_left.y, second_corner.x, second_corner.y, 1.0, TRIANGLE_BORDER);
+
+                let intersection = Rect::new(top_left.x, top_left.y, CELL_PAD, CELL_PAD);
+                draw_rect(intersection, RAIL);
+
                 let sign = match direction {
                     Vertical::Top => -1.0,
                     Vertical::Center => 0.0,
@@ -279,6 +298,40 @@ fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let right = vec2(start.x + triangle_width, mid);
                 let tip = vec2(start.x, mid + triangle_width * sign);
                 draw_bordered_triangle(left, right, tip, TRIANGLE, TRIANGLE_BORDER);
+            }
+        }
+    }
+    // intersections
+    for i_row in 1..NUM_ROWS {
+        for i_column in 1..NUM_COLUMNS {
+            let below = grid.rails.get_vert(i_row, i_column);
+            let above = grid.rails.get_vert(i_row -1 , i_column);
+            let right = grid.rails.get_horiz(i_row, i_column);
+            let left = grid.rails.get_horiz(i_row, i_column -1 );
+
+            let current_cell = *get(grid, i_row, i_column);
+            let above_cell = *get(grid, i_row - 1, i_column);
+            let left_cell = *get(grid, i_row, i_column - 1);
+            let left_above_cell = *get(grid, i_row - 1, i_column - 1);
+
+            let bottom_right = cell_top_left(i_row, i_column);
+            let top_left = bottom_right - CELL_PAD;
+            let _top_right = top_left + vec2(CELL_PAD, 0.0);
+            let _bottom_left = top_left + vec2(0.0, CELL_PAD);
+            let _center = top_left_rail_intersection(i_row, i_column);
+            let intersection = Rect::new(top_left.x, top_left.y, CELL_PAD, CELL_PAD);
+            match (below, above, right, left) {
+                (Vertical::Center, Vertical::Center, Horizontal::Center, Horizontal::Center) => {}
+                _ => draw_rect(intersection, RAIL),
+            }
+            if current_cell && left_above_cell && !above_cell && !left_cell {
+                let start = bottom_right - vec2(CELL_PAD, 0.0);
+                let end = bottom_right - vec2(0.0, CELL_PAD);
+                draw_line(start.x, start.y, end.x, end.y, 1.0, TRIANGLE_BORDER);
+            } else if !current_cell && !left_above_cell && above_cell && left_cell {
+                let start = cell_top_left(i_row, i_column);
+                let end = start - vec2(CELL_PAD, CELL_PAD);
+                draw_line(start.x, start.y, end.x, end.y, 1.0, TRIANGLE_BORDER);
             }
         }
     }

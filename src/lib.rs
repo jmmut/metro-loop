@@ -2,6 +2,7 @@ pub mod constraints;
 pub mod grid;
 pub mod rails;
 pub mod render;
+pub mod intersection;
 
 use crate::constraints::{matches_constraint, Constraints, RailCoord};
 use crate::grid::{get, Grid};
@@ -78,4 +79,12 @@ const fn color_average_weight(color_1: Color, color_2: Color, weight: f32) -> Co
         color_1.b * (1.0 - weight) + color_2.b * weight,
         color_1.a * (1.0 - weight) + color_2.a * weight,
     )
+}
+
+fn generate_nested_vec<T: Clone>(num_rows: usize, num_columns: usize, default: T) -> Vec<Vec<T>> {
+    let mut row = Vec::new();
+    row.resize(num_columns, default);
+    let mut inner = Vec::new();
+    inner.resize(num_rows, row);
+    inner
 }

@@ -150,11 +150,13 @@ mod tests {
     use crate::grid::Cell;
     use crate::rails::Rails;
     use macroquad::prelude::IVec2;
+    use crate::intersection::Intersections;
 
     fn mock_grid(cells: Vec<Vec<Cell>>) -> Grid {
         let rails = Rails::new(0, 0);
         let root = IVec2::default();
-        Grid { cells, rails, root }
+        let intersections = Intersections::new(0, 0);
+        Grid { cells, rails, root, intersections }
     }
     const CLICK: bool = true;
 

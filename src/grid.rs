@@ -2,11 +2,13 @@ use crate::rails::Rails;
 use crate::{NUM_COLUMNS, NUM_ROWS};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::prelude::IVec2;
+use crate::intersection::Intersections;
 
 pub type Cell = bool;
 pub struct Grid {
     pub cells: Vec<Vec<Cell>>,
     pub rails: Rails,
+    pub intersections: Intersections,
     pub root: IVec2,
 }
 
@@ -18,8 +20,9 @@ impl Grid {
         cells.resize(num_rows as usize, row);
 
         let rails = Rails::new(num_rows, num_columns);
+        let intersections = Intersections::new(num_rows, num_columns);
 
-        let mut grid = Self { cells, rails, root };
+        let mut grid = Self { cells, rails, root, intersections };
         *get_mut(&mut grid, NUM_ROWS / 2, NUM_COLUMNS / 2) = true;
         grid
     }

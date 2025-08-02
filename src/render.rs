@@ -62,6 +62,7 @@ pub fn render_satisfaction(
 }
 
 pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
+    // cells
     for i_row in 0..NUM_ROWS {
         for i_column in 0..NUM_COLUMNS {
             let current_cell = *get(grid, i_row, i_column);
@@ -85,6 +86,7 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
         }
     }
 
+    // horizontal rails
     for i_row in 1..grid.rails.horiz_rows() - 1 {
         for i_column in 1..grid.rails.horiz_columns() - 1 {
             let direction = grid.rails.get_horiz(i_row, i_column);
@@ -114,6 +116,8 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
             }
         }
     }
+
+    // vertical rails
     for i_row in 1..grid.rails.vert_rows() - 1 {
         for i_column in 1..grid.rails.vert_columns() - 1 {
             let direction = grid.rails.get_vert(i_row, i_column);
@@ -161,22 +165,17 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
 
             let bottom_right = cell_top_left(i_row, i_column);
             let top_left = bottom_right - CELL_PAD;
-            let _top_right = top_left + vec2(CELL_PAD, 0.0);
-            let _bottom_left = top_left + vec2(0.0, CELL_PAD);
-            let _center = top_left_rail_intersection(i_row, i_column);
             let intersection = Rect::new(top_left.x, top_left.y, CELL_PAD, CELL_PAD);
             match (below, above, right, left) {
                 (Vertical::Center, Vertical::Center, Horizontal::Center, Horizontal::Center) => {}
                 _ => draw_rect(intersection, RAIL),
             }
             if current_cell && left_above_cell && !above_cell && !left_cell {
-                let start = bottom_right - vec2(CELL_PAD, 0.0);
-                let end = bottom_right - vec2(0.0, CELL_PAD);
-                draw_line(start.x, start.y, end.x, end.y, 1.0, TRIANGLE_BORDER);
+                let top_right = top_left + vec2(CELL_PAD, 0.0);
+                let bottom_left = top_left + vec2(0.0, CELL_PAD);
+                draw_line_v(bottom_left, top_right, TRIANGLE_BORDER);
             } else if !current_cell && !left_above_cell && above_cell && left_cell {
-                let start = cell_top_left(i_row, i_column);
-                let end = start - vec2(CELL_PAD, CELL_PAD);
-                draw_line(start.x, start.y, end.x, end.y, 1.0, TRIANGLE_BORDER);
+                draw_line_v(top_left, bottom_right, TRIANGLE_BORDER);
             }
         }
     }
@@ -186,7 +185,6 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid) {
     let triangle_half_width = 4.0 * CELL_PAD;
     let small_triangle_half_width = 2.0 * CELL_PAD;
     let thickness = 1.5 * CELL_PAD;
-    // let offset = thickness * 0.8;
     enum Constraint {
         Station,
         Blockade,

@@ -1,4 +1,4 @@
-use juquad::draw::draw_rect;
+use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::widgets::Widget;
 mod constraints;
 mod rails;
@@ -8,7 +8,8 @@ use crate::constraints::{
     Satisfaction,
 };
 use crate::rails::{count_neighbours, get, get_mut, in_range, Grid};
-use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
+use juquad::widgets::anchor::{Anchor, Horizontal, Layout, Vertical};
+use juquad::widgets::anchorer::Anchorer;
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::text::TextRect;
@@ -118,7 +119,12 @@ async fn main() {
 
         draw_rect(button_panel, GRAY);
         render_button(&reset_button);
-        render_satisfaction(&satisfaction, reset_button.rect(), &mut show_solution);
+        render_satisfaction(
+            &satisfaction,
+            reset_button.rect(),
+            button_panel,
+            &mut show_solution,
+        );
         if show_solution {
             render_grid(&solution, &hovered_cell);
         } else {
@@ -135,9 +141,14 @@ async fn main() {
     }
 }
 
-fn render_satisfaction(satisfaction: &Satisfaction, previous_rect: Rect, show_solution: &mut bool) {
-    let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
+fn render_satisfaction(
+    satisfaction: &Satisfaction,
+    previous_rect: Rect,
+    panel: Rect,
+    show_solution: &mut bool,
+) {
     if satisfaction.success() {
+        let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
         let text = TextRect::new(&"SOLVED!", anchor, FONT_SIZE * 2.0);
         text.render_default(&STYLE.at_rest);
         let show_anchor = Anchor::below(text.rect(), Horizontal::Center, 10.0);
@@ -147,13 +158,31 @@ fn render_satisfaction(satisfaction: &Satisfaction, previous_rect: Rect, show_so
         }
         render_button(&show);
     } else {
-        let labels = LabelGroup::new(FONT_SIZE, anchor);
+        let font_size = FONT_SIZE * 1.25;
+        let x = panel.x + font_size * 1.5;
+        let y = previous_rect.bottom() + 30.0;
+        let anchor = Anchor::top_left(x, y);
+        let labels = LabelGroup {
+            font_size,
+            anchor,
+            alignment: Horizontal::Left,
+            font: None,
+        };
         let text_rects = labels.create([
             &format!("{} incorrect rails", satisfaction.failing_rails),
             &format!("{} cells to activate", satisfaction.cell_diff),
             &format!("{} unconnected loops", satisfaction.unconnected_loops),
         ]);
-        for text_rect in text_rects {
+
+        for mut text_rect in text_rects {
+            let icon_size = text_rect.rect().h;
+            text_rect.rect_mut().x += icon_size;
+            let anchor = Anchor::top_right_v(text_rect.rect().point());
+            (if text_rect.text.chars().next().unwrap() == '0' {
+                render_tick
+            } else {
+                render_cross
+            })(anchor, icon_size);
             text_rect.render_default(&STYLE.at_rest);
         }
         // let rails = TextRect::new(&format!("{} incorrect rails", failures), anchor, FONT_SIZE);
@@ -431,4 +460,28 @@ const fn color_average(color_1: Color, color_2: Color) -> Color {
         (color_1.b + color_2.b) * 0.5,
         (color_1.a + color_2.a) * 0.5,
     )
+}
+fn render_tick(anchor: Anchor, size: f32) {
+    let rect = anchor.get_rect(vec2(size, size));
+    // draw_rect_lines(rect, 2.0, BLUE);
+    let start = rect.point() + rect.size() * 0.25;
+    let mid = rect.point() + rect.size() * 0.5;
+    let end = rect.point() + rect.size() * 0.75;
+    draw_line(start.x, mid.y, mid.x, end.y, CELL_PAD, SUCCESS);
+    draw_line(
+        mid.x - CELL_PAD * 0.5,
+        end.y,
+        end.x,
+        start.y,
+        CELL_PAD,
+        SUCCESS,
+    );
+}
+fn render_cross(anchor: Anchor, font_size: f32) {
+    let rect = anchor.get_rect(vec2(font_size, font_size));
+    // draw_rect_lines(rect, 2.0, BLUE);
+    let start = rect.point() + rect.size() * 0.25;
+    let end = rect.point() + rect.size() * 0.75;
+    draw_line(start.x, start.y, end.x, end.y, CELL_PAD, FAILING);
+    draw_line(start.x, end.y, end.x, start.y, CELL_PAD, FAILING);
 }

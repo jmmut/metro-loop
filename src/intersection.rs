@@ -1,18 +1,57 @@
+use juquad::widgets::anchor::{Horizontal, Vertical};
 use crate::generate_nested_vec;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Direction {
     Inwards,
     Outwards,
     Absent,
 }
+impl Direction {
+    pub fn invert(self) -> Self {
+        match self {
+            Direction::Inwards => Direction::Outwards,
+            Direction::Outwards => Direction::Inwards,
+            Direction::Absent => Direction::Absent,
+        }
+    }
+}
 
+impl From<Vertical> for Direction {
+    fn from(value: Vertical) -> Self {
+        match value {
+            Vertical::Top => Direction::Inwards,
+            Vertical::Center => Direction::Absent,
+            Vertical::Bottom => Direction::Outwards,
+        }
+    }
+}
+impl From<Horizontal> for Direction {
+    fn from(value: Horizontal) -> Self {
+        match value {
+            Horizontal::Left => Direction::Inwards,
+            Horizontal::Center => Direction::Absent,
+            Horizontal::Right => Direction::Outwards,
+        }
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum Crossing {
+    None,
+    Full,
+    TopLeftToBottomRigt,
+    TopRightToBottomLeft,
+    VerticalOnTop,
+    HorizontalOnTop,
+}
 #[derive(Copy, Clone)]
 pub struct Intersection {
-    pub left: Direction,
     pub right: Direction,
-    pub above: Direction,
+    pub left: Direction,
     pub below: Direction,
+    pub above: Direction,
+    pub crossing: Crossing,
 }
 
 impl Default for Intersection {
@@ -22,6 +61,7 @@ impl Default for Intersection {
             right: Direction::Absent,
             above: Direction::Absent,
             below: Direction::Absent,
+            crossing: Crossing::None,
         }
     }
 }

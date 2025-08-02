@@ -8,6 +8,7 @@ use juquad::widgets::text::TextRect;
 use juquad::widgets::Widget;
 use macroquad::math::f32;
 use macroquad::prelude::*;
+use crate::intersection::{Crossing, Direction, Intersection};
 
 pub fn render_satisfaction(
     satisfaction: &Satisfaction,
@@ -133,9 +134,6 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let second_corner = second_corner - vec2(CELL_PAD + 1.0, 0.0);
                 draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
 
-                let intersection = Rect::new(top_left.x, top_left.y, CELL_PAD, CELL_PAD);
-                draw_rect(intersection, RAIL);
-
                 let sign = match direction {
                     Vertical::Top => -1.0,
                     Vertical::Center => 0.0,
@@ -151,31 +149,38 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
         }
     }
     // intersections
-    for i_row in 1..NUM_ROWS {
-        for i_column in 1..NUM_COLUMNS {
-            let below = grid.rails.get_vert(i_row, i_column);
-            let above = grid.rails.get_vert(i_row - 1, i_column);
-            let right = grid.rails.get_horiz(i_row, i_column);
-            let left = grid.rails.get_horiz(i_row, i_column - 1);
-
-            let current_cell = *get(grid, i_row, i_column);
-            let above_cell = *get(grid, i_row - 1, i_column);
-            let left_cell = *get(grid, i_row, i_column - 1);
-            let left_above_cell = *get(grid, i_row - 1, i_column - 1);
+    for i_row in 1..grid.intersections.rows() -1 {
+        for i_column in 1..grid.intersections.columns() - 1 {
+            let Intersection {
+                right, left, below, above, crossing,
+            }  = grid.intersections.get(i_row, i_column);
 
             let bottom_right = cell_top_left(i_row, i_column);
             let top_left = bottom_right - CELL_PAD;
-            let intersection = Rect::new(top_left.x, top_left.y, CELL_PAD, CELL_PAD);
-            match (below, above, right, left) {
-                (Vertical::Center, Vertical::Center, Horizontal::Center, Horizontal::Center) => {}
-                _ => draw_rect(intersection, RAIL),
-            }
-            if current_cell && left_above_cell && !above_cell && !left_cell {
-                let top_right = top_left + vec2(CELL_PAD, 0.0);
-                let bottom_left = top_left + vec2(0.0, CELL_PAD);
-                draw_line_v(bottom_left, top_right, TRIANGLE_BORDER);
-            } else if !current_cell && !left_above_cell && above_cell && left_cell {
-                draw_line_v(top_left, bottom_right, TRIANGLE_BORDER);
+            let intersection_rect = Rect::new(top_left.x, top_left.y, CELL_PAD, CELL_PAD);
+            match crossing {
+                Crossing::None => {}
+                Crossing::Full => {
+                    draw_rect(intersection_rect, RAIL)
+                }
+                Crossing::TopLeftToBottomRigt => {
+                    draw_rect(intersection_rect, RAIL);
+                    draw_line_v(top_left, bottom_right, TRIANGLE_BORDER);
+                }
+                Crossing::TopRightToBottomLeft => {
+                    let top_right = top_left + vec2(CELL_PAD, 0.0);
+                    let bottom_left = top_left + vec2(0.0, CELL_PAD);
+                    draw_rect(intersection_rect, RAIL);
+                    draw_line_v(top_right, bottom_left, TRIANGLE_BORDER);
+                }
+                Crossing::VerticalOnTop => {
+                    draw_rect(intersection_rect, RAIL);
+                    todo!()
+                }
+                Crossing::HorizontalOnTop => {
+                    draw_rect(intersection_rect, RAIL);
+                    todo!()
+                }
             }
         }
     }
@@ -283,7 +288,6 @@ pub fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, bor
 fn render_tick(anchor: Anchor, size: f32) {
     let rect = anchor.get_rect(vec2(size, size));
     draw_rect(rect, SUCCESS_DARK);
-    // draw_rect_lines(rect, 2.0, BLUE);
     let start = rect.point() + rect.size() * 0.25;
     let mid = rect.point() + rect.size() * 0.5;
     let end = rect.point() + rect.size() * 0.75;
@@ -301,7 +305,6 @@ fn render_tick(anchor: Anchor, size: f32) {
 fn render_cross(anchor: Anchor, font_size: f32) {
     let rect = anchor.get_rect(vec2(font_size, font_size));
     draw_rect(rect, FAILING_DARK);
-    // draw_rect_lines(rect, 2.0, BLUE);
     let start = rect.point() + rect.size() * 0.25;
     let end = rect.point() + rect.size() * 0.75;
     draw_line(start.x, start.y, end.x, end.y, CELL_PAD, FAILING);

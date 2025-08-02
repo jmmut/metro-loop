@@ -2,7 +2,7 @@ use crate::rails::Rails;
 use crate::{NUM_COLUMNS, NUM_ROWS};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::prelude::IVec2;
-use crate::intersection::Intersections;
+use crate::intersection::{Crossing, Direction, Intersection, Intersections};
 
 pub type Cell = bool;
 pub struct Grid {
@@ -62,7 +62,39 @@ impl Grid {
                 *self.rails.get_vert_mut(i_row, i_column) = direction;
             }
         }
+        for i_row in 1..self.intersections.rows() -1{
+            for i_column in 1..self.intersections.columns() -1 {
+                let above = self.rails.get_vert(i_row - 1, i_column);
+                let below = self.rails.get_vert(i_row, i_column);
+                let left = self.rails.get_horiz(i_row, i_column - 1);
+                let right = self.rails.get_horiz(i_row, i_column);
+                let right = Direction::from(right);
+                let left = Direction::from(left).invert();
+                let below = Direction::from(below);
+                let above = Direction::from(above).invert();
+
+
+                let cell_current = *get(&self, i_row, i_column);
+                let cell_above = *get(&self, i_row - 1, i_column);
+                let cell_left = *get(&self, i_row, i_column - 1);
+                let cell_left_above = *get(&self, i_row -1, i_column - 1);
+
+                let crossing = if cell_current && cell_left_above && !cell_above && !cell_left {
+                    Crossing::TopRightToBottomLeft
+                } else if !cell_current && !cell_left_above && cell_above && cell_left {
+                    Crossing::TopLeftToBottomRigt
+                } else if cell_current || cell_left_above || cell_above || cell_left {
+                    Crossing::Full
+                } else {
+                    Crossing::None
+                };
+                *self.intersections.get_mut(i_row, i_column) = Intersection {
+                    right, left, below, above, crossing,
+                }
+            }
+        }
     }
+
 }
 
 pub fn get_mut(grid: &mut Grid, row: i32, column: i32) -> &mut Cell {

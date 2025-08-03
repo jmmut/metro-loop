@@ -157,6 +157,8 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
 
             let bottom_right = cell_top_left(i_row, i_column);
             let top_left = bottom_right - CELL_PAD;
+            let top_right = top_left + vec2(CELL_PAD, 0.0);
+            let bottom_left = top_left + vec2(0.0, CELL_PAD);
             let intersection_rect = Rect::new(top_left.x, top_left.y, CELL_PAD, CELL_PAD);
             match crossing {
                 Crossing::None => {}
@@ -168,18 +170,18 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                     draw_line_v(top_left, bottom_right, TRIANGLE_BORDER);
                 }
                 Crossing::TopRightToBottomLeft => {
-                    let top_right = top_left + vec2(CELL_PAD, 0.0);
-                    let bottom_left = top_left + vec2(0.0, CELL_PAD);
                     draw_rect(intersection_rect, RAIL);
                     draw_line_v(top_right, bottom_left, TRIANGLE_BORDER);
                 }
                 Crossing::VerticalOnTop => {
                     draw_rect(intersection_rect, RAIL);
-                    todo!()
+                    draw_line_v(top_right, bottom_right, TRIANGLE_BORDER);
+                    draw_line_v(top_left, bottom_left, TRIANGLE_BORDER);
                 }
                 Crossing::HorizontalOnTop => {
                     draw_rect(intersection_rect, RAIL);
-                    todo!()
+                    draw_line_v(top_right, top_left, TRIANGLE_BORDER);
+                    draw_line_v(bottom_right, bottom_left, TRIANGLE_BORDER);
                 }
             }
         }

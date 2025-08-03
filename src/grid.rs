@@ -1,7 +1,7 @@
 use crate::rails::Rails;
 use crate::{NUM_COLUMNS, NUM_ROWS};
 use juquad::widgets::anchor::{Horizontal, Vertical};
-use macroquad::prelude::IVec2;
+use macroquad::prelude::{ivec2, IVec2};
 use crate::intersection::{Crossing, Direction, Intersection, Intersections};
 
 pub type Cell = bool;
@@ -33,6 +33,7 @@ impl Grid {
         self.cells.get(0).unwrap().len() as i32
     }
     pub fn recalculate_rails(&mut self) {
+        let mut rail_count = 0;
         for i_row in 1..NUM_ROWS {
             for i_column in 1..NUM_COLUMNS {
                 let current = *get(&self, i_row, i_column);
@@ -41,8 +42,10 @@ impl Grid {
 
                 let direction = if current != above {
                     if current {
+                        rail_count += 1;
                         Horizontal::Right
                     } else {
+                        rail_count += 1;
                         Horizontal::Left
                     }
                 } else {
@@ -52,8 +55,10 @@ impl Grid {
 
                 let direction = if current != left {
                     if current {
+                        rail_count += 1;
                         Vertical::Top
                     } else {
+                        rail_count += 1;
                         Vertical::Bottom
                     }
                 } else {
@@ -91,6 +96,138 @@ impl Grid {
                 *self.intersections.get_mut(i_row, i_column) = Intersection {
                     right, left, below, above, crossing,
                 }
+            }
+        }
+        let mut iterations = 0;
+        let mut rail_coord = self.root;
+        let mut rail_is_horizontal = true;
+        let mut backwards = false;
+        loop {
+            iterations += 1;
+            if iterations > 10000 {
+                panic!("potential infinite loop in recalculate rails");
+            }
+            let row = rail_coord.y;
+            let column = rail_coord.x;
+
+            rail_coord =  if rail_is_horizontal {
+                let horizontal = self.rails.get_horiz_mut(row, column);
+                if backwards {
+                    *horizontal = horizontal.opposite();
+                }
+                let next_crossing = match horizontal {
+                    Horizontal::Left => rail_coord,
+                    Horizontal::Center => panic!(),
+                    Horizontal::Right => ivec2(column+1, row),
+                };
+                let crossing = self.intersections.get_mut(next_crossing.y, next_crossing.x);
+                match crossing.crossing {
+                    Crossing::None => panic!(),
+                    Crossing::Full => {
+                        if !backwards {
+                            if crossing.below == Direction::Outwards {
+                                rail_is_horizontal = !rail_is_horizontal;
+                                next_crossing
+                            } else if crossing.above == Direction::Outwards {
+                                rail_is_horizontal = !rail_is_horizontal;
+                                ivec2(next_crossing.x, next_crossing.y - 1)
+                            } else if crossing.left == Direction::Outwards {
+                                ivec2(next_crossing.x - 1, next_crossing.y)
+                            } else if crossing.right == Direction::Outwards {
+                                next_crossing
+                            } else {
+                                panic!()
+                            }
+                        } else {
+                            if crossing.below == Direction::Inwards {
+                                rail_is_horizontal = !rail_is_horizontal;
+                                next_crossing
+                            } else if crossing.above == Direction::Inwards {
+                                rail_is_horizontal = !rail_is_horizontal;
+                                ivec2(next_crossing.x, next_crossing.y - 1)
+                            } else if crossing.left == Direction::Inwards {
+                                ivec2(next_crossing.x - 1, next_crossing.y)
+                            } else if crossing.right == Direction::Inwards {
+                                next_crossing
+                            } else {
+                                panic!()
+                            }
+                        }
+                    }
+                    Crossing::TopLeftToBottomRigt => {
+                        backwards = !backwards;
+                        crossing.crossing = Crossing::HorizontalOnTop;
+                        next_crossing
+                    },
+                    Crossing::TopRightToBottomLeft => {
+                        backwards = !backwards;
+                        crossing.crossing = Crossing::HorizontalOnTop;
+                        next_crossing
+                    }
+                    Crossing::VerticalOnTop => {backwards=!backwards; next_crossing}
+                    Crossing::HorizontalOnTop => {backwards=!backwards; next_crossing} // panic?
+                }
+
+            } else {
+                let vertical = self.rails.get_vert_mut(row, column);
+                if backwards {
+                    *vertical = vertical.opposite();
+                }
+                let next_crossing = match vertical {
+                    Vertical::Top => rail_coord,
+                    Vertical::Center => panic!(),
+                    Vertical::Bottom => ivec2(column, row+1),
+                };
+                let crossing = self.intersections.get_mut(next_crossing.y, next_crossing.x);
+                match crossing.crossing {
+                    Crossing::None => panic!(),
+                    Crossing::Full => {
+                        if !backwards {
+                            if crossing.right == Direction::Outwards {
+                                rail_is_horizontal = !rail_is_horizontal;
+                                next_crossing
+                            } else if crossing.left == Direction::Outwards {
+                                rail_is_horizontal = !rail_is_horizontal;
+                                ivec2(next_crossing.x - 1, next_crossing.y)
+                            } else if crossing.above == Direction::Outwards {
+                                ivec2(next_crossing.x, next_crossing.y - 1)
+                            } else if crossing.below == Direction::Outwards {
+                                next_crossing
+                            } else {
+                                panic!()
+                            }
+                        } else {
+                            if crossing.right == Direction::Inwards {
+                                rail_is_horizontal = !rail_is_horizontal;
+                                next_crossing
+                            } else if crossing.left == Direction::Inwards {
+                                rail_is_horizontal = !rail_is_horizontal;
+                                ivec2(next_crossing.x - 1, next_crossing.y)
+                            } else if crossing.above == Direction::Inwards {
+                                ivec2(next_crossing.x, next_crossing.y - 1)
+                            } else if crossing.below == Direction::Inwards {
+                                next_crossing
+                            } else {
+                                panic!()
+                            }
+                        }
+                    }
+                    Crossing::TopLeftToBottomRigt => {
+                        backwards = !backwards;
+                        crossing.crossing = Crossing::VerticalOnTop;
+                        next_crossing
+                    },
+                    Crossing::TopRightToBottomLeft => {
+                        backwards = !backwards;
+                        crossing.crossing = Crossing::VerticalOnTop;
+                        next_crossing
+                    }
+                    Crossing::VerticalOnTop => {backwards=!backwards; next_crossing} // panic?
+                    Crossing::HorizontalOnTop =>  {backwards=!backwards; next_crossing}
+                }
+            };
+            if rail_coord == self.root {
+                break;
             }
         }
     }

@@ -101,7 +101,7 @@ async fn reset(visualize: bool) -> (Grid, Grid, Constraints, bool) {
 }
 
 async fn generate_grid(visualize: bool) -> Grid {
-    let mut solution = Grid::new(NUM_ROWS, NUM_COLUMNS, ivec2(NUM_ROWS / 2, NUM_COLUMNS / 2));
+    let mut solution = Grid::new(NUM_ROWS, NUM_COLUMNS, ivec2(NUM_COLUMNS / 2, NUM_ROWS / 2));
     let mut enabled = Vec::new();
 
     enabled.push((solution.root.y, solution.root.x));

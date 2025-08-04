@@ -17,14 +17,16 @@ pub const STEP_GENERATION: bool = false;
 pub const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 pub const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
 pub const PANEL_BACKGROUND: Color = LIGHTGRAY;
-pub const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue
-pub const TRIANGLE_BORDER: Color = color_average_weight(BLACK, BLUE, 0.25);
-pub const RAIL: Color = TRIANGLE;
 
 pub const FAILING: Color = ORANGE;
 pub const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
 pub const FAILING_DARK: Color = color_average(FAILING, BLACK);
 pub const SUCCESS_DARK: Color = color_average(SUCCESS, BLACK);
+
+pub const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue
+pub const TRIANGLE_BORDER: Color = color_average_weight(BLACK, BLUE, 0.25);
+pub const RAIL: Color = TRIANGLE;
+pub const UNREACHABLE_RAIL: Color = FAILING;
 
 pub const ENABLED_CELL: Color = BLUE;
 pub const DISABLED_CELL: Color = DARKGRAY;

@@ -75,7 +75,10 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
             };
             let color = if let Some(hovered) = hovered_cell.clone() {
                 let hovered_v = ivec2(hovered.1, hovered.0);
-                if (i_row, i_column) == hovered && hovered_v != grid.root &&  hovered_v != grid.root - ivec2(0, 1){
+                if (i_row, i_column) == hovered
+                    && hovered_v != grid.root
+                    && hovered_v != grid.root - ivec2(0, 1)
+                {
                     HOVERED_CELL
                 } else {
                     color
@@ -91,11 +94,13 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
     // horizontal rails
     for i_row in 1..grid.rails.horiz_rows() - 1 {
         for i_column in 1..grid.rails.horiz_columns() - 1 {
+            let reachable = grid.rails.get_reach_horiz(i_row, i_column);
+            let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
             let direction = grid.rails.get_horiz(i_row, i_column);
             if direction != Horizontal::Center {
                 let start = top_left_rail_intersection(i_row, i_column);
                 let end = top_left_rail_intersection(i_row, i_column + 1);
-                draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+                draw_line(start.x, start.y, end.x, end.y, CELL_PAD, color);
 
                 let top_left = cell_top_left(i_row, i_column) + vec2(0.0, 1.0);
                 let second_corner = top_left + vec2(CELL_WIDTH, 0.0);
@@ -114,7 +119,7 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let above = vec2(mid, start.y - triangle_width);
                 let below = vec2(mid, start.y + triangle_width);
                 let tip = vec2(mid + triangle_width * sign, start.y);
-                draw_bordered_triangle(above, below, tip, TRIANGLE, TRIANGLE_BORDER);
+                draw_bordered_triangle(above, below, tip, color, TRIANGLE_BORDER);
             }
         }
     }
@@ -122,11 +127,13 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
     // vertical rails
     for i_row in 1..grid.rails.vert_rows() - 1 {
         for i_column in 1..grid.rails.vert_columns() - 1 {
+            let reachable = grid.rails.get_reach_vert(i_row, i_column);
+            let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
             let direction = grid.rails.get_vert(i_row, i_column);
             if direction != Vertical::Center {
                 let start = top_left_rail_intersection(i_row, i_column);
                 let end = top_left_rail_intersection(i_row + 1, i_column);
-                draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
+                draw_line(start.x, start.y, end.x, end.y, CELL_PAD, color);
 
                 let top_left = cell_top_left(i_row, i_column) + vec2(0.0, 0.0);
                 let second_corner = top_left + vec2(0.0, CELL_WIDTH);
@@ -145,7 +152,7 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let left = vec2(start.x - triangle_width, mid);
                 let right = vec2(start.x + triangle_width, mid);
                 let tip = vec2(start.x, mid + triangle_width * sign);
-                draw_bordered_triangle(left, right, tip, TRIANGLE, TRIANGLE_BORDER);
+                draw_bordered_triangle(left, right, tip, color, TRIANGLE_BORDER);
             }
         }
     }
@@ -159,7 +166,15 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 // above,
                 crossing,
             } = grid.intersections.get(i_row, i_column);
-
+            let color = if grid.rails.get_reach_horiz(i_row, i_column)
+                || grid.rails.get_reach_vert(i_row, i_column)
+                || grid.rails.get_reach_vert(i_row -1, i_column)
+                || grid.rails.get_reach_horiz(i_row, i_column -1)
+            {
+                RAIL
+            } else {
+                UNREACHABLE_RAIL
+            };
             let bottom_right = cell_top_left(i_row, i_column);
             let top_left = bottom_right - CELL_PAD;
             let top_right = top_left + vec2(CELL_PAD, 0.0);
@@ -169,22 +184,22 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
             let top_left = top_left + vec2(-1.0, 0.0);
             match crossing {
                 Crossing::None => {}
-                Crossing::Single => draw_rect(intersection_rect, RAIL),
+                Crossing::Single => draw_rect(intersection_rect, color),
                 Crossing::TopLeftToBottomRigt => {
-                    draw_rect(intersection_rect, RAIL);
+                    draw_rect(intersection_rect, color);
                     draw_line_v(top_left, bottom_right, TRIANGLE_BORDER);
                 }
                 Crossing::TopRightToBottomLeft => {
-                    draw_rect(intersection_rect, RAIL);
+                    draw_rect(intersection_rect, color);
                     draw_line_v(top_right, bottom_left, TRIANGLE_BORDER);
                 }
                 Crossing::VerticalOnTop => {
-                    draw_rect(intersection_rect, RAIL);
+                    draw_rect(intersection_rect, color);
                     draw_line_v(top_right, bottom_right, TRIANGLE_BORDER);
                     draw_line_v(top_left, bottom_left, TRIANGLE_BORDER);
                 }
                 Crossing::HorizontalOnTop => {
-                    draw_rect(intersection_rect, RAIL);
+                    draw_rect(intersection_rect, color);
                     draw_line_v(top_right, top_left, TRIANGLE_BORDER);
                     draw_line_v(bottom_right, bottom_left, TRIANGLE_BORDER);
                 }

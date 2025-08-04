@@ -1,25 +1,31 @@
+use crate::generate_nested_vec;
 use juquad::widgets::anchor::{Horizontal, Vertical};
 
 pub struct Rails {
     pub horizontal: Vec<Vec<Horizontal>>,
     pub vertical: Vec<Vec<Vertical>>,
+    pub reachable_horizontal: Vec<Vec<bool>>,
+    pub reachable_vertical: Vec<Vec<bool>>,
 }
 
 impl Rails {
     pub fn new(num_rows: i32, num_columns: i32) -> Self {
-        let mut row = Vec::new();
-        row.resize(num_columns as usize, Horizontal::Center);
-        let mut horizontal = Vec::new();
-        horizontal.resize(num_rows as usize + 1, row);
+        let num_rows = num_rows as usize;
+        let num_rows_1 = num_rows + 1;
+        let num_columns = num_columns as usize;
+        let num_columns_1 = num_columns + 1;
 
-        let mut row = Vec::new();
-        row.resize(num_columns as usize + 1, Vertical::Center);
-        let mut vertical = Vec::new();
-        vertical.resize(num_rows as usize, row);
+        let horizontal = generate_nested_vec(num_rows_1, num_columns, Horizontal::Center);
+        let vertical = generate_nested_vec(num_rows, num_columns_1, Vertical::Center);
+
+        let reachable_horizontal = generate_nested_vec(num_rows_1, num_columns, false);
+        let reachable_vertical = generate_nested_vec(num_rows, num_columns_1, false);
 
         Self {
             horizontal,
             vertical,
+            reachable_horizontal,
+            reachable_vertical,
         }
     }
     pub fn horiz_rows(&self) -> i32 {
@@ -59,6 +65,36 @@ impl Rails {
     }
     pub fn get_vert_mut(&mut self, row: i32, column: i32) -> &mut Vertical {
         self.vertical
+            .get_mut(row as usize)
+            .unwrap()
+            .get_mut(column as usize)
+            .unwrap()
+    }
+    pub fn get_reach_horiz(&self, row: i32, column: i32) -> bool {
+        *self
+            .reachable_horizontal
+            .get(row as usize)
+            .unwrap()
+            .get(column as usize)
+            .unwrap()
+    }
+    pub fn get_reach_horiz_mut(&mut self, row: i32, column: i32) -> &mut bool {
+        self.reachable_horizontal
+            .get_mut(row as usize)
+            .unwrap()
+            .get_mut(column as usize)
+            .unwrap()
+    }
+    pub fn get_reach_vert(&self, row: i32, column: i32) -> bool {
+        *self
+            .reachable_vertical
+            .get(row as usize)
+            .unwrap()
+            .get(column as usize)
+            .unwrap()
+    }
+    pub fn get_reach_vert_mut(&mut self, row: i32, column: i32) -> &mut bool {
+        self.reachable_vertical
             .get_mut(row as usize)
             .unwrap()
             .get_mut(column as usize)

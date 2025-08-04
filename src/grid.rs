@@ -64,6 +64,7 @@ impl Grid {
                 } else {
                     Horizontal::Center
                 };
+                *self.rails.get_reach_horiz_mut(i_row, i_column) = false;
                 *self.rails.get_horiz_mut(i_row, i_column) = direction;
 
                 let direction = if current != left {
@@ -77,6 +78,7 @@ impl Grid {
                 } else {
                     Vertical::Center
                 };
+                *self.rails.get_reach_vert_mut(i_row, i_column) = false;
                 *self.rails.get_vert_mut(i_row, i_column) = direction;
             }
         }
@@ -92,7 +94,10 @@ impl Grid {
                 let cell_left = *get(&self, i_row, i_column - 1);
                 let cell_left_above = *get(&self, i_row - 1, i_column - 1);
 
-                let enabled_cells = cell_current as i32 + cell_left_above as i32 + cell_above as i32 + cell_left as i32;
+                let enabled_cells = cell_current as i32
+                    + cell_left_above as i32
+                    + cell_above as i32
+                    + cell_left as i32;
                 let crossing = if cell_current && cell_left_above && !cell_above && !cell_left {
                     Crossing::TopRightToBottomLeft
                 } else if !cell_current && !cell_left_above && cell_above && cell_left {
@@ -102,9 +107,7 @@ impl Grid {
                 } else {
                     Crossing::None
                 };
-                *self.intersections.get_mut(i_row, i_column) = Intersection {
-                    crossing,
-                }
+                *self.intersections.get_mut(i_row, i_column) = Intersection { crossing }
             }
         }
         let mut iterations = 0;
@@ -132,6 +135,7 @@ impl Grid {
                 );
             }
             rail_coord = if rail_is_horizontal {
+                *self.rails.get_reach_horiz_mut(row, column) = true;
                 let horizontal = self.rails.get_horiz_mut(row, column);
                 if backwards {
                     *horizontal = horizontal.opposite();
@@ -165,7 +169,7 @@ impl Grid {
                             ivec2(next_crossing.x, next_crossing.y - 1)
                         } else if left == horizontal && left == Horizontal::Left {
                             ivec2(next_crossing.x - 1, next_crossing.y)
-                        } else if right == horizontal && right == Horizontal::Right  {
+                        } else if right == horizontal && right == Horizontal::Right {
                             next_crossing
                         } else {
                             panic!()
@@ -218,6 +222,7 @@ impl Grid {
                     } // panic?
                 }
             } else {
+                *self.rails.get_reach_vert_mut(row, column) = true;
                 let vertical = self.rails.get_vert_mut(row, column);
                 if backwards {
                     *vertical = vertical.opposite();
@@ -250,7 +255,7 @@ impl Grid {
                             ivec2(next_crossing.x - 1, next_crossing.y)
                         } else if above == vertical && above == Vertical::Top {
                             ivec2(next_crossing.x, next_crossing.y - 1)
-                        } else if below == vertical && below == Vertical::Bottom  {
+                        } else if below == vertical && below == Vertical::Bottom {
                             next_crossing
                         } else {
                             panic!()
@@ -363,12 +368,12 @@ impl Display for Grid {
             //     write!(f, "{}   ", below_to_char(inter.below))?;
             // }
             // writeln!(f)?;
-            for column in 0..self.columns(){
+            for column in 0..self.columns() {
                 let vert = self.rails.get_vert(row, column);
                 write!(f, "{} ", crate::intersection::vert_to_char(vert))?;
             }
-                let vert = self.rails.get_vert(row, self.columns());
-                write!(f, "{}", crate::intersection::vert_to_char(vert))?;
+            let vert = self.rails.get_vert(row, self.columns());
+            write!(f, "{}", crate::intersection::vert_to_char(vert))?;
             writeln!(f)?;
             // for column in 0..self.columns() +1 {
             //     let inter = self.intersections.get(row+1, column);
@@ -489,7 +494,7 @@ mod tests {
 | | | | |
 •-•-•-•-•
 "#
-                .trim_start_matches('\n')
+            .trim_start_matches('\n')
         );
     }
     #[test]

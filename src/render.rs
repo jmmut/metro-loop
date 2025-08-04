@@ -16,21 +16,12 @@ pub fn render_satisfaction(
     panel: Rect,
     show_solution: &mut bool,
 ) {
-    if satisfaction.success() {
+    let solved = satisfaction.success();
+    let mut rect = if solved {
         let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
         let text = TextRect::new(&"SOLVED!", anchor, FONT_SIZE * 2.0);
         text.render_default(&STYLE.at_rest);
-        let show_anchor = Anchor::below(text.rect(), Horizontal::Center, 10.0);
-        let show_text = if *show_solution {
-            "Hide solution"
-        } else {
-            "Show solution"
-        };
-        let mut show = new_button(show_text, show_anchor);
-        if show.interact().is_clicked() {
-            *show_solution = !*show_solution;
-        }
-        render_button(&show);
+        text.rect()
     } else {
         let font_size = FONT_SIZE * 1.25;
         let x = panel.x + font_size * 1.5;
@@ -47,7 +38,7 @@ pub fn render_satisfaction(
             &format!("{} cells to activate", satisfaction.cell_diff),
             &format!("{} unreachable rails", satisfaction.unreachable_rails),
         ]);
-
+        let mut rect = Rect::default();
         for mut text_rect in text_rects {
             let icon_size = text_rect.rect().h;
             text_rect.rect_mut().x += icon_size;
@@ -58,7 +49,24 @@ pub fn render_satisfaction(
                 render_cross
             })(anchor, icon_size);
             text_rect.render_default(&STYLE.at_rest);
+            rect = text_rect.rect()
         }
+        rect
+    };
+    if solved || SEE_SOLUTION_DURING_GAME {
+        rect.x = panel.x;
+        rect.w = panel.w;
+        let show_anchor = Anchor::below(rect, Horizontal::Center, 30.0);
+        let show_text = if *show_solution {
+            "Hide solution"
+        } else {
+            "Show possible solution"
+        };
+        let mut show = new_button(show_text, show_anchor);
+        if show.interact().is_clicked() {
+            *show_solution = !*show_solution;
+        }
+        render_button(&show);
     }
 }
 
@@ -168,8 +176,8 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
             } = grid.intersections.get(i_row, i_column);
             let color = if grid.rails.get_reach_horiz(i_row, i_column)
                 || grid.rails.get_reach_vert(i_row, i_column)
-                || grid.rails.get_reach_vert(i_row -1, i_column)
-                || grid.rails.get_reach_horiz(i_row, i_column -1)
+                || grid.rails.get_reach_vert(i_row - 1, i_column)
+                || grid.rails.get_reach_horiz(i_row, i_column - 1)
             {
                 RAIL
             } else {

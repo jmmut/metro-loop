@@ -3,8 +3,10 @@ use juquad::widgets::anchor::Anchor;
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
-use metro_loop::constraints::{choose_constraints, compute_satisfaction, count_loops, Constraints};
-use metro_loop::grid::{count_neighbours, get_mut, in_range, Grid};
+use metro_loop::constraints::{
+    choose_constraints, compute_satisfaction, count_loops, count_unreachable_rails, Constraints,
+};
+use metro_loop::grid::{count_neighbours, get, get_mut, in_range, Grid};
 use metro_loop::render::{
     new_button, render_button, render_constraints, render_grid, render_satisfaction,
 };
@@ -98,11 +100,12 @@ fn window_conf() -> Conf {
 
 async fn reset(visualize: bool) -> (Grid, Grid, Constraints, bool) {
     let mut solution = generate_grid(visualize).await;
-    while count_loops(&solution) != 1 {
+    solution.recalculate_rails();
+    while count_unreachable_rails(&solution) > 0 {
         solution = generate_grid(visualize).await;
+        solution.recalculate_rails();
     }
     // println!("tried {} iterations", i);
-    solution.recalculate_rails();
     let mut grid = Grid::new(NUM_ROWS, NUM_COLUMNS, solution.root);
     grid.recalculate_rails();
     let constraints = choose_constraints(&solution);
@@ -116,7 +119,7 @@ async fn generate_grid(visualize: bool) -> Grid {
 
     enabled.push((solution.root.y, solution.root.x));
     let mut i = 0;
-    while enabled.len() < 30 {
+    while enabled.len() < 20 {
         if visualize && is_key_pressed(KeyCode::Escape) {
             break;
         }
@@ -125,45 +128,51 @@ async fn generate_grid(visualize: bool) -> Grid {
             if i > 1000 {
                 break;
             }
+            // TODO: simplify and allow diagonal cells
 
             // let index = rand() % enabled.len();
             let mut index = enabled.len() - 1;
-            let (mut row, mut column) = enabled[index];
-            let mut neighbours = count_neighbours(&solution, row, column);
             let mut low_neighbours_attempts = 0;
-            while neighbours > 2 {
-                low_neighbours_attempts += 1;
-                if low_neighbours_attempts > 20 {
-                    break;
-                }
-                // println!("rejected: ({}, {}), neighbours {}", row, column, neighbours);
-                index = rand() as usize % enabled.len();
-                (row, column) = enabled[index];
-                neighbours = count_neighbours(&solution, row, column);
-            }
-            if neighbours < 3 {
-                let neighbour = rand() % 4;
+            let (new_row, new_column) = loop {
+                let (mut row, mut column) = enabled[index];
+                let candidate = rand() % 8;
                 // println!(
                 //     "index: {} ({}, {}), neighbour {}",
                 //     index, row, column, neighbour
                 // );
-                if row > 0 && column > 0 {
-                    let (new_row, new_column) = match neighbour {
-                        0 => (row - 1, column),
-                        1 => (row, column + 1),
-                        2 => (row + 1, column),
-                        3 => (row, column - 1),
-                        _ => panic!(),
-                    };
-                    let above_root = (solution.root.y - 1, solution.root.x);
-                    // if the chosen neighbour is already enabled, choose another neighbour
-                    if in_range(&solution, new_row, new_column)
-                        && (new_row, new_column) != above_root
-                    {
-                        *get_mut(&mut solution, new_row, new_column) = true;
-                        enabled.push((new_row, new_column));
+                let (new_row, new_column) = match candidate {
+                    0 => (row - 1, column),
+                    1 => (row, column + 1),
+                    2 => (row + 1, column),
+                    3 => (row, column - 1),
+                    4 => (row - 1, column - 1),
+                    5 => (row - 1, column + 1),
+                    6 => (row + 1, column + 1),
+                    7 => (row + 1, column - 1),
+                    _ => panic!(),
+                };
+                low_neighbours_attempts += 1;
+                if in_range(&solution, new_row, new_column) {
+                    let neighbours = count_neighbours(&solution, new_row, new_column);
+                    let already_enabled = get(&solution, new_row, new_column);
+                    if !already_enabled && neighbours <= 2 || low_neighbours_attempts > 50 {
+                        break (new_row, new_column);
                     }
                 }
+                // println!("rejected: ({}, {}), neighbours {}", row, column, neighbours);
+                if low_neighbours_attempts % 10 == 0 {
+                    index = rand() as usize % enabled.len();
+                    // println!("trying another endpoint {}, {}", enabled[index].0, enabled[index].1);
+                }
+                if low_neighbours_attempts > 100 {
+                    panic!();
+                }
+            };
+            let above_root = (solution.root.y - 1, solution.root.x);
+            // if the chosen neighbour is already enabled, choose another neighbour
+            if in_range(&solution, new_row, new_column) && (new_row, new_column) != above_root {
+                *get_mut(&mut solution, new_row, new_column) = true;
+                enabled.push((new_row, new_column));
             }
             // for i_row in 0..SIZE {
             //     for i_column in 0..SIZE {

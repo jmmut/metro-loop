@@ -90,7 +90,7 @@ pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfact
     let failing_rails = compute_rail_failures(grid, &constraints.rails);
     let cell_diff = constraints.cell_count - count_cells(grid);
     let unconnected_loops = (count_loops(grid) - 1).abs();
-    let unreachable_rails = grid.total_rails - grid.reachable_rails;
+    let unreachable_rails = count_unreachable_rails(grid);
     Satisfaction {
         failing_rails,
         cell_diff,
@@ -99,6 +99,9 @@ pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfact
     }
 }
 
+pub fn count_unreachable_rails(grid: &Grid) -> i32 {
+    grid.total_rails - grid.reachable_rails
+}
 pub fn count_loops(grid: &Grid) -> i32 {
     let active = count_cells(grid);
     let mut adjacents = 0;

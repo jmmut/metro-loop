@@ -116,18 +116,19 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let top_left = top_left - vec2(0.0, CELL_PAD + 1.0);
                 let second_corner = second_corner - vec2(0.0, CELL_PAD + 1.0);
                 draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
-
-                let sign = match direction {
-                    Horizontal::Left => -1.0,
-                    Horizontal::Center => 0.0,
-                    Horizontal::Right => 1.0,
-                };
-                let mid = (start.x + end.x) * 0.5;
-                let triangle_width = 2.0 * CELL_PAD;
-                let above = vec2(mid, start.y - triangle_width);
-                let below = vec2(mid, start.y + triangle_width);
-                let tip = vec2(mid + triangle_width * sign, start.y);
-                draw_bordered_triangle(above, below, tip, color, TRIANGLE_BORDER);
+                if reachable {
+                    let sign = match direction {
+                        Horizontal::Left => -1.0,
+                        Horizontal::Center => 0.0,
+                        Horizontal::Right => 1.0,
+                    };
+                    let mid = (start.x + end.x) * 0.5;
+                    let triangle_width = 2.0 * CELL_PAD;
+                    let above = vec2(mid, start.y - triangle_width);
+                    let below = vec2(mid, start.y + triangle_width);
+                    let tip = vec2(mid + triangle_width * sign, start.y);
+                    draw_bordered_triangle(above, below, tip, color, TRIANGLE_BORDER);
+                }
             }
         }
     }
@@ -149,18 +150,19 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let top_left = top_left - vec2(CELL_PAD + 1.0, 0.0);
                 let second_corner = second_corner - vec2(CELL_PAD + 1.0, 0.0);
                 draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
-
-                let sign = match direction {
-                    Vertical::Top => -1.0,
-                    Vertical::Center => 0.0,
-                    Vertical::Bottom => 1.0,
-                };
-                let mid = (start.y + end.y) * 0.5;
-                let triangle_width = 2.0 * CELL_PAD;
-                let left = vec2(start.x - triangle_width, mid);
-                let right = vec2(start.x + triangle_width, mid);
-                let tip = vec2(start.x, mid + triangle_width * sign);
-                draw_bordered_triangle(left, right, tip, color, TRIANGLE_BORDER);
+                if reachable{
+                    let sign = match direction {
+                        Vertical::Top => -1.0,
+                        Vertical::Center => 0.0,
+                        Vertical::Bottom => 1.0,
+                    };
+                    let mid = (start.y + end.y) * 0.5;
+                    let triangle_width = 2.0 * CELL_PAD;
+                    let left = vec2(start.x - triangle_width, mid);
+                    let right = vec2(start.x + triangle_width, mid);
+                    let tip = vec2(start.x, mid + triangle_width * sign);
+                    draw_bordered_triangle(left, right, tip, color, TRIANGLE_BORDER);
+                }
             }
         }
     }

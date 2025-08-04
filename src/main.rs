@@ -4,7 +4,7 @@ use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
 use metro_loop::constraints::{
-    choose_constraints, compute_satisfaction, count_loops, count_unreachable_rails, Constraints,
+    choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints,
 };
 use metro_loop::grid::{count_neighbours, get, get_mut, in_range, Grid};
 use metro_loop::render::{
@@ -134,7 +134,7 @@ async fn generate_grid(visualize: bool) -> Grid {
             let mut index = enabled.len() - 1;
             let mut low_neighbours_attempts = 0;
             let (new_row, new_column) = loop {
-                let (mut row, mut column) = enabled[index];
+                let (row, column) = enabled[index];
                 let candidate = rand() % 8;
                 // println!(
                 //     "index: {} ({}, {}), neighbour {}",

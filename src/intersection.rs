@@ -145,28 +145,6 @@ pub(crate) fn vert_to_char(vertical: Vertical) -> char {
     }
 }
 
-fn right_to_char(direction: Direction) -> char {
-    match direction {
-        Direction::Inwards => '<',
-        Direction::Outwards => '>',
-        Direction::Absent => '-',
-    }
-}
-
-fn left_to_char(direction: Direction) -> char {
-    right_to_char(direction.invert())
-}
-fn above_to_char(direction: Direction) -> char {
-    match direction {
-        Direction::Inwards => 'v',
-        Direction::Outwards => '^',
-        Direction::Absent => '|',
-    }
-}
-fn below_to_char(direction: Direction) -> char {
-    above_to_char(direction.invert())
-}
-
 pub fn crossing_to_char(inter: Intersection) -> char {
     match inter.crossing {
         Crossing::None => '•',

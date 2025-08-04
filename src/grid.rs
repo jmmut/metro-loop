@@ -1,4 +1,4 @@
-use crate::intersection::{inter_to_string, Crossing, Direction, Intersection, Intersections};
+use crate::intersection::{Crossing, Intersection, Intersections};
 use crate::rails::Rails;
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::prelude::{ivec2, IVec2};
@@ -84,11 +84,6 @@ impl Grid {
         }
         for i_row in 1..self.intersections.rows() - 1 {
             for i_column in 1..self.intersections.columns() - 1 {
-                let above = self.rails.get_vert(i_row - 1, i_column);
-                let below = self.rails.get_vert(i_row, i_column);
-                let left = self.rails.get_horiz(i_row, i_column - 1);
-                let right = self.rails.get_horiz(i_row, i_column);
-
                 let cell_current = *get(&self, i_row, i_column);
                 let cell_above = *get(&self, i_row - 1, i_column);
                 let cell_left = *get(&self, i_row, i_column - 1);
@@ -174,21 +169,6 @@ impl Grid {
                         } else {
                             panic!()
                         }
-                        // } else {
-                        //     if below == Direction::Outwards {
-                        //         rail_is_horizontal = !rail_is_horizontal;
-                        //         next_crossing
-                        //     } else if crossing.above == Direction::Outwards {
-                        //         rail_is_horizontal = !rail_is_horizontal;
-                        //         ivec2(next_crossing.x, next_crossing.y - 1)
-                        //     } else if crossing.left == Direction::Outwards {
-                        //         ivec2(next_crossing.x - 1, next_crossing.y)
-                        //     } else if crossing.right == Direction::Outwards {
-                        //         next_crossing
-                        //     } else {
-                        //         panic!()
-                        //     }
-                        // }
                     }
                     Crossing::TopLeftToBottomRigt => {
                         backwards = !backwards;
@@ -260,21 +240,6 @@ impl Grid {
                         } else {
                             panic!()
                         }
-                        // } else {
-                        //     if crossing.right == Direction::Outwards {
-                        //         rail_is_horizontal = !rail_is_horizontal;
-                        //         next_crossing
-                        //     } else if crossing.left == Direction::Outwards {
-                        //         rail_is_horizontal = !rail_is_horizontal;
-                        //         ivec2(next_crossing.x - 1, next_crossing.y)
-                        //     } else if crossing.above == Direction::Outwards {
-                        //         ivec2(next_crossing.x, next_crossing.y - 1)
-                        //     } else if crossing.below == Direction::Outwards {
-                        //         next_crossing
-                        //     } else {
-                        //         panic!()
-                        //     }
-                        // }
                     }
                     Crossing::TopLeftToBottomRigt => {
                         backwards = !backwards;

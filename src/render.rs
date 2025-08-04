@@ -1,5 +1,5 @@
 use crate::constraints::Satisfaction;
-use crate::intersection::{Crossing, Direction, Intersection};
+use crate::intersection::{Crossing, Intersection};
 use crate::*;
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};

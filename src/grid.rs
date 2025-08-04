@@ -472,7 +472,7 @@ mod tests {
     #[test]
     fn test_recalculate_rails_below() {
         let mut grid = Grid::new(4, 3, ivec2(1, 1));
-        *get_mut(&mut grid, 1, 2) = true;
+        *get_mut(&mut grid, 2, 1) = true;
         grid.recalculate_rails();
     }
 }

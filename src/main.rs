@@ -5,8 +5,15 @@ use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
 use metro_loop::constraints::{choose_constraints, compute_satisfaction, count_loops, Constraints};
 use metro_loop::grid::{count_neighbours, get_mut, in_range, Grid};
-use metro_loop::render::{new_button, render_button, render_constraints, render_grid, render_satisfaction};
-use metro_loop::{grid_height, grid_width, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH, GRID_PAD, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, STEP_GENERATION, VISUALIZE};
+use metro_loop::render::{
+    new_button, render_button, render_constraints, render_grid, render_satisfaction,
+};
+use metro_loop::{
+    grid_height, grid_width, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD,
+    CELL_WIDTH, DEFAULT_SHOW_SOLUTION, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE,
+    DEFAULT_WINDOW_WIDTH, GRID_PAD, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, STEP_GENERATION,
+    VISUALIZE,
+};
 
 #[macroquad::main(window_conf)]
 async fn main() {
@@ -41,7 +48,7 @@ async fn main() {
             (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
         let i_row = grid_indexes.y as i32;
         let i_column = grid_indexes.x as i32;
-        let hovered_cell = if in_range(i_row, i_column) {
+        let hovered_cell = if in_range(&grid, i_row, i_column) {
             Some((i_row, i_column))
         } else {
             None
@@ -49,9 +56,12 @@ async fn main() {
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
         if is_mouse_button_pressed(MouseButton::Left) && !show_solution {
             if let Some((i_row, i_column)) = hovered_cell.clone() {
-                let cell = get_mut(&mut grid, i_row, i_column);
-                *cell = !*cell;
-                grid.recalculate_rails();
+                let clicked = ivec2(i_column, i_row);
+                if clicked != grid.root && clicked != grid.root - ivec2(0, 1) {
+                    let cell = get_mut(&mut grid, i_row, i_column);
+                    *cell = !*cell;
+                    grid.recalculate_rails();
+                }
             }
         }
 
@@ -147,7 +157,9 @@ async fn generate_grid(visualize: bool) -> Grid {
                     };
                     let above_root = (solution.root.y - 1, solution.root.x);
                     // if the chosen neighbour is already enabled, choose another neighbour
-                    if in_range(new_row, new_column) && (new_row, new_column) != above_root {
+                    if in_range(&solution, new_row, new_column)
+                        && (new_row, new_column) != above_root
+                    {
                         *get_mut(&mut solution, new_row, new_column) = true;
                         enabled.push((new_row, new_column));
                     }

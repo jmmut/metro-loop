@@ -1,4 +1,5 @@
 use crate::constraints::Satisfaction;
+use crate::intersection::{Crossing, Direction, Intersection};
 use crate::*;
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
@@ -8,7 +9,6 @@ use juquad::widgets::text::TextRect;
 use juquad::widgets::Widget;
 use macroquad::math::f32;
 use macroquad::prelude::*;
-use crate::intersection::{Crossing, Direction, Intersection};
 
 pub fn render_satisfaction(
     satisfaction: &Satisfaction,
@@ -74,7 +74,8 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 DISABLED_CELL
             };
             let color = if let Some(hovered) = hovered_cell.clone() {
-                if (i_row, i_column) == hovered {
+                let hovered_v = ivec2(hovered.1, hovered.0);
+                if (i_row, i_column) == hovered && hovered_v != grid.root &&  hovered_v != grid.root - ivec2(0, 1){
                     HOVERED_CELL
                 } else {
                     color
@@ -96,7 +97,7 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let end = top_left_rail_intersection(i_row, i_column + 1);
                 draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
 
-                let top_left = cell_top_left(i_row, i_column);
+                let top_left = cell_top_left(i_row, i_column) + vec2(0.0, 1.0);
                 let second_corner = top_left + vec2(CELL_WIDTH, 0.0);
                 draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
                 let top_left = top_left - vec2(0.0, CELL_PAD + 1.0);
@@ -127,7 +128,7 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let end = top_left_rail_intersection(i_row + 1, i_column);
                 draw_line(start.x, start.y, end.x, end.y, CELL_PAD, RAIL);
 
-                let top_left = cell_top_left(i_row, i_column) + vec2(1.0, 0.0);
+                let top_left = cell_top_left(i_row, i_column) + vec2(0.0, 0.0);
                 let second_corner = top_left + vec2(0.0, CELL_WIDTH);
                 draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
                 let top_left = top_left - vec2(CELL_PAD + 1.0, 0.0);
@@ -149,22 +150,26 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
         }
     }
     // intersections
-    for i_row in 1..grid.intersections.rows() -1 {
+    for i_row in 1..grid.intersections.rows() - 1 {
         for i_column in 1..grid.intersections.columns() - 1 {
             let Intersection {
-                right, left, below, above, crossing,
-            }  = grid.intersections.get(i_row, i_column);
+                // right,
+                // left,
+                // below,
+                // above,
+                crossing,
+            } = grid.intersections.get(i_row, i_column);
 
             let bottom_right = cell_top_left(i_row, i_column);
             let top_left = bottom_right - CELL_PAD;
             let top_right = top_left + vec2(CELL_PAD, 0.0);
-            let bottom_left = top_left + vec2(0.0, CELL_PAD);
+            let bottom_left = top_left + vec2(-1.0, CELL_PAD + 1.0);
             let intersection_rect = Rect::new(top_left.x, top_left.y, CELL_PAD, CELL_PAD);
+            let bottom_right = bottom_right + vec2(0.0, 1.0);
+            let top_left = top_left + vec2(-1.0, 0.0);
             match crossing {
                 Crossing::None => {}
-                Crossing::Full => {
-                    draw_rect(intersection_rect, RAIL)
-                }
+                Crossing::Single => draw_rect(intersection_rect, RAIL),
                 Crossing::TopLeftToBottomRigt => {
                     draw_rect(intersection_rect, RAIL);
                     draw_line_v(top_left, bottom_right, TRIANGLE_BORDER);
@@ -270,8 +275,8 @@ fn top_left_rail_intersection(i_row: i32, i_column: i32) -> Vec2 {
 }
 
 fn cell_top_left(i_row: i32, i_column: i32) -> Vec2 {
-    let x = GRID_PAD + i_column as f32 * (CELL_WIDTH + CELL_PAD);
-    let y = GRID_PAD + i_row as f32 * (CELL_HEIGHT + CELL_PAD);
+    let x = GRID_PAD + i_column as f32 * (CELL_WIDTH + CELL_PAD) + 0.5;
+    let y = GRID_PAD + i_row as f32 * (CELL_HEIGHT + CELL_PAD) + 0.5;
     vec2(x, y)
 }
 

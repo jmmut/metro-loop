@@ -1,12 +1,12 @@
 pub mod constraints;
 pub mod grid;
+pub mod intersection;
 pub mod rails;
 pub mod render;
-pub mod intersection;
 
 use crate::constraints::{matches_constraint, Constraints, RailCoord};
 use crate::grid::{get, Grid};
-use juquad::widgets::anchor::{Vertical};
+use juquad::widgets::anchor::Vertical;
 use juquad::widgets::{StateStyle, Style};
 use macroquad::prelude::*;
 

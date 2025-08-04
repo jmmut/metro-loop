@@ -148,15 +148,22 @@ pub fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
 mod tests {
     use super::*;
     use crate::grid::Cell;
+    use crate::intersection::Intersections;
     use crate::rails::Rails;
     use macroquad::prelude::IVec2;
-    use crate::intersection::Intersections;
 
     fn mock_grid(cells: Vec<Vec<Cell>>) -> Grid {
         let rails = Rails::new(0, 0);
         let root = IVec2::default();
         let intersections = Intersections::new(0, 0);
-        Grid { cells, rails, root, intersections }
+        Grid {
+            num_rows: cells.len() as i32,
+            num_columns: cells.first().unwrap().len() as i32,
+            cells,
+            rails,
+            root,
+            intersections,
+        }
     }
     const CLICK: bool = true;
 

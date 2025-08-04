@@ -24,10 +24,13 @@ pub struct Satisfaction {
     pub failing_rails: i32,
     pub cell_diff: i32,
     pub unconnected_loops: i32,
+    pub unreachable_rails: i32,
 }
 impl Satisfaction {
     pub fn success(&self) -> bool {
-        self.failing_rails == 0 && self.cell_diff == 0 && self.unconnected_loops == 0
+        self.failing_rails == 0 && self.cell_diff == 0
+            // && self.unconnected_loops == 0
+        && self.unreachable_rails == 0
     }
 }
 pub fn choose_constraints(grid: &Grid) -> Constraints {
@@ -87,10 +90,12 @@ pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfact
     let failing_rails = compute_rail_failures(grid, &constraints.rails);
     let cell_diff = constraints.cell_count - count_cells(grid);
     let unconnected_loops = (count_loops(grid) - 1).abs();
+    let unreachable_rails = grid.total_rails - grid.reachable_rails;
     Satisfaction {
         failing_rails,
         cell_diff,
         unconnected_loops,
+        unreachable_rails,
     }
 }
 
@@ -163,6 +168,8 @@ mod tests {
             rails,
             root,
             intersections,
+            total_rails: 0,
+            reachable_rails: 0,
         }
     }
     const CLICK: bool = true;

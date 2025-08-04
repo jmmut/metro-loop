@@ -45,7 +45,7 @@ pub fn render_satisfaction(
         let text_rects = labels.create([
             &format!("{} incorrect rails", satisfaction.failing_rails),
             &format!("{} cells to activate", satisfaction.cell_diff),
-            &format!("{} unconnected loops", satisfaction.unconnected_loops),
+            &format!("{} unreachable rails", satisfaction.unreachable_rails),
         ]);
 
         for mut text_rect in text_rects {

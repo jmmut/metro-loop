@@ -12,6 +12,8 @@ pub struct Grid {
     pub rails: Rails,
     pub intersections: Intersections,
     pub root: IVec2,
+    pub total_rails: i32,
+    pub reachable_rails: i32,
 }
 
 impl Grid {
@@ -31,6 +33,8 @@ impl Grid {
             rails,
             root,
             intersections,
+            total_rails: 0,
+            reachable_rails: 0,
         };
         *get_mut(&mut grid, root.y, root.x) = true;
         grid
@@ -303,6 +307,8 @@ impl Grid {
                 break;
             }
         }
+        self.total_rails = rail_count;
+        self.reachable_rails = iterations;
     }
 }
 

@@ -19,7 +19,12 @@ async fn main() {
     srand(seed);
     let (mut solution, mut grid, mut constraints, mut show_solution) = reset(VISUALIZE).await;
 
-    let (_sw, _sh) = (screen_width(), screen_height());
+    let (sw, sh) = (screen_width(), screen_height());
+    let texture_params = DrawTextureParams {
+        flip_y: true,
+        ..Default::default()
+    };
+
     let button_panel = Rect::new(
         grid_width() + GRID_PAD * 2.0,
         GRID_PAD,
@@ -27,7 +32,6 @@ async fn main() {
         grid_height(),
     );
     loop {
-        clear_background(BACKGROUND);
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
@@ -66,6 +70,19 @@ async fn main() {
 
         let satisfaction = compute_satisfaction(&grid, &constraints);
 
+
+        let render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
+        render_target.texture.set_filter(FilterMode::Nearest);
+
+        set_camera(&Camera2D {
+            target: vec2(sw * 0.5, sh * 0.5),
+            zoom: vec2(1.0 / sw * 2.0, -1.0 / sh * 2.0),
+            render_target: Some(render_target.clone()),
+            ..Default::default()
+        });
+
+        clear_background(BACKGROUND);
+
         draw_rect(button_panel, PANEL_BACKGROUND);
         render_button(&reset_button);
         render_satisfaction(
@@ -80,6 +97,8 @@ async fn main() {
             render_grid(&grid, &hovered_cell);
             render_constraints(&constraints, &grid);
         }
+        set_default_camera();
+        draw_texture_ex(render_target.texture, 0., 0., WHITE, texture_params.clone());
         TextRect::new(&format!("FPS: {}", get_fps()), Anchor::top_left(0.0, 0.0), FONT_SIZE).render_default(&STYLE.pressed);
 
         next_frame().await

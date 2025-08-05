@@ -10,5 +10,6 @@ Clone this repo, then [Install rust](https://www.rust-lang.org/tools/install), t
 
 ## Ideas for improvements
 
-- Be able to fix cells as in minesweeper
 - Select difficulty
+- sound
+- music

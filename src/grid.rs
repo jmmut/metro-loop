@@ -1,3 +1,4 @@
+use crate::generate_nested_vec;
 use crate::intersection::{Crossing, Intersection, Intersections};
 use crate::rails::Rails;
 use juquad::widgets::anchor::{Horizontal, Vertical};
@@ -9,6 +10,7 @@ pub struct Grid {
     pub num_rows: i32,
     pub num_columns: i32,
     pub cells: Vec<Vec<Cell>>,
+    pub fixed_cells: Vec<Vec<Cell>>,
     pub rails: Rails,
     pub intersections: Intersections,
     pub root: IVec2,
@@ -18,10 +20,8 @@ pub struct Grid {
 
 impl Grid {
     pub fn new(num_rows: i32, num_columns: i32, root: IVec2) -> Self {
-        let mut row = Vec::new();
-        row.resize(num_columns as usize, false);
-        let mut cells = Vec::new();
-        cells.resize(num_rows as usize, row);
+        let cells = generate_nested_vec(num_rows as usize, num_columns as usize, false);
+        let fixed_cells = generate_nested_vec(num_rows as usize, num_columns as usize, false);
 
         let rails = Rails::new(num_rows, num_columns);
         let intersections = Intersections::new(num_rows, num_columns);
@@ -30,13 +30,24 @@ impl Grid {
             num_rows,
             num_columns,
             cells,
+            fixed_cells,
             rails,
             root,
             intersections,
             total_rails: 0,
             reachable_rails: 0,
         };
-        *get_mut(&mut grid, root.y, root.x) = true;
+        *get_cell_mut(&mut grid, root.y, root.x) = true;
+        *get_mut(&mut grid.fixed_cells, root.y, root.x) = true;
+        *get_mut(&mut grid.fixed_cells, root.y - 1, root.x) = true;
+        for i_row in 0..num_rows {
+            *get_mut(&mut grid.fixed_cells, i_row, 0) = true;
+            *get_mut(&mut grid.fixed_cells, i_row, num_columns - 1) = true;
+        }
+        for i_column in 0..num_columns {
+            *get_mut(&mut grid.fixed_cells, 0, i_column) = true;
+            *get_mut(&mut grid.fixed_cells, num_rows - 1, i_column) = true;
+        }
         grid
     }
     pub fn rows(&self) -> i32 {
@@ -49,9 +60,9 @@ impl Grid {
         let mut rail_count = 0;
         for i_row in 1..self.rows() {
             for i_column in 1..self.columns() {
-                let current = *get(&self, i_row, i_column);
-                let above = *get(&self, i_row - 1, i_column);
-                let left = *get(&self, i_row, i_column - 1);
+                let current = *get_cell(&self, i_row, i_column);
+                let above = *get_cell(&self, i_row - 1, i_column);
+                let left = *get_cell(&self, i_row, i_column - 1);
 
                 let direction = if current != above {
                     if current {
@@ -84,10 +95,10 @@ impl Grid {
         }
         for i_row in 1..self.intersections.rows() - 1 {
             for i_column in 1..self.intersections.columns() - 1 {
-                let cell_current = *get(&self, i_row, i_column);
-                let cell_above = *get(&self, i_row - 1, i_column);
-                let cell_left = *get(&self, i_row, i_column - 1);
-                let cell_left_above = *get(&self, i_row - 1, i_column - 1);
+                let cell_current = *get_cell(&self, i_row, i_column);
+                let cell_above = *get_cell(&self, i_row - 1, i_column);
+                let cell_left = *get_cell(&self, i_row, i_column - 1);
+                let cell_left_above = *get_cell(&self, i_row - 1, i_column - 1);
 
                 let enabled_cells = cell_current as i32
                     + cell_left_above as i32
@@ -282,31 +293,38 @@ impl Grid {
     }
 }
 
-pub fn get_mut(grid: &mut Grid, row: i32, column: i32) -> &mut Cell {
+pub fn get_mut<T>(vec_vec: &mut Vec<Vec<T>>, row: i32, column: i32) -> &mut T {
     assert!(row >= 0);
     assert!(column >= 0);
-    grid.cells
+    vec_vec
         .get_mut(row as usize)
         .unwrap()
         .get_mut(column as usize)
         .unwrap()
 }
 
-pub fn get(grid: &Grid, row: i32, column: i32) -> &Cell {
+pub fn get<T>(vec_vec: &Vec<Vec<T>>, row: i32, column: i32) -> &T {
     assert!(row >= 0);
     assert!(column >= 0);
-    grid.cells
+    vec_vec
         .get(row as usize)
         .unwrap()
         .get(column as usize)
         .unwrap()
 }
+pub fn get_cell(grid: &Grid, row: i32, column: i32) -> &Cell {
+    get(&grid.cells, row, column)
+}
+
+pub fn get_cell_mut(grid: &mut Grid, row: i32, column: i32) -> &mut Cell {
+    get_mut(&mut grid.cells, row, column)
+}
 
 pub fn count_neighbours(grid: &Grid, row: i32, column: i32) -> i32 {
-    *get(grid, row + 1, column) as i32
-        + *get(grid, row - 1, column) as i32
-        + *get(grid, row, column + 1) as i32
-        + *get(grid, row, column - 1) as i32
+    *get_cell(grid, row + 1, column) as i32
+        + *get_cell(grid, row - 1, column) as i32
+        + *get_cell(grid, row, column + 1) as i32
+        + *get_cell(grid, row, column - 1) as i32
 }
 
 pub fn in_range(grid: &Grid, row: i32, column: i32) -> bool {
@@ -373,7 +391,7 @@ mod tests {
     #[test]
     fn test_recalculate_rails_to_top_left() {
         let mut grid = Grid::new(4, 4, ivec2(2, 2));
-        *get_mut(&mut grid, 1, 1) = true;
+        *get_cell_mut(&mut grid, 1, 1) = true;
         grid.recalculate_rails();
         let crossing = grid.intersections.get(2, 2);
         assert_eq!(crossing, Intersection::new(Crossing::VerticalOnTop));
@@ -396,7 +414,7 @@ mod tests {
     #[test]
     fn test_recalculate_rails_to_top_right() {
         let mut grid = Grid::new(4, 4, ivec2(1, 2));
-        *get_mut(&mut grid, 1, 2) = true;
+        *get_cell_mut(&mut grid, 1, 2) = true;
         grid.recalculate_rails();
         let crossing = grid.intersections.get(2, 2);
         assert_eq!(crossing, Intersection::new(Crossing::HorizontalOnTop));
@@ -419,7 +437,7 @@ mod tests {
     #[test]
     fn test_recalculate_rails_to_bottom_left() {
         let mut grid = Grid::new(4, 4, ivec2(2, 1));
-        *get_mut(&mut grid, 2, 1) = true;
+        *get_cell_mut(&mut grid, 2, 1) = true;
         grid.recalculate_rails();
         let crossing = grid.intersections.get(2, 2);
         assert_eq!(crossing, Intersection::new(Crossing::HorizontalOnTop));
@@ -442,7 +460,7 @@ mod tests {
     #[test]
     fn test_recalculate_rails_to_bottom_right() {
         let mut grid = Grid::new(4, 4, ivec2(1, 1));
-        *get_mut(&mut grid, 2, 2) = true;
+        *get_cell_mut(&mut grid, 2, 2) = true;
         grid.recalculate_rails();
         let crossing = grid.intersections.get(2, 2);
         assert_eq!(crossing, Intersection::new(Crossing::VerticalOnTop));
@@ -465,14 +483,14 @@ mod tests {
     #[test]
     fn test_recalculate_rails_diagonal() {
         let mut grid = Grid::new(4, 5, ivec2(1, 1));
-        *get_mut(&mut grid, 2, 2) = true;
-        *get_mut(&mut grid, 2, 3) = true;
+        *get_cell_mut(&mut grid, 2, 2) = true;
+        *get_cell_mut(&mut grid, 2, 3) = true;
         grid.recalculate_rails();
     }
     #[test]
     fn test_recalculate_rails_below() {
         let mut grid = Grid::new(4, 3, ivec2(1, 1));
-        *get_mut(&mut grid, 2, 1) = true;
+        *get_cell_mut(&mut grid, 2, 1) = true;
         grid.recalculate_rails();
     }
 }

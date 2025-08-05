@@ -4,7 +4,7 @@ pub mod intersection;
 pub mod rails;
 pub mod render;
 
-use crate::constraints::{matches_constraint, Constraints, RailCoord};
+use crate::constraints::{Constraints, RailCoord};
 use crate::grid::{get, Grid};
 use juquad::widgets::anchor::Vertical;
 use juquad::widgets::{StateStyle, Style};

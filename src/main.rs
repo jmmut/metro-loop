@@ -7,9 +7,16 @@ use macroquad::rand::{rand, srand};
 use metro_loop::constraints::{
     choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints,
 };
-use metro_loop::grid::{count_neighbours, get, get_mut, in_range, Grid};
-use metro_loop::render::{new_button, render_button, render_cells, render_constraints, render_grid, render_satisfaction};
-use metro_loop::{grid_height, grid_width, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH, DISABLED_CELL, ENABLED_CELL, FONT_SIZE, GRID_PAD, HOVERED_CELL, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE};
+use metro_loop::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
+use metro_loop::render::{
+    new_button, render_button, render_cells, render_constraints, render_grid, render_satisfaction,
+};
+use metro_loop::{
+    grid_height, grid_width, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD,
+    CELL_WIDTH, DEFAULT_SHOW_SOLUTION, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE,
+    DEFAULT_WINDOW_WIDTH, FONT_SIZE, GRID_PAD, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS,
+    STEP_GENERATION, STYLE, VISUALIZE,
+};
 
 #[macroquad::main(window_conf)]
 async fn main() {
@@ -61,14 +68,27 @@ async fn main() {
             None
         };
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
+        if is_mouse_button_pressed(MouseButton::Right) && !show_solution {
+            if let Some((i_row, i_column)) = hovered_cell.clone() {
+                let clicked = ivec2(i_column, i_row);
+                if clicked != grid.root && clicked != grid.root - ivec2(0, 1) {
+                    let cell = get_mut(&mut grid.fixed_cells, i_row, i_column);
+                    *cell = !*cell;
+                    refresh_render = true;
+                }
+            }
+        }
         if is_mouse_button_pressed(MouseButton::Left) && !show_solution {
             if let Some((i_row, i_column)) = hovered_cell.clone() {
                 let clicked = ivec2(i_column, i_row);
                 if clicked != grid.root && clicked != grid.root - ivec2(0, 1) {
-                    let cell = get_mut(&mut grid, i_row, i_column);
-                    *cell = !*cell;
-                    grid.recalculate_rails();
-                    refresh_render = true;
+                    let fixed = get(&mut grid.fixed_cells, i_row, i_column);
+                    if !fixed {
+                        let cell = get_cell_mut(&mut grid, i_row, i_column);
+                        *cell = !*cell;
+                        grid.recalculate_rails();
+                        refresh_render = true;
+                    }
                 }
             }
         }
@@ -94,9 +114,9 @@ async fn main() {
             );
 
             if show_solution {
-                render_grid(&solution, &hovered_cell);
+                render_grid(&solution);
             } else {
-                render_grid(&grid, &hovered_cell);
+                render_grid(&grid);
                 render_constraints(&constraints, &grid);
             }
             set_default_camera();
@@ -195,7 +215,7 @@ async fn generate_grid(visualize: bool) -> Grid {
                 low_neighbours_attempts += 1;
                 if in_range(&solution, new_row, new_column) {
                     let neighbours = count_neighbours(&solution, new_row, new_column);
-                    let already_enabled = get(&solution, new_row, new_column);
+                    let already_enabled = get_cell(&solution, new_row, new_column);
                     if !already_enabled && neighbours <= 2 || low_neighbours_attempts > 50 {
                         break (new_row, new_column);
                     }
@@ -212,7 +232,7 @@ async fn generate_grid(visualize: bool) -> Grid {
             let above_root = (solution.root.y - 1, solution.root.x);
             // if the chosen neighbour is already enabled, choose another neighbour
             if in_range(&solution, new_row, new_column) && (new_row, new_column) != above_root {
-                *get_mut(&mut solution, new_row, new_column) = true;
+                *get_cell_mut(&mut solution, new_row, new_column) = true;
                 enabled.push((new_row, new_column));
             }
             // for i_row in 0..SIZE {
@@ -227,7 +247,7 @@ async fn generate_grid(visualize: bool) -> Grid {
         }
         if visualize {
             clear_background(BACKGROUND_2);
-            render_grid(&mut solution, &None);
+            render_grid(&mut solution);
             next_frame().await;
         }
     }

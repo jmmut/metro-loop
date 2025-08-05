@@ -1,4 +1,5 @@
 use crate::constraints::{matches_constraint_and_reachable, Satisfaction};
+use crate::grid::get_cell;
 use crate::intersection::{Crossing, Intersection};
 use crate::*;
 use juquad::draw::draw_rect;
@@ -72,7 +73,7 @@ pub fn render_satisfaction(
 pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
     for i_row in 0..NUM_ROWS {
         for i_column in 0..NUM_COLUMNS {
-            let current_cell = *get(grid, i_row, i_column);
+            let current_cell = *get_cell(grid, i_row, i_column);
 
             let color = if current_cell {
                 ENABLED_CELL
@@ -97,8 +98,20 @@ pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
         }
     }
 }
-pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
-
+pub fn render_grid(grid: &Grid) {
+    for i_row in 0..NUM_ROWS {
+        for i_column in 0..NUM_COLUMNS {
+            let current_cell = *get(&grid.fixed_cells, i_row, i_column);
+            if current_cell {
+                let mut intersection = top_left_rail_intersection(i_row, i_column);
+                intersection += vec2(CELL_WIDTH, CELL_HEIGHT) * 0.5;
+                draw_rect(
+                    Rect::new(intersection.x, intersection.y, CELL_PAD, CELL_PAD),
+                    TRIANGLE_BORDER,
+                );
+            }
+        }
+    }
     // horizontal rails
     for i_row in 1..grid.rails.horiz_rows() - 1 {
         for i_column in 1..grid.rails.horiz_columns() - 1 {

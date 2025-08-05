@@ -1,4 +1,4 @@
-use crate::grid::{get, Grid};
+use crate::grid::{get_cell, Grid};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::rand::rand;
 
@@ -108,19 +108,19 @@ pub fn count_loops(grid: &Grid) -> i32 {
     let mut adjacents = 0;
     for row in 0..grid.rows() {
         for column in 0..grid.columns() {
-            let current = *get(grid, row, column);
+            let current = *get_cell(grid, row, column);
             if row > 0 {
-                let above = *get(grid, row - 1, column);
+                let above = *get_cell(grid, row - 1, column);
                 adjacents += (current && above) as i32;
             }
             if column > 0 {
-                let left = *get(grid, row, column - 1);
+                let left = *get_cell(grid, row, column - 1);
                 adjacents += (current && left) as i32;
             }
             if row > 0 && column > 0 {
-                let left = *get(grid, row, column - 1);
-                let above = *get(grid, row - 1, column);
-                let above_left = *get(grid, row - 1, column - 1);
+                let left = *get_cell(grid, row, column - 1);
+                let above = *get_cell(grid, row - 1, column);
+                let above_left = *get_cell(grid, row - 1, column - 1);
                 adjacents -= (current && left && above && above_left) as i32;
             }
         }
@@ -159,12 +159,18 @@ pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> 
             row,
             column,
             direction,
-        } => grid.rails.get_horiz(row, column) == direction && (direction == Horizontal::Center || grid.rails.get_reach_horiz(row, column)),
+        } => {
+            grid.rails.get_horiz(row, column) == direction
+                && (direction == Horizontal::Center || grid.rails.get_reach_horiz(row, column))
+        }
         RailCoord::Vertical {
             row,
             column,
             direction,
-        } => grid.rails.get_vert(row, column) == direction &&  (direction == Vertical::Center || grid.rails.get_reach_vert(row, column)),
+        } => {
+            grid.rails.get_vert(row, column) == direction
+                && (direction == Vertical::Center || grid.rails.get_reach_vert(row, column))
+        }
     }
 }
 
@@ -180,10 +186,12 @@ mod tests {
         let rails = Rails::new(0, 0);
         let root = IVec2::default();
         let intersections = Intersections::new(0, 0);
+        let fixed_cells = cells.clone();
         Grid {
             num_rows: cells.len() as i32,
             num_columns: cells.first().unwrap().len() as i32,
             cells,
+            fixed_cells,
             rails,
             root,
             intersections,

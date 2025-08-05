@@ -82,16 +82,26 @@ async fn main() {
             if let Some((hovered_row, hovered_column)) = hovered_cell.clone() {
                 let clicked = ivec2(hovered_column, hovered_row);
                 if clicked != grid.root && clicked != grid.root - ivec2(0, 1) {
-                    let cell = get_mut(&mut grid.fixed_cells, i_row, i_column);
-                    *cell = !*cell;
-                    refresh_render = true;
-                    // if let Some((right_clicked_row, right_clicked_column)) = right_clicked {
-                    //     let diff_row = right_clicked_row - clicked.y;
-                    //     let diff_column = right_clicked_column - clicked.x;
-                    //     if diff_row.abs() + diff_column.abs() == 1 {
-                    //         // grid.fixed_rails
-                    //     }
-                    // }
+                    if let Some((right_clicked_row, right_clicked_column)) = right_clicked {
+                        let diff_row = right_clicked_row - clicked.y;
+                        let diff_column = right_clicked_column - clicked.x;
+                        let diff = diff_row.abs() + diff_column.abs();
+                        if diff == 1 {
+                            let rail_row = right_clicked_row.max(clicked.y);
+                            let rail_column = right_clicked_column.max(clicked.x);
+                            let fixed = if diff_row.abs() == 1 {
+                                grid.fixed_rails.get_horiz_mut(rail_row, rail_column)
+                            } else {
+                                grid.fixed_rails.get_vert_mut(rail_row, rail_column)
+                            };
+                            *fixed = !*fixed;
+                            refresh_render = true;
+                        } else if diff == 0 {
+                            let cell = get_mut(&mut grid.fixed_cells, i_row, i_column);
+                            *cell = !*cell;
+                            refresh_render = true;
+                        } // TODO: diff = 2, diagonal constraints
+                    }
                 }
             }
         }

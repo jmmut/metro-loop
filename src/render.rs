@@ -306,6 +306,42 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid) {
             }
         }
     }
+    for row in 1..grid.fixed_rails.horiz_rows() {
+        for column in 1..grid.fixed_rails.horiz_columns() {
+            let user_constraint = grid.fixed_rails.get_horiz(row, column);
+            if user_constraint {
+                let direction = vec2(1.0, 0.0);
+                render_user_rail_constraint(small_triangle_half_width, thickness, row, column, direction);
+            }
+        }
+    }
+    for row in 1..grid.fixed_rails.vert_rows() {
+        for column in 1..grid.fixed_rails.vert_columns() {
+            let user_constraint = grid.fixed_rails.get_vert(row, column);
+            if user_constraint {
+                let direction = vec2(0.0, 1.0);
+                render_user_rail_constraint(small_triangle_half_width, thickness, row, column, direction);
+            }
+        }
+    }
+}
+
+fn render_user_rail_constraint(small_triangle_half_width: f32, thickness: f32, row: i32, column: i32, direction: Vec2) {
+    let start = top_left_rail_intersection(row, column);
+    let end = start + direction * (CELL_WIDTH + CELL_PAD);
+    let mid = (start + end) * 0.5;
+    let diff = (end - start).normalize();
+    let to_left = vec2(diff.y, -diff.x);
+
+    let forward = diff * thickness * 0.5;
+    let leftward = to_left * small_triangle_half_width;
+    let a = mid + forward + leftward;
+    let b = mid + forward - leftward;
+    let c = mid - forward + leftward;
+    let d = mid - forward - leftward;
+    draw_triangle(a, c, b, RAIL);
+    draw_triangle(b, c, d, RAIL);
+    draw_lines(&[a, b, d, c, a], TRIANGLE_BORDER);
 }
 
 fn top_left_rail_intersection(i_row: i32, i_column: i32) -> Vec2 {

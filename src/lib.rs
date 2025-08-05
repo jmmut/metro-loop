@@ -11,7 +11,7 @@ use juquad::widgets::{StateStyle, Style};
 use macroquad::prelude::*;
 
 pub const DEFAULT_SHOW_SOLUTION: bool = false;
-pub const SEE_SOLUTION_DURING_GAME: bool = true;
+pub const SEE_SOLUTION_DURING_GAME: bool = false;
 pub const VISUALIZE: bool = false;
 pub const STEP_GENERATION: bool = false;
 

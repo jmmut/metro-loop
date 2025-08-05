@@ -89,7 +89,8 @@ fn count_cells(grid: &Grid) -> i32 {
 pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfaction {
     let failing_rails = compute_rail_failures(grid, &constraints.rails);
     let cell_diff = constraints.cell_count - count_cells(grid);
-    let unconnected_loops = (count_loops(grid) - 1).abs();
+    // let unconnected_loops = (count_loops(grid) - 1).abs();
+    let unconnected_loops = 1;
     let unreachable_rails = count_unreachable_rails(grid);
     Satisfaction {
         failing_rails,

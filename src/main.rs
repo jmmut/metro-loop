@@ -76,7 +76,6 @@ async fn main() {
             }
         }
 
-        let satisfaction = compute_satisfaction(&grid, &constraints);
         if refresh_render {
             refresh_render = false;
             set_camera(&Camera2D {
@@ -89,14 +88,13 @@ async fn main() {
             clear_background(BACKGROUND);
 
             draw_rect(button_panel, PANEL_BACKGROUND);
-            let (solved_, show) = render_satisfaction(
+            let satisfaction = compute_satisfaction(&grid, &constraints);
+            show_solution_button = render_satisfaction(
                 &satisfaction,
                 reset_button.rect(),
                 button_panel,
                 &mut show_solution,
             );
-            solved = solved_;
-            show_solution_button = show;
 
             if show_solution {
                 render_grid(&solution, &hovered_cell);

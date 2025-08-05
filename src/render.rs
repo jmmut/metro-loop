@@ -15,7 +15,7 @@ pub fn render_satisfaction(
     previous_rect: Rect,
     panel: Rect,
     show_solution: &mut bool,
-) {
+) -> (bool, Option<Button>) {
     let solved = satisfaction.success();
     let mut rect = if solved {
         let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
@@ -62,11 +62,10 @@ pub fn render_satisfaction(
         } else {
             "Show possible solution"
         };
-        let mut show = new_button(show_text, show_anchor);
-        if show.interact().is_clicked() {
-            *show_solution = !*show_solution;
-        }
-        render_button(&show);
+        let show = new_button(show_text, show_anchor);
+        (solved, Some(show))
+    } else {
+        (solved, None)
     }
 }
 

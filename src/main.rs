@@ -24,6 +24,12 @@ async fn main() {
         flip_y: true,
         ..Default::default()
     };
+    let render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
+    render_target.texture.set_filter(FilterMode::Nearest);
+
+    let mut refresh_render = true;
+    let mut solved = false;
+    let mut show_solution_button = None;
 
     let button_panel = Rect::new(
         grid_width() + GRID_PAD * 2.0,
@@ -45,6 +51,7 @@ async fn main() {
         );
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
             (solution, grid, constraints, show_solution) = reset(VISUALIZE).await;
+            refresh_render = true;
         }
         let pos = Vec2::from(mouse_position());
         let grid_indexes =
@@ -64,43 +71,52 @@ async fn main() {
                     let cell = get_mut(&mut grid, i_row, i_column);
                     *cell = !*cell;
                     grid.recalculate_rails();
+                    refresh_render = true;
                 }
             }
         }
 
         let satisfaction = compute_satisfaction(&grid, &constraints);
+        if refresh_render {
+            refresh_render = false;
+            set_camera(&Camera2D {
+                target: vec2(sw * 0.5, sh * 0.5),
+                zoom: vec2(1.0 / sw * 2.0, -1.0 / sh * 2.0),
+                render_target: Some(render_target.clone()),
+                ..Default::default()
+            });
 
+            clear_background(BACKGROUND);
 
-        let render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
-        render_target.texture.set_filter(FilterMode::Nearest);
+            draw_rect(button_panel, PANEL_BACKGROUND);
+            let (solved_, show) = render_satisfaction(
+                &satisfaction,
+                reset_button.rect(),
+                button_panel,
+                &mut show_solution,
+            );
+            solved = solved_;
+            show_solution_button = show;
 
-        set_camera(&Camera2D {
-            target: vec2(sw * 0.5, sh * 0.5),
-            zoom: vec2(1.0 / sw * 2.0, -1.0 / sh * 2.0),
-            render_target: Some(render_target.clone()),
-            ..Default::default()
-        });
-
-        clear_background(BACKGROUND);
-
-        draw_rect(button_panel, PANEL_BACKGROUND);
-        render_button(&reset_button);
-        render_satisfaction(
-            &satisfaction,
-            reset_button.rect(),
-            button_panel,
-            &mut show_solution,
-        );
-        if show_solution {
-            render_grid(&solution, &hovered_cell);
-        } else {
-            render_grid(&grid, &hovered_cell);
-            render_constraints(&constraints, &grid);
+            if show_solution {
+                render_grid(&solution, &hovered_cell);
+            } else {
+                render_grid(&grid, &hovered_cell);
+                render_constraints(&constraints, &grid);
+            }
+            set_default_camera();
         }
-        set_default_camera();
         draw_texture_ex(render_target.texture, 0., 0., WHITE, texture_params.clone());
-        TextRect::new(&format!("FPS: {}", get_fps()), Anchor::top_left(0.0, 0.0), FONT_SIZE).render_default(&STYLE.pressed);
+        render_button(&reset_button);
 
+        if let Some(show) = show_solution_button.as_mut() {
+            if show.interact().is_clicked() {
+                show_solution = !show_solution;
+                refresh_render = true;
+            }
+            render_button(&show);
+        }
+        TextRect::new(&format!("FPS: {}", get_fps()), Anchor::top_left(0.0, 0.0), FONT_SIZE).render_default(&STYLE.pressed);
         next_frame().await
     }
 }

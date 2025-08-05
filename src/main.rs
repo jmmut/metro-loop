@@ -41,6 +41,7 @@ async fn main() {
         BUTTON_PANEL_WIDTH,
         grid_height(),
     );
+    let mut right_clicked = None;
     loop {
         if is_key_pressed(KeyCode::Escape) {
             break;
@@ -69,12 +70,28 @@ async fn main() {
         };
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
         if is_mouse_button_pressed(MouseButton::Right) && !show_solution {
-            if let Some((i_row, i_column)) = hovered_cell.clone() {
-                let clicked = ivec2(i_column, i_row);
+            right_clicked = hovered_cell.clone();
+        }
+        if is_mouse_button_pressed(MouseButton::Right) && !show_solution {
+            if let Some(coords) = hovered_cell.clone() {
+                right_clicked = Some(coords);
+            }
+        }
+
+        if is_mouse_button_released(MouseButton::Right) && !show_solution {
+            if let Some((hovered_row, hovered_column)) = hovered_cell.clone() {
+                let clicked = ivec2(hovered_column, hovered_row);
                 if clicked != grid.root && clicked != grid.root - ivec2(0, 1) {
                     let cell = get_mut(&mut grid.fixed_cells, i_row, i_column);
                     *cell = !*cell;
                     refresh_render = true;
+                    // if let Some((right_clicked_row, right_clicked_column)) = right_clicked {
+                    //     let diff_row = right_clicked_row - clicked.y;
+                    //     let diff_column = right_clicked_column - clicked.x;
+                    //     if diff_row.abs() + diff_column.abs() == 1 {
+                    //         // grid.fixed_rails
+                    //     }
+                    // }
                 }
             }
         }

@@ -153,6 +153,21 @@ pub fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
     }
 }
 
+pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> bool {
+    match *constraint {
+        RailCoord::Horizontal {
+            row,
+            column,
+            direction,
+        } => grid.rails.get_horiz(row, column) == direction && (direction == Horizontal::Center || grid.rails.get_reach_horiz(row, column)),
+        RailCoord::Vertical {
+            row,
+            column,
+            direction,
+        } => grid.rails.get_vert(row, column) == direction &&  (direction == Vertical::Center || grid.rails.get_reach_vert(row, column)),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

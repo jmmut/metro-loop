@@ -1,4 +1,4 @@
-use crate::constraints::Satisfaction;
+use crate::constraints::{matches_constraint_and_reachable, Satisfaction};
 use crate::intersection::{Crossing, Intersection};
 use crate::*;
 use juquad::draw::draw_rect;
@@ -226,7 +226,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid) {
         Blockade,
     }
     for constraint in &constraints.rails {
-        let (color, color_border) = if matches_constraint(grid, constraint) {
+        let (color, color_border) = if matches_constraint_and_reachable(grid, constraint) {
             (SUCCESS, SUCCESS_DARK)
         } else {
             (FAILING, FAILING_DARK)

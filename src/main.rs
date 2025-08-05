@@ -1,5 +1,6 @@
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
+use juquad::widgets::text::TextRect;
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
@@ -10,12 +11,7 @@ use metro_loop::grid::{count_neighbours, get, get_mut, in_range, Grid};
 use metro_loop::render::{
     new_button, render_button, render_constraints, render_grid, render_satisfaction,
 };
-use metro_loop::{
-    grid_height, grid_width, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD,
-    CELL_WIDTH, DEFAULT_SHOW_SOLUTION, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE,
-    DEFAULT_WINDOW_WIDTH, GRID_PAD, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, STEP_GENERATION,
-    VISUALIZE,
-};
+use metro_loop::{grid_height, grid_width, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH, FONT_SIZE, GRID_PAD, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, STEP_GENERATION, STYLE, VISUALIZE};
 
 #[macroquad::main(window_conf)]
 async fn main() {
@@ -35,6 +31,7 @@ async fn main() {
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
+
         let mut reset_button = new_button(
             "New Game",
             Anchor::top_center(
@@ -83,6 +80,7 @@ async fn main() {
             render_grid(&grid, &hovered_cell);
             render_constraints(&constraints, &grid);
         }
+        TextRect::new(&format!("FPS: {}", get_fps()), Anchor::top_left(0.0, 0.0), FONT_SIZE).render_default(&STYLE.pressed);
 
         next_frame().await
     }

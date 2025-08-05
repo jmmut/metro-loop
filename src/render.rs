@@ -69,8 +69,7 @@ pub fn render_satisfaction(
     }
 }
 
-pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
-    // cells
+pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
     for i_row in 0..NUM_ROWS {
         for i_column in 0..NUM_COLUMNS {
             let current_cell = *get(grid, i_row, i_column);
@@ -97,6 +96,8 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
             draw_rectangle(cell_pos.x, cell_pos.y, CELL_WIDTH, CELL_HEIGHT, color);
         }
     }
+}
+pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
 
     // horizontal rails
     for i_row in 1..grid.rails.horiz_rows() - 1 {

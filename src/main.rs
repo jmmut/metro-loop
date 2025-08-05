@@ -14,8 +14,8 @@ use metro_loop::render::{
 use metro_loop::{
     grid_height, grid_width, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD,
     CELL_WIDTH, DEFAULT_SHOW_SOLUTION, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE,
-    DEFAULT_WINDOW_WIDTH, FONT_SIZE, GRID_PAD, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS,
-    STEP_GENERATION, STYLE, VISUALIZE,
+    DEFAULT_WINDOW_WIDTH, FONT_SIZE, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND,
+    SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 
 #[macroquad::main(window_conf)]
@@ -115,6 +115,7 @@ async fn main() {
 
             if show_solution {
                 render_grid(&solution);
+                render_constraints(&constraints, &solution);
             } else {
                 render_grid(&grid);
                 render_constraints(&constraints, &grid);
@@ -180,7 +181,7 @@ async fn generate_grid(visualize: bool) -> Grid {
 
     enabled.push((solution.root.y, solution.root.x));
     let mut i = 0;
-    while enabled.len() < 20 {
+    while enabled.len() < MAX_CELLS {
         if visualize && is_key_pressed(KeyCode::Escape) {
             break;
         }

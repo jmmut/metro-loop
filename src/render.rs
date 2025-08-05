@@ -115,7 +115,7 @@ pub fn render_grid(grid: &Grid) {
     // horizontal rails
     for i_row in 1..grid.rails.horiz_rows() - 1 {
         for i_column in 1..grid.rails.horiz_columns() - 1 {
-            let reachable = grid.rails.get_reach_horiz(i_row, i_column);
+            let reachable = grid.reachable_rails.get_horiz(i_row, i_column);
             let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
             let direction = grid.rails.get_horiz(i_row, i_column);
             if direction != Horizontal::Center {
@@ -149,7 +149,7 @@ pub fn render_grid(grid: &Grid) {
     // vertical rails
     for i_row in 1..grid.rails.vert_rows() - 1 {
         for i_column in 1..grid.rails.vert_columns() - 1 {
-            let reachable = grid.rails.get_reach_vert(i_row, i_column);
+            let reachable = grid.reachable_rails.get_vert(i_row, i_column);
             let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
             let direction = grid.rails.get_vert(i_row, i_column);
             if direction != Vertical::Center {
@@ -189,10 +189,10 @@ pub fn render_grid(grid: &Grid) {
                 // above,
                 crossing,
             } = grid.intersections.get(i_row, i_column);
-            let color = if grid.rails.get_reach_horiz(i_row, i_column)
-                || grid.rails.get_reach_vert(i_row, i_column)
-                || grid.rails.get_reach_vert(i_row - 1, i_column)
-                || grid.rails.get_reach_horiz(i_row, i_column - 1)
+            let color = if grid.reachable_rails.get_horiz(i_row, i_column)
+                || grid.reachable_rails.get_vert(i_row, i_column)
+                || grid.reachable_rails.get_vert(i_row - 1, i_column)
+                || grid.reachable_rails.get_horiz(i_row, i_column - 1)
             {
                 RAIL
             } else {

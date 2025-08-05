@@ -101,7 +101,7 @@ pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfact
 }
 
 pub fn count_unreachable_rails(grid: &Grid) -> i32 {
-    grid.total_rails - grid.reachable_rails
+    grid.total_rails - grid.reachable_rails_count
 }
 pub fn count_loops(grid: &Grid) -> i32 {
     let active = count_cells(grid);
@@ -161,7 +161,7 @@ pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> 
             direction,
         } => {
             grid.rails.get_horiz(row, column) == direction
-                && (direction == Horizontal::Center || grid.rails.get_reach_horiz(row, column))
+                && (direction == Horizontal::Center || grid.reachable_rails.get_horiz(row, column))
         }
         RailCoord::Vertical {
             row,
@@ -169,7 +169,7 @@ pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> 
             direction,
         } => {
             grid.rails.get_vert(row, column) == direction
-                && (direction == Vertical::Center || grid.rails.get_reach_vert(row, column))
+                && (direction == Vertical::Center || grid.reachable_rails.get_vert(row, column))
         }
     }
 }
@@ -183,7 +183,9 @@ mod tests {
     use macroquad::prelude::IVec2;
 
     fn mock_grid(cells: Vec<Vec<Cell>>) -> Grid {
-        let rails = Rails::new(0, 0);
+        let rails = Rails::new(0, 0, Horizontal::Center, Vertical::Center);
+        let reachable_rails = Rails::new(0, 0, false, false);
+        let fixed_rails = Rails::new(0, 0, false, false);
         let root = IVec2::default();
         let intersections = Intersections::new(0, 0);
         let fixed_cells = cells.clone();
@@ -193,10 +195,12 @@ mod tests {
             cells,
             fixed_cells,
             rails,
+            reachable_rails,
+            fixed_rails,
             root,
             intersections,
             total_rails: 0,
-            reachable_rails: 0,
+            reachable_rails_count: 0,
         }
     }
     const CLICK: bool = true;

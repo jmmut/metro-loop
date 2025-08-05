@@ -11,11 +11,13 @@ pub struct Grid {
     pub num_columns: i32,
     pub cells: Vec<Vec<Cell>>,
     pub fixed_cells: Vec<Vec<Cell>>,
-    pub rails: Rails,
+    pub rails: Rails<Horizontal, Vertical>,
+    pub reachable_rails: Rails<bool, bool>,
+    pub fixed_rails: Rails<bool, bool>,
     pub intersections: Intersections,
     pub root: IVec2,
     pub total_rails: i32,
-    pub reachable_rails: i32,
+    pub reachable_rails_count: i32,
 }
 
 impl Grid {
@@ -23,7 +25,9 @@ impl Grid {
         let cells = generate_nested_vec(num_rows as usize, num_columns as usize, false);
         let fixed_cells = generate_nested_vec(num_rows as usize, num_columns as usize, false);
 
-        let rails = Rails::new(num_rows, num_columns);
+        let rails = Rails::new(num_rows, num_columns, Horizontal::Center, Vertical::Center);
+        let reachable_rails = Rails::new(num_rows, num_columns, false, false);
+        let fixed_rails = Rails::new(num_rows, num_columns, false, false);
         let intersections = Intersections::new(num_rows, num_columns);
 
         let mut grid = Self {
@@ -32,10 +36,12 @@ impl Grid {
             cells,
             fixed_cells,
             rails,
+            reachable_rails,
+            fixed_rails,
             root,
             intersections,
             total_rails: 0,
-            reachable_rails: 0,
+            reachable_rails_count: 0,
         };
         *get_cell_mut(&mut grid, root.y, root.x) = true;
         *get_mut(&mut grid.fixed_cells, root.y, root.x) = true;
@@ -75,7 +81,7 @@ impl Grid {
                 } else {
                     Horizontal::Center
                 };
-                *self.rails.get_reach_horiz_mut(i_row, i_column) = false;
+                *self.reachable_rails.get_horiz_mut(i_row, i_column) = false;
                 *self.rails.get_horiz_mut(i_row, i_column) = direction;
 
                 let direction = if current != left {
@@ -89,7 +95,7 @@ impl Grid {
                 } else {
                     Vertical::Center
                 };
-                *self.rails.get_reach_vert_mut(i_row, i_column) = false;
+                *self.reachable_rails.get_vert_mut(i_row, i_column) = false;
                 *self.rails.get_vert_mut(i_row, i_column) = direction;
             }
         }
@@ -141,7 +147,7 @@ impl Grid {
                 );
             }
             rail_coord = if rail_is_horizontal {
-                *self.rails.get_reach_horiz_mut(row, column) = true;
+                *self.reachable_rails.get_horiz_mut(row, column) = true;
                 let horizontal = self.rails.get_horiz_mut(row, column);
                 if backwards {
                     *horizontal = horizontal.opposite();
@@ -213,7 +219,7 @@ impl Grid {
                     } // panic?
                 }
             } else {
-                *self.rails.get_reach_vert_mut(row, column) = true;
+                *self.reachable_rails.get_vert_mut(row, column) = true;
                 let vertical = self.rails.get_vert_mut(row, column);
                 if backwards {
                     *vertical = vertical.opposite();
@@ -289,7 +295,7 @@ impl Grid {
             }
         }
         self.total_rails = rail_count;
-        self.reachable_rails = iterations;
+        self.reachable_rails_count = iterations;
     }
 }
 

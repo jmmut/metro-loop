@@ -13,4 +13,3 @@ Clone this repo, then [Install rust](https://www.rust-lang.org/tools/install), t
 - Be able to fix cells as in minesweeper
 - Don't show green stations on orange rails
 - Select difficulty
-- render to texture and reuse it

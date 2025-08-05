@@ -149,7 +149,7 @@ pub fn render_grid(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
                 let top_left = top_left - vec2(CELL_PAD + 1.0, 0.0);
                 let second_corner = second_corner - vec2(CELL_PAD + 1.0, 0.0);
                 draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
-                if reachable{
+                if reachable {
                     let sign = match direction {
                         Vertical::Top => -1.0,
                         Vertical::Center => 0.0,

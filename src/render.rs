@@ -311,7 +311,13 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid) {
             let user_constraint = grid.fixed_rails.get_horiz(row, column);
             if user_constraint {
                 let direction = vec2(1.0, 0.0);
-                render_user_rail_constraint(small_triangle_half_width, thickness, row, column, direction);
+                render_user_rail_constraint(
+                    small_triangle_half_width,
+                    thickness,
+                    row,
+                    column,
+                    direction,
+                );
             }
         }
     }
@@ -320,13 +326,25 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid) {
             let user_constraint = grid.fixed_rails.get_vert(row, column);
             if user_constraint {
                 let direction = vec2(0.0, 1.0);
-                render_user_rail_constraint(small_triangle_half_width, thickness, row, column, direction);
+                render_user_rail_constraint(
+                    small_triangle_half_width,
+                    thickness,
+                    row,
+                    column,
+                    direction,
+                );
             }
         }
     }
 }
 
-fn render_user_rail_constraint(small_triangle_half_width: f32, thickness: f32, row: i32, column: i32, direction: Vec2) {
+fn render_user_rail_constraint(
+    small_triangle_half_width: f32,
+    thickness: f32,
+    row: i32,
+    column: i32,
+    direction: Vec2,
+) {
     let start = top_left_rail_intersection(row, column);
     let end = start + direction * (CELL_WIDTH + CELL_PAD);
     let mid = (start + end) * 0.5;

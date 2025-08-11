@@ -7,7 +7,12 @@ pub struct Rails<H, V> {
 }
 
 impl<H: Clone, V: Clone> Rails<H, V> {
-    pub fn new(num_rows: i32, num_columns: i32, horizontal_default: H, vertical_default: V) -> Self {
+    pub fn new(
+        num_rows: i32,
+        num_columns: i32,
+        horizontal_default: H,
+        vertical_default: V,
+    ) -> Self {
         let num_rows = num_rows as usize;
         let num_rows_1 = num_rows + 1;
         let num_columns = num_columns as usize;
@@ -34,8 +39,7 @@ impl<H: Clone, V: Clone> Rails<H, V> {
         self.vertical.get(0).unwrap().len() as i32
     }
     pub fn get_horiz(&self, row: i32, column: i32) -> H {
-        self
-            .horizontal
+        self.horizontal
             .get(row as usize)
             .unwrap()
             .get(column as usize)
@@ -50,8 +54,7 @@ impl<H: Clone, V: Clone> Rails<H, V> {
             .unwrap()
     }
     pub fn get_vert(&self, row: i32, column: i32) -> V {
-        self
-            .vertical
+        self.vertical
             .get(row as usize)
             .unwrap()
             .get(column as usize)

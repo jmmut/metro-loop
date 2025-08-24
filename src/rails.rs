@@ -1,5 +1,4 @@
 use crate::generate_nested_vec;
-use juquad::widgets::anchor::{Horizontal, Vertical};
 
 pub struct Rails<H, V> {
     pub horizontal: Vec<Vec<H>>,

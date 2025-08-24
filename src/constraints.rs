@@ -1,4 +1,5 @@
 use crate::grid::{get_cell, Grid};
+use crate::CLUE_PERCENTAGE;
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::rand::rand;
 
@@ -33,6 +34,7 @@ impl Satisfaction {
         && self.unreachable_rails == 0
     }
 }
+
 pub fn choose_constraints(grid: &Grid) -> Constraints {
     let mut rails = Vec::new();
     {
@@ -48,7 +50,7 @@ pub fn choose_constraints(grid: &Grid) -> Constraints {
     for row in 1..grid.rails.horiz_rows() - 1 {
         for column in 1..grid.rails.horiz_columns() - 1 {
             let is_root = row == grid.root.y && column == grid.root.x; // avoid adding the root twice
-            if rand() % 100 < 30 && !is_root {
+            if rand() % 100 < CLUE_PERCENTAGE && !is_root {
                 let direction = grid.rails.get_horiz(row, column);
                 rails.push(RailCoord::Horizontal {
                     row,
@@ -60,7 +62,7 @@ pub fn choose_constraints(grid: &Grid) -> Constraints {
     }
     for row in 1..grid.rails.vert_rows() - 1 {
         for column in 1..grid.rails.vert_columns() - 1 {
-            if rand() % 100 < 30 {
+            if rand() % 100 < CLUE_PERCENTAGE {
                 let direction = grid.rails.get_vert(row, column);
                 rails.push(RailCoord::Vertical {
                     row,

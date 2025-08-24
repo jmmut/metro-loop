@@ -56,7 +56,9 @@ pub const FONT_SIZE: f32 = 16.0;
 
 pub const NUM_ROWS: i32 = 10;
 pub const NUM_COLUMNS: i32 = 11;
-pub const MAX_CELLS: usize = 20;
+pub const MAX_CELLS: usize = ((NUM_ROWS - 2) * (NUM_COLUMNS - 2)) as usize / 2;
+pub const CLUE_PERCENTAGE: u32 = 30;
+
 pub const CELL_WIDTH: f32 = 50.0;
 pub const CELL_HEIGHT: f32 = 50.0;
 pub const CELL_PAD: f32 = 5.0;

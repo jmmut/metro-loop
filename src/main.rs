@@ -1,28 +1,56 @@
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::text::TextRect;
+use macroquad::audio::{load_sound_from_bytes, play_sound, play_sound_once, AudioContext, PlaySoundParams, Sound};
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use macroquad::rand::{rand, srand};
-use metro_loop::constraints::{
-    choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints,
-};
+// use quad_snd::AudioContext;
+use metro_loop::constraints::{choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction};
 use metro_loop::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use metro_loop::render::{
     new_button, render_button, render_cells, render_constraints, render_grid, render_satisfaction,
 };
-use metro_loop::{
-    grid_height, grid_width, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD,
-    CELL_WIDTH, DEFAULT_SHOW_SOLUTION, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE,
-    DEFAULT_WINDOW_WIDTH, FONT_SIZE, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND,
-    SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
-};
+use metro_loop::{grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH, FONT_SIZE, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE};
+use metro_loop::resource_loader::ResourceLoader;
+
+pub struct State {
+    solution: Grid,
+    grid: Grid,
+    constraints: Constraints,
+    show_solution: bool,
+    previous_satisfaction: Option<Satisfaction>,
+    success_sound_played: bool,
+}
 
 #[macroquad::main(window_conf)]
-async fn main() {
+async fn main() -> Result<(), AnyError> {
     let seed = now() as u64;
     srand(seed);
-    let (mut solution, mut grid, mut constraints, mut show_solution) = reset(VISUALIZE).await;
+    // let mut audio_ctx = AudioContext::new();
+    // let sound = quad_snd::Sound::load(&audio_ctx, include_bytes!("../assets/sound/background_intro.ogg"));
+
+    // let sound_incorrect = load_sound_from_bytes(include_bytes!("../assets/sound/incorrect.wav"));
+    // let sound_correct = load_sound_from_bytes(include_bytes!("../assets/sound/satisfied.wav"));
+    // let music_background = load_sound_from_bytes(include_bytes!("../assets/sound/background.ogg"));
+    // let music_background_intro = load_sound_from_bytes(include_bytes!("../assets/sound/background_intro.ogg"));
+    // let sound_incorrect = sound_incorrect.?;
+    // let sound_correct = sound_correct.await?;
+    // let music_background = music_background.await?;
+    // let music_background_intro = music_background_intro.await?;
+
+    let mut sound_loader = ResourceLoader::<Sound>::new(&[
+        include_bytes!("../assets/sound/incorrect.wav"),
+        include_bytes!("../assets/sound/satisfied.wav"),
+        include_bytes!("../assets/sound/background.ogg"),
+        include_bytes!("../assets/sound/background_intro.ogg"),
+    ]);
+    let mut sound_incorrect = None;
+    let mut sound_correct = None;
+    let mut music_background = None;
+    let mut music_background_intro = None;
+
+    let mut state = reset(VISUALIZE).await;
 
     let (sw, sh) = (screen_width(), screen_height());
     let texture_params = DrawTextureParams {
@@ -42,7 +70,41 @@ async fn main() {
         grid_height(),
     );
     let mut right_clicked = None;
+    let mut should_play_sound = false;
+    let mut should_play_intro = true;
+    let mut should_play_background = true;
+    // play_sound_once(music_background_intro);
+    // play_sound_once(music_background);
+    // play_sound(music_background, PlaySoundParams { looped: true, volume: 0.5 });
+    let mut start_ts = None;
     loop {
+        if sound_correct.is_none() {
+            println!("attempt to load resources");
+            if let Some(sounds) = sound_loader.get_resources()? {
+                println!("finished loading resources");
+                sound_incorrect = Some(sounds[0]);
+                sound_correct = Some(sounds[1]);
+                music_background = Some(sounds[2]);
+                music_background_intro = Some(sounds[3]);
+            }
+        }
+        if should_play_intro {
+            if let Some(music_intro) = &music_background_intro {
+                play_sound_once(music_intro.clone());
+                start_ts = Some(now());
+                should_play_intro = false;
+            }
+        }
+        if let Some(music_background) = &music_background {
+            if let Some(start_ts) = &start_ts {
+                if now() - start_ts > 6.0 {
+                    if should_play_background {
+                        should_play_background = false;
+                        play_sound(music_background.clone(), PlaySoundParams { looped: true, volume: 0.75 });
+                    }
+                }
+            }
+        }
         if is_key_pressed(KeyCode::Escape) {
             break;
         }
@@ -55,7 +117,7 @@ async fn main() {
             ),
         );
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
-            (solution, grid, constraints, show_solution) = reset(VISUALIZE).await;
+            state = reset(VISUALIZE).await;
             refresh_render = true;
         }
         let pos = Vec2::from(mouse_position());
@@ -63,25 +125,20 @@ async fn main() {
             (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
         let i_row = grid_indexes.y as i32;
         let i_column = grid_indexes.x as i32;
-        let hovered_cell = if in_range(&grid, i_row, i_column) {
+        let hovered_cell = if in_range(&state.grid, i_row, i_column) {
             Some((i_row, i_column))
         } else {
             None
         };
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
-        if is_mouse_button_pressed(MouseButton::Right) && !show_solution {
+        if is_mouse_button_pressed(MouseButton::Right) && !state.show_solution {
             right_clicked = hovered_cell.clone();
         }
-        if is_mouse_button_pressed(MouseButton::Right) && !show_solution {
-            if let Some(coords) = hovered_cell.clone() {
-                right_clicked = Some(coords);
-            }
-        }
 
-        if is_mouse_button_released(MouseButton::Right) && !show_solution {
+        if is_mouse_button_released(MouseButton::Right) && !state.show_solution {
             if let Some((hovered_row, hovered_column)) = hovered_cell.clone() {
                 let clicked = ivec2(hovered_column, hovered_row);
-                if clicked != grid.root && clicked != grid.root - ivec2(0, 1) {
+                if clicked != state.grid.root && clicked != state.grid.root - ivec2(0, 1) {
                     if let Some((right_clicked_row, right_clicked_column)) = right_clicked {
                         let diff_row = right_clicked_row - clicked.y;
                         let diff_column = right_clicked_column - clicked.x;
@@ -90,14 +147,14 @@ async fn main() {
                             let rail_row = right_clicked_row.max(clicked.y);
                             let rail_column = right_clicked_column.max(clicked.x);
                             let fixed = if diff_row.abs() == 1 {
-                                grid.fixed_rails.get_horiz_mut(rail_row, rail_column)
+                                state.grid.fixed_rails.get_horiz_mut(rail_row, rail_column)
                             } else {
-                                grid.fixed_rails.get_vert_mut(rail_row, rail_column)
+                                state.grid.fixed_rails.get_vert_mut(rail_row, rail_column)
                             };
                             *fixed = !*fixed;
                             refresh_render = true;
                         } else if diff == 0 {
-                            let cell = get_mut(&mut grid.fixed_cells, i_row, i_column);
+                            let cell = get_mut(&mut state.grid.fixed_cells, i_row, i_column);
                             *cell = !*cell;
                             refresh_render = true;
                         } // TODO: diff = 2, diagonal constraints
@@ -105,15 +162,16 @@ async fn main() {
                 }
             }
         }
-        if is_mouse_button_pressed(MouseButton::Left) && !show_solution {
+        if is_mouse_button_pressed(MouseButton::Left) && !state.show_solution {
             if let Some((i_row, i_column)) = hovered_cell.clone() {
                 let clicked = ivec2(i_column, i_row);
-                if clicked != grid.root && clicked != grid.root - ivec2(0, 1) {
-                    let fixed = get(&mut grid.fixed_cells, i_row, i_column);
+                if clicked != state.grid.root && clicked != state.grid.root - ivec2(0, 1) {
+                    let fixed = get(&mut state.grid.fixed_cells, i_row, i_column);
                     if !fixed {
-                        let cell = get_cell_mut(&mut grid, i_row, i_column);
+                        let cell = get_cell_mut(&mut state.grid, i_row, i_column);
                         *cell = !*cell;
-                        grid.recalculate_rails();
+                        state.grid.recalculate_rails();
+                        should_play_sound = true;
                         refresh_render = true;
                     }
                 }
@@ -132,35 +190,54 @@ async fn main() {
             clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
 
             draw_rect(button_panel, PANEL_BACKGROUND);
-            let satisfaction = compute_satisfaction(&grid, &constraints);
+            let satisfaction = compute_satisfaction(&state.grid, &state.constraints);
             show_solution_button = render_satisfaction(
                 &satisfaction,
                 reset_button.rect(),
                 button_panel,
-                &mut show_solution,
+                &mut state.show_solution,
             );
+            if satisfaction.success() {
+                if !state.success_sound_played {
+                    state.success_sound_played = true;
+                    // if let Some(sound_correct) = sound_correct {
+                    //     play_sound(sound_correct, PlaySoundParams::default());
+                    // }
+                }
+            }
+            // if let Some(previous) = &previous_satisfaction {
+            //     if should_play_sound {
+            //         should_play_sound = false;
+            //         if satisfaction.failing_rails < previous.failing_rails {
+            //             play_sound(sound_correct, PlaySoundParams::default());
+            //         } else if satisfaction.failing_rails > previous.failing_rails {
+            //             play_sound(sound_incorrect, PlaySoundParams::default());
+            //         }
+            //     }
+            // }
+            state.previous_satisfaction = Some(satisfaction);
 
-            if show_solution {
-                render_grid(&solution);
-                render_constraints(&constraints, &solution);
+            if state.show_solution {
+                render_grid(&state.solution);
+                render_constraints(&state.constraints, &state.solution);
             } else {
-                render_grid(&grid);
-                render_constraints(&constraints, &grid);
+                render_grid(&state.grid);
+                render_constraints(&state.constraints, &state.grid);
             }
             set_default_camera();
         }
         clear_background(BACKGROUND);
-        if show_solution {
-            render_cells(&solution, &hovered_cell);
+        if state.show_solution {
+            render_cells(&state.solution, &hovered_cell);
         } else {
-            render_cells(&grid, &hovered_cell);
+            render_cells(&state.grid, &hovered_cell);
         }
         draw_texture_ex(render_target.texture, 0., 0., WHITE, texture_params.clone());
         render_button(&reset_button);
 
         if let Some(show) = show_solution_button.as_mut() {
             if show.interact().is_clicked() {
-                show_solution = !show_solution;
+                state.show_solution = !state.show_solution;
                 refresh_render = true;
             }
             render_button(&show);
@@ -175,6 +252,7 @@ async fn main() {
         }
         next_frame().await
     }
+    Ok(())
 }
 
 fn window_conf() -> Conf {
@@ -187,7 +265,7 @@ fn window_conf() -> Conf {
     }
 }
 
-async fn reset(visualize: bool) -> (Grid, Grid, Constraints, bool) {
+async fn reset(visualize: bool) -> State {
     let mut solution = generate_grid(visualize).await;
     solution.recalculate_rails();
     while count_unreachable_rails(&solution) > 0 {
@@ -199,7 +277,9 @@ async fn reset(visualize: bool) -> (Grid, Grid, Constraints, bool) {
     grid.recalculate_rails();
     let constraints = choose_constraints(&solution);
     let show_solution = DEFAULT_SHOW_SOLUTION;
-    (solution, grid, constraints, show_solution)
+    let previous_satisfaction = None;
+    let success_sound_played = false;
+    State {solution, grid, constraints, show_solution, previous_satisfaction, success_sound_played}
 }
 
 async fn generate_grid(visualize: bool) -> Grid {

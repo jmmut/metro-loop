@@ -3,6 +3,7 @@ pub mod grid;
 pub mod intersection;
 pub mod rails;
 pub mod render;
+pub mod resource_loader;
 
 use crate::constraints::{Constraints, RailCoord};
 use crate::grid::{get, Grid};
@@ -68,6 +69,8 @@ pub const BUTTON_PANEL_WIDTH: f32 = 300.0;
 pub const DEFAULT_WINDOW_WIDTH: i32 = (grid_width() + BUTTON_PANEL_WIDTH + 3.0 * GRID_PAD) as i32;
 pub const DEFAULT_WINDOW_HEIGHT: i32 = (grid_height() + 2.0 * GRID_PAD) as i32;
 pub const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
+
+pub type AnyError = Box<dyn std::error::Error>;
 
 pub const fn grid_width() -> f32 {
     (CELL_WIDTH + CELL_PAD) * NUM_COLUMNS as f32 - CELL_PAD

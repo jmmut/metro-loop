@@ -7,7 +7,10 @@ pub mod logic {
 
 pub mod render;
 pub mod resource_loader;
-pub mod scenes;
+pub mod scenes {
+    pub mod play;
+    pub use play::play;
+}
 
 use crate::logic::constraints::{Constraints, RailCoord};
 use crate::logic::grid::{get, Grid};

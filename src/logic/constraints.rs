@@ -1,4 +1,4 @@
-use crate::grid::{get_cell, Grid};
+use crate::logic::grid::{get_cell, Grid};
 use crate::CLUE_PERCENTAGE;
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::rand::rand;
@@ -179,9 +179,9 @@ pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grid::Cell;
-    use crate::intersection::Intersections;
-    use crate::rails::Rails;
+    use crate::logic::grid::Cell;
+    use crate::logic::intersection::Intersections;
+    use crate::logic::rails::Rails;
     use macroquad::prelude::IVec2;
 
     fn mock_grid(cells: Vec<Vec<Cell>>) -> Grid {

@@ -1,6 +1,6 @@
-use crate::constraints::{matches_constraint_and_reachable, Satisfaction};
-use crate::grid::get_cell;
-use crate::intersection::{Crossing, Intersection};
+use crate::logic::constraints::{matches_constraint_and_reachable, Satisfaction};
+use crate::logic::grid::get_cell;
+use crate::logic::intersection::{Crossing, Intersection};
 use crate::*;
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};

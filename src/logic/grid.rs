@@ -1,6 +1,6 @@
 use crate::generate_nested_vec;
-use crate::intersection::{Crossing, Intersection, Intersections};
-use crate::rails::Rails;
+use crate::logic::intersection::{crossing_to_char, horiz_to_char, vert_to_char, Crossing, Intersection, Intersections};
+use crate::logic::rails::Rails;
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::prelude::{ivec2, IVec2};
 use std::fmt::{Display, Formatter};
@@ -342,15 +342,15 @@ impl Display for Grid {
         for row in 0..self.rows() {
             for column in 0..self.columns() {
                 let inter = self.intersections.get(row, column);
-                write!(f, "{}", crate::intersection::crossing_to_char(inter))?;
+                write!(f, "{}", crossing_to_char(inter))?;
                 // write!(f, "{}", right_to_char(inter.right))?;
                 let horiz = self.rails.get_horiz(row, column);
-                write!(f, "{}", crate::intersection::horiz_to_char(horiz))?;
+                write!(f, "{}", horiz_to_char(horiz))?;
                 // let inter = self.intersections.get(row, column+1);
                 // write!(f, "{}", left_to_char(inter.left))?;
             }
             let inter = self.intersections.get(row, self.columns());
-            write!(f, "{}", crate::intersection::crossing_to_char(inter))?;
+            write!(f, "{}", crossing_to_char(inter))?;
             writeln!(f)?;
             // for column in 0..self.columns() +1 {
             //     let inter = self.intersections.get(row, column);
@@ -359,10 +359,10 @@ impl Display for Grid {
             // writeln!(f)?;
             for column in 0..self.columns() {
                 let vert = self.rails.get_vert(row, column);
-                write!(f, "{} ", crate::intersection::vert_to_char(vert))?;
+                write!(f, "{} ", vert_to_char(vert))?;
             }
             let vert = self.rails.get_vert(row, self.columns());
-            write!(f, "{}", crate::intersection::vert_to_char(vert))?;
+            write!(f, "{}", vert_to_char(vert))?;
             writeln!(f)?;
             // for column in 0..self.columns() +1 {
             //     let inter = self.intersections.get(row+1, column);
@@ -373,15 +373,15 @@ impl Display for Grid {
         let row = self.rows();
         for column in 0..self.columns() {
             let inter = self.intersections.get(row, column);
-            write!(f, "{}", crate::intersection::crossing_to_char(inter))?;
+            write!(f, "{}", crossing_to_char(inter))?;
             // write!(f, "{}", right_to_char(inter.right))?;
             let horiz = self.rails.get_horiz(row, column);
-            write!(f, "{}", crate::intersection::horiz_to_char(horiz))?;
+            write!(f, "{}", horiz_to_char(horiz))?;
             // let inter = self.intersections.get(row, column+1);
             // write!(f, "{}", left_to_char(inter.left))?;
         }
         let inter = self.intersections.get(row, self.columns());
-        write!(f, "{}", crate::intersection::crossing_to_char(inter))?;
+        write!(f, "{}", crossing_to_char(inter))?;
         writeln!(f)?;
         Ok(())
     }

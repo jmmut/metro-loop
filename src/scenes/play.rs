@@ -14,8 +14,8 @@ use crate::{grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_
 use crate::render::{new_button, render_button, render_cells, render_constraints, render_grid, render_satisfaction};
 use crate::resource_loader::ResourceLoader;
 // use quad_snd::AudioContext;
-use crate::constraints::{choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction};
-use crate::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
+use crate::logic::constraints::{choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction};
+use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 
 pub struct State {
     solution: Grid,

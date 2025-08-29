@@ -1,13 +1,16 @@
-pub mod constraints;
-pub mod grid;
-pub mod intersection;
-pub mod rails;
+pub mod logic {
+    pub mod constraints;
+    pub mod grid;
+    pub mod intersection;
+    pub mod rails;
+}
+
 pub mod render;
 pub mod resource_loader;
 pub mod scenes;
 
-use crate::constraints::{Constraints, RailCoord};
-use crate::grid::{get, Grid};
+use crate::logic::constraints::{Constraints, RailCoord};
+use crate::logic::grid::{get, Grid};
 use juquad::widgets::anchor::Vertical;
 use juquad::widgets::{StateStyle, Style};
 use macroquad::prelude::*;

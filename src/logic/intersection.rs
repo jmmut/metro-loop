@@ -1,5 +1,5 @@
 use crate::generate_nested_vec;
-use crate::grid::Grid;
+use crate::logic::grid::Grid;
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use std::fmt::{Debug, Display, Formatter};
 

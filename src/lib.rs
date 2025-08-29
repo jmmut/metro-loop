@@ -4,7 +4,6 @@ pub mod logic {
     pub mod intersection;
     pub mod rails;
 }
-
 pub mod render;
 pub mod resource_loader;
 pub mod scenes {

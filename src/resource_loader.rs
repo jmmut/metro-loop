@@ -1,8 +1,8 @@
+use macroquad::audio::{load_sound_from_bytes, Sound};
+use macroquad::prelude::{load_image, load_texture, FileError, Image, Texture2D};
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Poll, RawWaker, RawWakerVTable, Waker};
-use macroquad::audio::{load_sound_from_bytes, Sound};
-use macroquad::prelude::{load_image, load_texture, FileError, Image, Texture2D};
 
 /// Loads resources semi-asynchronously, so that you can render a loading screen.
 ///
@@ -16,7 +16,7 @@ use macroquad::prelude::{load_image, load_texture, FileError, Image, Texture2D};
 /// See [`examples/hello_juquad.rs:36`] for an example of how to do a loading screen while waiting
 /// for this to load.
 pub struct ResourceLoader<T> {
-    resources_bytes: &'static [&'static[u8]], // TODO: if I make these non-static, it doesn't compile because the struct must outlive the in_progress pin ???
+    resources_bytes: &'static [&'static [u8]], // TODO: if I make these non-static, it doesn't compile because the struct must outlive the in_progress pin ???
     resources: Vec<T>,
     in_progress: Option<Pin<Box<dyn Future<Output = Result<T, FileError>>>>>,
     load_func: fn(&[u8]) -> Pin<Box<dyn Future<Output = Result<T, FileError>> + '_>>,
@@ -71,7 +71,6 @@ impl ResourceLoader<Sound> {
         }
     }
 }
-
 
 impl<T: 'static> ResourceLoader<T> {
     pub fn get_progress(&self) -> Progress {

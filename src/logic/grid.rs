@@ -1,5 +1,7 @@
 use crate::generate_nested_vec;
-use crate::logic::intersection::{crossing_to_char, horiz_to_char, vert_to_char, Crossing, Intersection, Intersections};
+use crate::logic::intersection::{
+    crossing_to_char, horiz_to_char, vert_to_char, Crossing, Intersection, Intersections,
+};
 use crate::logic::rails::Rails;
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::prelude::{ivec2, IVec2};

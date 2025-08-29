@@ -1,20 +1,34 @@
+use crate::render::{
+    new_button, render_button, render_cells, render_constraints, render_grid, render_satisfaction,
+};
+use crate::resource_loader::ResourceLoader;
+use crate::{
+    grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT,
+    CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE, GRID_PAD, MAX_CELLS, NUM_COLUMNS,
+    NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
+};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::text::TextRect;
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams, Sound};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
-use macroquad::input::{is_key_pressed, is_mouse_button_pressed, is_mouse_button_released, mouse_position, KeyCode, MouseButton};
+use macroquad::input::{
+    is_key_pressed, is_mouse_button_pressed, is_mouse_button_released, mouse_position, KeyCode,
+    MouseButton,
+};
 use macroquad::math::{ivec2, vec2, Rect, Vec2};
 use macroquad::miniquad::date::now;
 use macroquad::miniquad::FilterMode;
-use macroquad::prelude::{clear_background, draw_texture_ex, get_fps, next_frame, screen_height, screen_width, DrawTextureParams};
+use macroquad::prelude::{
+    clear_background, draw_texture_ex, get_fps, next_frame, screen_height, screen_width,
+    DrawTextureParams,
+};
 use macroquad::rand::rand;
-use crate::{grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE};
-use crate::render::{new_button, render_button, render_cells, render_constraints, render_grid, render_satisfaction};
-use crate::resource_loader::ResourceLoader;
 // use quad_snd::AudioContext;
-use crate::logic::constraints::{choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction};
+use crate::logic::constraints::{
+    choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction,
+};
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 
 pub struct State {
@@ -86,7 +100,13 @@ pub async fn play() -> Result<(), AnyError> {
                 if now() - start_ts > 6.0 {
                     if should_play_background {
                         should_play_background = false;
-                        play_sound(music_background.clone(), PlaySoundParams { looped: true, volume: 0.75 });
+                        play_sound(
+                            music_background.clone(),
+                            PlaySoundParams {
+                                looped: true,
+                                volume: 0.75,
+                            },
+                        );
                     }
                 }
             }
@@ -255,7 +275,14 @@ async fn reset(visualize: bool) -> State {
     let show_solution = DEFAULT_SHOW_SOLUTION;
     let previous_satisfaction = None;
     let success_sound_played = false;
-    State {solution, grid, constraints, show_solution, previous_satisfaction, success_sound_played}
+    State {
+        solution,
+        grid,
+        constraints,
+        show_solution,
+        previous_satisfaction,
+        success_sound_played,
+    }
 }
 
 async fn generate_grid(visualize: bool) -> Grid {

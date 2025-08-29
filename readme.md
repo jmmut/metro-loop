@@ -11,6 +11,8 @@ Clone this repo, then [Install rust](https://www.rust-lang.org/tools/install), t
 ## Ideas for improvements
 
 - Select difficulty
-- campaign/random modes
+- campaign/random/incremental modes
+- diagonal constraint
+- adjacent rail constraint
 - sound
 - music

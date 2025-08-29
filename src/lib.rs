@@ -7,6 +7,10 @@ pub mod logic {
 pub mod render;
 pub mod resource_loader;
 pub mod scenes {
+    pub mod main_menu;
+    pub use main_menu::main_menu;
+    pub mod loading_screen;
+    pub use loading_screen::loading_screen;
     pub mod play;
     pub use play::play;
 }

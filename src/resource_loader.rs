@@ -3,6 +3,7 @@ use macroquad::prelude::{load_image, load_texture, FileError, Image, Texture2D};
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Poll, RawWaker, RawWakerVTable, Waker};
+use crate::AnyError;
 
 /// Loads resources semi-asynchronously, so that you can render a loading screen.
 ///
@@ -15,64 +16,38 @@ use std::task::{Poll, RawWaker, RawWakerVTable, Waker};
 ///
 /// See [`examples/hello_juquad.rs:36`] for an example of how to do a loading screen while waiting
 /// for this to load.
-pub struct ResourceLoader<T> {
-    resources_bytes: &'static [&'static [u8]], // TODO: if I make these non-static, it doesn't compile because the struct must outlive the in_progress pin ???
+pub struct ResourceLoader<'a, T, E, F, Fut>
+where
+    E: Into<AnyError>,
+    F: Fn(&'a [u8]) -> Fut,
+    Fut: Future<Output = Result<T, E>> + 'a,
+{
+    resources_bytes: &'a [&'a [u8]],
     resources: Vec<T>,
-    in_progress: Option<Pin<Box<dyn Future<Output = Result<T, FileError>>>>>,
-    load_func: fn(&[u8]) -> Pin<Box<dyn Future<Output = Result<T, FileError>> + '_>>,
+    in_progress: Option<Pin<Box<Fut>>>,
+    load_func: F,
 }
 
 pub struct Progress {
     pub loaded: usize,
     pub total_to_load: usize,
 }
-//
-// fn pinned_load_texture(
-//     path: &str,
-// ) -> Pin<Box<dyn Future<Output = Result<Texture2D, FileError>> + '_>> {
-//     Box::pin(load_texture(path))
-// }
-// fn pinned_load_image(path: &str) -> Pin<Box<dyn Future<Output = Result<Image, FileError>> + '_>> {
-//     Box::pin(load_image(path))
-// }
-//
-// impl ResourceLoader<Texture2D> {
-//     pub fn new(resource_paths: &'static [&'static str]) -> Self {
-//         Self {
-//             resource_paths,
-//             resources: Vec::new(),
-//             in_progress: None,
-//             load_func: pinned_load_texture,
-//         }
-//     }
-// }
-// impl ResourceLoader<Image> {
-//     pub fn new_from_image(resource_paths: &'static [&'static str]) -> Self {
-//         Self {
-//             resource_paths,
-//             resources: Vec::new(),
-//             in_progress: None,
-//             load_func: pinned_load_image,
-//         }
-//     }
-// }
-//
-fn pinned_load_sound(bytes: &[u8]) -> Pin<Box<dyn Future<Output = Result<Sound, FileError>> + '_>> {
-    Box::pin(load_sound_from_bytes(bytes))
-}
 
-impl ResourceLoader<Sound> {
-    pub fn new(resources_bytes: &'static [&'static [u8]]) -> Self {
+impl<'a, T, E, F, Fut> ResourceLoader<'a, T, E, F, Fut>
+where
+    E: Into<AnyError>,
+    F: Fn(&'a [u8]) -> Fut,
+    Fut: Future<Output = Result<T, E>> + 'a,
+{
+    pub fn new(resources_bytes: &'a [&'a [u8]], load_func: F) -> Self {
         Self {
             resources_bytes,
             resources: Vec::new(),
             in_progress: None,
-            load_func: pinned_load_sound,
+            load_func,
         }
     }
-}
 
-impl<T: 'static> ResourceLoader<T> {
     pub fn get_progress(&self) -> Progress {
         Progress {
             loaded: self.resources.len(),
@@ -80,48 +55,44 @@ impl<T: 'static> ResourceLoader<T> {
         }
     }
 
-    /// returns Ok(None) until all resources are loaded, and then returns Ok(Some(resources))
-    /// returns Err() if a file couldn't be read for any reason
-    pub fn get_resources(&mut self) -> Result<Option<Vec<T>>, FileError> {
+    /// Ok(None) until all are loaded; Ok(Some(vec)) when done; Err on load error.
+    pub fn get_resources(&mut self) -> Result<Option<Vec<T>>, E> {
         if self.resources.len() < self.resources_bytes.len() {
-            // more resources to load
-            let next_unloaded_index = self.resources.len();
+            let i = self.resources.len();
+
             if let Some(in_progress) = &mut self.in_progress {
-                // the loading of some resource was started
-                match resume(in_progress) {
-                    Some(resource_res) => {
-                        // the resource finished loading
-                        let resource = resource_res?;
-                        self.resources.push(resource);
-                        self.in_progress = None;
-                    }
-                    None => {
-                        // the resource is still loading
-                    }
+                // Pin<Box<Fut>> -> Pin<&mut Fut>
+                if let Some(res) = resume(in_progress.as_mut()) {
+                    let resource = res?;
+                    self.resources.push(resource);
+                    self.in_progress = None;
                 }
             } else {
-                // no resource is loading
-                let resource_fut = (self.load_func)(&self.resources_bytes[next_unloaded_index]);
-                let resource_pin = Box::pin(resource_fut);
-                self.in_progress = Some(resource_pin);
+                // start next load
+                let fut = (self.load_func)(self.resources_bytes[i]);
+                self.in_progress = Some(Box::pin(fut));
             }
+
             Ok(None)
         } else {
-            // finished loading resources
-            let mut resources = Vec::new();
-            std::mem::swap(&mut resources, &mut self.resources);
-            Ok(Some(resources))
+            let mut out = Vec::new();
+            std::mem::swap(&mut out, &mut self.resources);
+            Ok(Some(out))
         }
     }
 }
 
 // resume() and waker() taken from macroquad::exec. I don't understand why they are private
+// I only made them generic over Fut
 
 /// returns Some(T) if future is done, None if it would block
-fn resume<T>(future: &mut Pin<Box<dyn Future<Output = T>>>) -> Option<T> {
+fn resume<Fut>(mut future: Pin<&mut Fut>) -> Option<Fut::Output>
+where
+    Fut: Future,
+{
     let waker = waker();
     let mut futures_context = std::task::Context::from_waker(&waker);
-    match future.as_mut().poll(&mut futures_context) {
+    match Future::poll(future.as_mut(), &mut futures_context) {
         Poll::Ready(v) => Some(v),
         Poll::Pending => None,
     }

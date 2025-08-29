@@ -10,7 +10,7 @@ use crate::{
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::text::TextRect;
-use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams, Sound};
+use macroquad::audio::{load_sound_from_bytes, play_sound, play_sound_once, PlaySoundParams, Sound};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
 use macroquad::input::{
@@ -39,13 +39,14 @@ pub struct State {
     previous_satisfaction: Option<Satisfaction>,
     success_sound_played: bool,
 }
+
 pub async fn play() -> Result<(), AnyError> {
-    let mut sound_loader = ResourceLoader::<Sound>::new(&[
+    let mut sound_loader = ResourceLoader::new(&[
         include_bytes!("../../assets/sound/incorrect.wav"),
         include_bytes!("../../assets/sound/satisfied.wav"),
         include_bytes!("../../assets/sound/background.ogg"),
         include_bytes!("../../assets/sound/background_intro.ogg"),
-    ]);
+    ], load_sound_from_bytes);
     let mut sound_incorrect = None;
     let mut sound_correct = None;
     let mut music_background = None;

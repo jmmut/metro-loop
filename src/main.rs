@@ -24,18 +24,9 @@ use metro_loop::{
 async fn main() -> Result<(), AnyError> {
     let seed = now() as u64;
     srand(seed);
-    // let mut audio_ctx = AudioContext::new();
-    // let sound = quad_snd::Sound::load(&audio_ctx, include_bytes!("../assets/sound/background_intro.ogg"));
 
-    // let sound_incorrect = load_sound_from_bytes(include_bytes!("../assets/sound/incorrect.wav"));
-    // let sound_correct = load_sound_from_bytes(include_bytes!("../assets/sound/satisfied.wav"));
-    // let music_background = load_sound_from_bytes(include_bytes!("../assets/sound/background.ogg"));
-    // let music_background_intro = load_sound_from_bytes(include_bytes!("../assets/sound/background_intro.ogg"));
-    // let sound_incorrect = sound_incorrect.?;
-    // let sound_correct = sound_correct.await?;
-    // let music_background = music_background.await?;
-    // let music_background_intro = music_background_intro.await?;
-
+    scenes::loading_screen().await?;
+    scenes::main_menu().await?;
     scenes::play().await?;
     Ok(())
 }

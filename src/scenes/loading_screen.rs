@@ -1,6 +1,5 @@
-use macroquad::audio::{load_sound_from_bytes, Sound};
 use crate::AnyError;
-use crate::resource_loader::ResourceLoader;
+use macroquad::audio::{load_sound_from_bytes, Sound};
 
 pub async fn loading_screen() -> Result<(), AnyError> {
     // let mut sound_loader = ResourceLoader::new(&[

@@ -1,16 +1,18 @@
 use crate::render::{
     new_button, render_button, render_cells, render_constraints, render_grid, render_satisfaction,
 };
-use crate::resource_loader::ResourceLoader;
 use crate::{
     grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT,
     CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE, GRID_PAD, MAX_CELLS, NUM_COLUMNS,
     NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
+use juquad::resource_loader::ResourceLoader;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::text::TextRect;
-use macroquad::audio::{load_sound_from_bytes, play_sound, play_sound_once, PlaySoundParams, Sound};
+use macroquad::audio::{
+    load_sound_from_bytes, play_sound, play_sound_once, PlaySoundParams, Sound,
+};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
 use macroquad::input::{
@@ -41,12 +43,15 @@ pub struct State {
 }
 
 pub async fn play() -> Result<(), AnyError> {
-    let mut sound_loader = ResourceLoader::new(&[
-        include_bytes!("../../assets/sound/incorrect.wav"),
-        include_bytes!("../../assets/sound/satisfied.wav"),
-        include_bytes!("../../assets/sound/background.ogg"),
-        include_bytes!("../../assets/sound/background_intro.ogg"),
-    ], load_sound_from_bytes);
+    let mut sound_loader = ResourceLoader::new(
+        load_sound_from_bytes,
+        &[
+            include_bytes!("../../assets/sound/incorrect.wav"),
+            include_bytes!("../../assets/sound/satisfied.wav"),
+            include_bytes!("../../assets/sound/background.ogg"),
+            include_bytes!("../../assets/sound/background_intro.ogg"),
+        ],
+    );
     let mut sound_incorrect = None;
     let mut sound_correct = None;
     let mut music_background = None;

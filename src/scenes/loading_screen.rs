@@ -9,7 +9,13 @@ use macroquad::color::Color;
 use macroquad::math::Rect;
 use macroquad::prelude::{clear_background, next_frame, screen_height, screen_width, Vec2};
 
-pub async fn loading_screen() -> Result<Sounds, AnyError> {
+pub struct Resources {
+    pub sounds: Sounds,
+    // font
+    // textures
+}
+
+pub async fn loading_screen() -> Result<Resources, AnyError> {
     let mut sound_loader = ResourceLoader::<_, Sound, _, _, _>::new(
         load_sound_from_bytes,
         &[
@@ -21,9 +27,7 @@ pub async fn loading_screen() -> Result<Sounds, AnyError> {
     );
 
     let mut resources = None;
-    let mut frame = 0;
     loop {
-        frame += 1;
         let (sw, sh) = (screen_width(), screen_height());
         let panel = Rect::new(GRID_PAD, GRID_PAD, sw - GRID_PAD * 2.0, sh - GRID_PAD * 2.0);
         match resources {
@@ -46,7 +50,9 @@ pub async fn loading_screen() -> Result<Sounds, AnyError> {
                 }
             }
             Some(sounds) => {
-                return Ok(Sounds::new(sounds));
+                return Ok(Resources {
+                    sounds: Sounds::new(sounds),
+                });
                 // resources = None; // to see the loading screen in loop
             }
         }

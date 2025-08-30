@@ -1,18 +1,20 @@
+use crate::logic::constraints::{
+    choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction,
+};
+use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use crate::render::{
     new_button, new_text, render_button, render_cells, render_constraints, render_grid,
     render_satisfaction, render_text,
 };
+use crate::scenes::loading_screen::Resources;
 use crate::{
     grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT,
-    CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE, GRID_PAD, MAX_CELLS, NUM_COLUMNS,
-    NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
+    CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS,
+    PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
-use juquad::resource_loader::ResourceLoader;
 use juquad::widgets::anchor::Anchor;
-use macroquad::audio::{
-    load_sound_from_bytes, play_sound, play_sound_once, PlaySoundParams, Sound,
-};
+use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
 use macroquad::input::{
@@ -27,11 +29,6 @@ use macroquad::prelude::{
     DrawTextureParams,
 };
 use macroquad::rand::rand;
-// use quad_snd::AudioContext;
-use crate::logic::constraints::{
-    choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction,
-};
-use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 
 pub struct State {
     solution: Grid,
@@ -42,21 +39,7 @@ pub struct State {
     success_sound_played: bool,
 }
 
-pub async fn play() -> Result<(), AnyError> {
-    let mut sound_loader = ResourceLoader::<_, Sound, _, _, _>::new(
-        load_sound_from_bytes,
-        &[
-            include_bytes!("../../assets/sound/incorrect.wav"),
-            include_bytes!("../../assets/sound/satisfied.wav"),
-            include_bytes!("../../assets/sound/background.ogg"),
-            include_bytes!("../../assets/sound/background_intro.ogg"),
-        ],
-    );
-    let mut _sound_incorrect = None;
-    let mut sound_correct = None;
-    let mut music_background = None;
-    let mut music_background_intro = None;
-
+pub async fn play(resources: &Resources) -> Result<(), AnyError> {
     let mut state = reset(VISUALIZE).await;
     let (sw, sh) = (screen_width(), screen_height());
     let texture_params = DrawTextureParams {
@@ -84,36 +67,22 @@ pub async fn play() -> Result<(), AnyError> {
     // play_sound(music_background, PlaySoundParams { looped: true, volume: 0.5 });
     let mut start_ts = None;
     loop {
-        if sound_correct.is_none() {
-            println!("attempt to load resources");
-            if let Some(sounds) = sound_loader.get_resources()? {
-                println!("finished loading resources");
-                _sound_incorrect = Some(sounds[0]);
-                sound_correct = Some(sounds[1]);
-                music_background = Some(sounds[2]);
-                music_background_intro = Some(sounds[3]);
-            }
-        }
         if should_play_intro {
-            if let Some(music_intro) = music_background_intro.clone() {
-                play_sound_once(music_intro);
-                start_ts = Some(now());
-                should_play_intro = false;
-            }
+            play_sound_once(resources.sounds.music_background_intro);
+            start_ts = Some(now());
+            should_play_intro = false;
         }
-        if let Some(music_background) = music_background.clone() {
-            if let Some(start_ts) = &start_ts {
-                if now() - start_ts > 6.0 {
-                    if should_play_background {
-                        should_play_background = false;
-                        play_sound(
-                            music_background,
-                            PlaySoundParams {
-                                looped: true,
-                                volume: 0.75,
-                            },
-                        );
-                    }
+        if let Some(start_ts) = &start_ts {
+            if now() - start_ts > 6.0 {
+                if should_play_background {
+                    should_play_background = false;
+                    play_sound(
+                        resources.sounds.music_background,
+                        PlaySoundParams {
+                            looped: true,
+                            volume: 0.75,
+                        },
+                    );
                 }
             }
         }

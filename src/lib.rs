@@ -28,6 +28,7 @@ pub const VISUALIZE: bool = false;
 pub const STEP_GENERATION: bool = false;
 pub const SHOW_FPS: bool = false;
 
+pub const TRANSPARENT: Color = Color::new(0.0, 0.0, 0.0, 0.0);
 pub const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 pub const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
 pub const PANEL_BACKGROUND: Color = LIGHTGRAY;

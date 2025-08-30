@@ -5,6 +5,8 @@ pub mod logic {
     pub mod rails;
 }
 pub mod render;
+pub mod sound;
+
 pub mod scenes {
     pub mod main_menu;
     pub use main_menu::main_menu;

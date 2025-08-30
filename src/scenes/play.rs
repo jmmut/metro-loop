@@ -1,5 +1,6 @@
 use crate::render::{
-    new_button, render_button, render_cells, render_constraints, render_grid, render_satisfaction,
+    new_button, new_text, render_button, render_cells, render_constraints, render_grid,
+    render_satisfaction, render_text,
 };
 use crate::{
     grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT,
@@ -9,7 +10,6 @@ use crate::{
 use juquad::draw::draw_rect;
 use juquad::resource_loader::ResourceLoader;
 use juquad::widgets::anchor::Anchor;
-use juquad::widgets::text::TextRect;
 use macroquad::audio::{
     load_sound_from_bytes, play_sound, play_sound_once, PlaySoundParams, Sound,
 };
@@ -255,12 +255,14 @@ pub async fn play() -> Result<(), AnyError> {
             render_button(&show);
         }
         if SHOW_FPS {
-            TextRect::new(
-                &format!("FPS: {}", get_fps()),
-                Anchor::top_left(0.0, 0.0),
-                FONT_SIZE,
-            )
-            .render_default(&STYLE.pressed);
+            render_text(
+                &new_text(
+                    &format!("FPS: {}", get_fps()),
+                    Anchor::top_left(0.0, 0.0),
+                    1.0,
+                ),
+                &STYLE.pressed,
+            );
         }
         next_frame().await
     }

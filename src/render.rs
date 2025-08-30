@@ -20,14 +20,12 @@ pub fn render_satisfaction(
     let solved = satisfaction.success();
     let mut rect = if solved {
         let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
-        let text = TextRect::new(&"SOLVED!", anchor, FONT_SIZE * 2.0);
-        text.render_default(&STYLE.at_rest);
+        let text = new_text(&"SOLVED!", anchor, 2.0);
+        render_text(&text, &STYLE.at_rest);
         text.rect()
     } else {
-        let font_size = FONT_SIZE * 1.25;
-        let x = panel.x + font_size * 1.5;
-        let y = previous_rect.bottom() + 30.0;
-        let anchor = Anchor::top_left(x, y);
+        let font_size = FONT_SIZE * 1.0;
+        let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
         let labels = LabelGroup {
             font_size,
             anchor,
@@ -40,16 +38,15 @@ pub fn render_satisfaction(
             &format!("{} unreachable rails", satisfaction.unreachable_rails),
         ]);
         let mut rect = Rect::default();
-        for mut text_rect in text_rects {
+        for text_rect in text_rects {
             let icon_size = text_rect.rect().h;
-            text_rect.rect_mut().x += icon_size;
             let anchor = Anchor::top_right_v(text_rect.rect().point());
             (if text_rect.text.chars().next().unwrap() == '0' {
                 render_tick
             } else {
                 render_cross
             })(anchor, icon_size);
-            text_rect.render_default(&STYLE.at_rest);
+            render_text(&text_rect, &STYLE.at_rest);
             rect = text_rect.rect()
         }
         rect
@@ -377,6 +374,14 @@ pub fn new_button(text: &str, anchor: Anchor) -> Button {
 }
 pub fn render_button(button: &Button) {
     button.render_default(&STYLE);
+}
+
+pub fn new_text(text: &str, anchor: Anchor, size_coef: f32) -> TextRect {
+    TextRect::new(text, anchor, FONT_SIZE * size_coef)
+}
+pub fn render_text(text_rect: &TextRect, style: &StateStyle) {
+    draw_rect(text_rect.rect(), style.bg_color);
+    text_rect.render_default(style)
 }
 
 pub fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, border: Color) {

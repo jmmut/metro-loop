@@ -43,7 +43,7 @@ pub struct State {
 }
 
 pub async fn play() -> Result<(), AnyError> {
-    let mut sound_loader = ResourceLoader::new(
+    let mut sound_loader = ResourceLoader::<_, Sound, _, _, _>::new(
         load_sound_from_bytes,
         &[
             include_bytes!("../../assets/sound/incorrect.wav"),
@@ -52,7 +52,7 @@ pub async fn play() -> Result<(), AnyError> {
             include_bytes!("../../assets/sound/background_intro.ogg"),
         ],
     );
-    let mut sound_incorrect = None;
+    let mut _sound_incorrect = None;
     let mut sound_correct = None;
     let mut music_background = None;
     let mut music_background_intro = None;
@@ -76,7 +76,7 @@ pub async fn play() -> Result<(), AnyError> {
         grid_height(),
     );
     let mut right_clicked = None;
-    let mut should_play_sound = false;
+    let mut _should_play_sound = false;
     let mut should_play_intro = true;
     let mut should_play_background = true;
     // play_sound_once(music_background_intro);
@@ -88,26 +88,26 @@ pub async fn play() -> Result<(), AnyError> {
             println!("attempt to load resources");
             if let Some(sounds) = sound_loader.get_resources()? {
                 println!("finished loading resources");
-                sound_incorrect = Some(sounds[0]);
+                _sound_incorrect = Some(sounds[0]);
                 sound_correct = Some(sounds[1]);
                 music_background = Some(sounds[2]);
                 music_background_intro = Some(sounds[3]);
             }
         }
         if should_play_intro {
-            if let Some(music_intro) = &music_background_intro {
-                play_sound_once(music_intro.clone());
+            if let Some(music_intro) = music_background_intro.clone() {
+                play_sound_once(music_intro);
                 start_ts = Some(now());
                 should_play_intro = false;
             }
         }
-        if let Some(music_background) = &music_background {
+        if let Some(music_background) = music_background.clone() {
             if let Some(start_ts) = &start_ts {
                 if now() - start_ts > 6.0 {
                     if should_play_background {
                         should_play_background = false;
                         play_sound(
-                            music_background.clone(),
+                            music_background,
                             PlaySoundParams {
                                 looped: true,
                                 volume: 0.75,
@@ -183,7 +183,7 @@ pub async fn play() -> Result<(), AnyError> {
                         let cell = get_cell_mut(&mut state.grid, i_row, i_column);
                         *cell = !*cell;
                         state.grid.recalculate_rails();
-                        should_play_sound = true;
+                        _should_play_sound = true;
                         refresh_render = true;
                     }
                 }

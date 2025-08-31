@@ -17,10 +17,7 @@ use macroquad::input::{
 use macroquad::math::{ivec2, vec2, Rect, Vec2};
 use macroquad::miniquad::date::now;
 use macroquad::miniquad::FilterMode;
-use macroquad::prelude::{
-    clear_background, draw_texture_ex, get_fps, next_frame, screen_height, screen_width,
-    DrawTextureParams,
-};
+use macroquad::prelude::{clear_background, draw_texture, draw_texture_ex, get_fps, next_frame, screen_height, screen_width, DrawTextureParams};
 use macroquad::rand::rand;
 
 pub struct State {
@@ -35,11 +32,7 @@ pub struct State {
 pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let mut state = reset(VISUALIZE).await;
     let (mut sw, mut sh) = (screen_width(), screen_height());
-    let texture_params = DrawTextureParams {
-        flip_y: true,
-        ..Default::default()
-    };
-    let render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
+    let mut render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
     render_target.texture.set_filter(FilterMode::Nearest);
 
     let mut refresh_render = true;
@@ -63,9 +56,10 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
         let (new_sw, new_sh) = (screen_width(), screen_height());
         if new_sw != sw || new_sh != sh {
             refresh_render = true;
-            theme.layout = new_layout(new_sw, new_sh);
             sw = new_sw;
             sh = new_sh;
+            theme.layout = new_layout(sw, sh);
+            render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
         }
         if should_play_intro {
             play_sound_once(theme.resources.sounds.music_background_intro);
@@ -164,7 +158,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             refresh_render = false;
             set_camera(&Camera2D {
                 target: vec2(sw * 0.5, sh * 0.5),
-                zoom: vec2(1.0 / sw * 2.0, -1.0 / sh * 2.0),
+                zoom: vec2(1.0 / sw * 2.0, 1.0 / sh * 2.0),
                 render_target: Some(render_target.clone()),
                 ..Default::default()
             });
@@ -215,7 +209,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
         } else {
             render_cells(&state.grid, &hovered_cell);
         }
-        draw_texture_ex(render_target.texture, 0., 0., WHITE, texture_params.clone());
+        draw_texture(render_target.texture, 0., 0., WHITE);
         render_button(&reset_button);
 
         if let Some(show) = show_solution_button.as_mut() {

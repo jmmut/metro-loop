@@ -243,10 +243,10 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
         Blockade,
     }
     for constraint in &constraints.rails {
-        let (color, color_border) = if matches_constraint_and_reachable(grid, constraint) {
-            (SUCCESS, SUCCESS_DARK)
+        let (success, color, color_border) = if matches_constraint_and_reachable(grid, constraint) {
+            (true, SUCCESS, SUCCESS_DARK)
         } else {
-            (FAILING, FAILING_DARK)
+            (false, FAILING, FAILING_DARK)
         };
 
         let (row, column, direction, constraint_render) = match *constraint {
@@ -288,25 +288,30 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                 let tip = mid + diff * small_triangle_half_width;
                 let outer_tip = mid + diff * triangle_half_width;
 
+                let daltonic_distinction = if success { color } else { color_border };
+
                 draw_triangle(outer_left, left, outer_tip, color);
-                draw_triangle(left, tip, outer_tip, color);
-                draw_triangle(right, outer_tip, tip, color);
+                draw_triangle(left, tip, outer_tip, daltonic_distinction);
+                draw_triangle(right, outer_tip, tip, daltonic_distinction);
                 draw_triangle(right, outer_right, outer_tip, color);
+
                 draw_lines(
                     &[tip, left, outer_left, outer_tip, outer_right, right, tip],
                     color_border,
                 );
             }
             Constraint::Blockade => {
-                let forward = diff * thickness * 0.5;
-                let leftward = to_left * small_triangle_half_width;
-                let a = mid + forward + leftward;
-                let b = mid + forward - leftward;
-                let c = mid - forward + leftward;
-                let d = mid - forward - leftward;
-                draw_triangle(a, c, b, color);
-                draw_triangle(b, c, d, color);
-                draw_lines(&[a, b, d, c, a], color_border);
+                draw_blockade(
+                    theme,
+                    small_triangle_half_width,
+                    thickness,
+                    success,
+                    color,
+                    color_border,
+                    mid,
+                    diff,
+                    to_left,
+                );
             }
         }
     }
@@ -315,12 +320,19 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
             let user_constraint = grid.fixed_rails.get_horiz(row, column);
             if user_constraint {
                 let direction = vec2(1.0, 0.0);
+                let constraint = RailCoord::Horizontal {
+                    row,
+                    column,
+                    direction: Horizontal::Center,
+                };
                 render_user_rail_constraint(
                     small_triangle_half_width,
                     thickness,
                     row,
                     column,
                     direction,
+                    constraint,
+                    grid,
                     theme,
                 );
             }
@@ -331,16 +343,59 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
             let user_constraint = grid.fixed_rails.get_vert(row, column);
             if user_constraint {
                 let direction = vec2(0.0, 1.0);
+                let constraint = RailCoord::Vertical {
+                    row,
+                    column,
+                    direction: Vertical::Center,
+                };
                 render_user_rail_constraint(
                     small_triangle_half_width,
                     thickness,
                     row,
                     column,
                     direction,
+                    constraint,
+                    grid,
                     theme,
                 );
             }
         }
+    }
+}
+
+fn draw_blockade(
+    theme: &Theme,
+    small_triangle_half_width: f32,
+    thickness: f32,
+    success: bool,
+    color: Color,
+    color_border: Color,
+    mid: Vec2,
+    diff: Vec2,
+    to_left: Vec2,
+) {
+    let forward = diff * thickness * 0.5;
+    let leftward = to_left * small_triangle_half_width;
+    let a = mid + forward + leftward;
+    let b = mid + forward - leftward;
+    let c = mid - forward + leftward;
+    let d = mid - forward - leftward;
+    draw_triangle(a, c, b, color);
+    draw_triangle(b, c, d, color);
+
+    // draw_lines(&[a, b, d, c, a], color_border);
+    draw_lines(&[d, c], color_border);
+    draw_lines(&[a, b], color_border);
+
+    if !success {
+        let forward = diff * thickness * 0.5;
+        let leftward = to_left * theme.cell_pad() * 0.75;
+        let a = mid + forward + leftward;
+        let b = mid + forward - leftward;
+        let c = mid - forward + leftward;
+        let d = mid - forward - leftward;
+        draw_triangle(a, c, b, color_border);
+        draw_triangle(b, c, d, color_border);
     }
 }
 
@@ -350,6 +405,8 @@ fn render_user_rail_constraint(
     row: i32,
     column: i32,
     direction: Vec2,
+    constraint: RailCoord,
+    grid: &Grid,
     theme: &Theme,
 ) {
     let start = top_left_rail_intersection(row, column, theme);
@@ -357,16 +414,18 @@ fn render_user_rail_constraint(
     let mid = (start + end) * 0.5;
     let diff = (end - start).normalize();
     let to_left = vec2(diff.y, -diff.x);
-
-    let forward = diff * thickness * 0.5;
-    let leftward = to_left * small_triangle_half_width;
-    let a = mid + forward + leftward;
-    let b = mid + forward - leftward;
-    let c = mid - forward + leftward;
-    let d = mid - forward - leftward;
-    draw_triangle(a, c, b, RAIL);
-    draw_triangle(b, c, d, RAIL);
-    draw_lines(&[a, b, d, c, a], TRIANGLE_BORDER);
+    let success = matches_constraint_and_reachable(grid, &constraint);
+    draw_blockade(
+        theme,
+        small_triangle_half_width,
+        thickness,
+        success,
+        RAIL,
+        TRIANGLE_BORDER,
+        mid,
+        diff,
+        to_left,
+    );
 }
 
 fn top_left_rail_intersection(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 {

@@ -42,8 +42,10 @@ pub const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
 pub const PANEL_BACKGROUND: Color = LIGHTGRAY;
 
 pub const FAILING: Color = ORANGE;
+pub const FAILING_TRANSPARENT: Color = color_average_weight(FAILING, TRANSPARENT, 0.2);
 pub const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
 pub const FAILING_DARK: Color = color_average(FAILING, BLACK);
+pub const FAILING_TRANSPARENT_DARK: Color = color_average_weight(FAILING_DARK, TRANSPARENT, 0.2);
 pub const SUCCESS_DARK: Color = color_average(SUCCESS, BLACK);
 
 pub const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue

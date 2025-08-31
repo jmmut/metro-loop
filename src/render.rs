@@ -10,6 +10,11 @@ use juquad::widgets::Widget;
 use macroquad::math::f32;
 use macroquad::prelude::*;
 
+pub enum RenderRail {
+    Triangle{mid: Vec2, direction: Vec2},
+    Disconnected,
+    None,
+}
 pub fn render_satisfaction(
     satisfaction: &Satisfaction,
     previous_rect: Rect,
@@ -246,7 +251,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
         let (success, color, color_border) = if matches_constraint_and_reachable(grid, constraint) {
             (true, SUCCESS, SUCCESS_DARK)
         } else {
-            (false, FAILING, FAILING_DARK)
+            (false, FAILING_TRANSPARENT, FAILING_TRANSPARENT_DARK)
         };
 
         let (row, column, direction, constraint_render) = match *constraint {
@@ -374,29 +379,30 @@ fn draw_blockade(
     diff: Vec2,
     to_left: Vec2,
 ) {
-    let forward = diff * thickness * 0.5;
-    let leftward = to_left * small_triangle_half_width;
+    let forward = diff * small_triangle_half_width * 1.0;
+    let leftward = to_left * small_triangle_half_width * 1.0;
     let a = mid + forward + leftward;
     let b = mid + forward - leftward;
     let c = mid - forward + leftward;
     let d = mid - forward - leftward;
-    draw_triangle(a, c, b, color);
-    draw_triangle(b, c, d, color);
-
+    // if success {
+        draw_triangle(a, c, b, color);
+        draw_triangle(b, c, d, color);
+    // }
     // draw_lines(&[a, b, d, c, a], color_border);
     draw_lines(&[d, c], color_border);
     draw_lines(&[a, b], color_border);
 
-    if !success {
-        let forward = diff * thickness * 0.5;
-        let leftward = to_left * theme.cell_pad() * 0.75;
-        let a = mid + forward + leftward;
-        let b = mid + forward - leftward;
-        let c = mid - forward + leftward;
-        let d = mid - forward - leftward;
-        draw_triangle(a, c, b, color_border);
-        draw_triangle(b, c, d, color_border);
-    }
+    // if !success {
+    //     let forward = diff * thickness * 0.5;
+    //     let leftward = to_left * theme.cell_pad() * 0.75;
+    //     let a = mid + forward + leftward;
+    //     let b = mid + forward - leftward;
+    //     let c = mid - forward + leftward;
+    //     let d = mid - forward - leftward;
+    //     draw_triangle(a, c, b, color_border);
+    //     draw_triangle(b, c, d, color_border);
+    // }
 }
 
 fn render_user_rail_constraint(

@@ -1,3 +1,4 @@
+use crate::level_history::generate_procedural;
 use crate::levels::{Level, Levels};
 use crate::logic::constraints::{
     choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction,
@@ -28,7 +29,6 @@ use macroquad::prelude::{
     clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width,
 };
 use macroquad::rand::rand;
-use crate::level_history::generate_procedural;
 
 pub struct State {
     solution: Grid,
@@ -40,7 +40,12 @@ pub struct State {
 }
 
 pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
-    let mut state = reset(VISUALIZE, theme.resources.level_history.next(), theme).await;
+    let mut state = reset(
+        VISUALIZE,
+        theme.resources.level_history.get_current(),
+        theme,
+    )
+    .await;
     let (mut sw, mut sh) = (screen_width(), screen_height());
     let mut render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
     render_target.texture.set_filter(FilterMode::Nearest);
@@ -102,7 +107,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             &theme,
         );
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
-            let level = theme.resources.level_history.next();
+            let level = theme.resources.level_history.next().get_current();
             state = reset(VISUALIZE, level, theme).await;
             refresh_render = true;
         }
@@ -276,11 +281,20 @@ fn change_font_ui(button_panel: Rect, theme: &mut Theme, refresh_render: &mut bo
 }
 
 async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> State {
-    let (grid, constraints, solution) = if let Some(Level { initial_grid, constraints, solution }) = level {
+    let (grid, constraints, solution) = if let Some(Level {
+        initial_grid,
+        constraints,
+        solution,
+    }) = level
+    {
         (initial_grid, constraints, solution)
     } else {
-        let Level { initial_grid, constraints, solution } = generate_procedural(visualize, theme).await;
-        
+        let Level {
+            initial_grid,
+            constraints,
+            solution,
+        } = generate_procedural(visualize, theme).await;
+
         (initial_grid, constraints, solution)
     };
     theme.layout = Layout {
@@ -288,7 +302,7 @@ async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> Stat
         default_columns: grid.columns(),
         ..theme.layout
     }
-        .readjust();
+    .readjust();
     let show_solution = DEFAULT_SHOW_SOLUTION;
     let previous_satisfaction = None;
     let success_sound_played = false;

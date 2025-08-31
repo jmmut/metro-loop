@@ -8,7 +8,8 @@ use std::fmt::{Display, Formatter};
 // pub const raw_levels() -> Result<Levels, AnyError> {
 pub const RAW_LEVELS: RawLevels = RawLevels {
     sections: &[RawSection {
-        levels: &[r#". . . . .
+        levels: &[
+            r#". . . . .
          
 . x x x .
          
@@ -21,7 +22,36 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . . . . .
-"#],
+"#,
+            r#". . . . .
+         
+. x x x .
+         
+. x . x .
+    >    
+. x % x .
+         
+. x x *.
+      >  
+. x x x .
+         
+. . . . .
+"#,
+            r#". . . . .
+         
+. *=* x .
+  "      
+. * . x .
+  " > "  
+. O=% x .
+         
+. x x x .
+         
+. x x x .
+         
+. . . . .
+"#,
+        ],
     }],
 };
 pub struct Levels {

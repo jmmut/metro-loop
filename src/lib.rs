@@ -26,6 +26,9 @@ use juquad::widgets::anchor::Vertical;
 use juquad::widgets::{StateStyle, Style};
 use macroquad::prelude::*;
 
+pub const STARTING_SECTION: i32 = 0;
+pub const STARTING_LEVEL: i32 = 2;
+
 pub const DEFAULT_SHOW_SOLUTION: bool = false;
 pub const SEE_SOLUTION_DURING_GAME: bool = true;
 pub const VISUALIZE: bool = false;

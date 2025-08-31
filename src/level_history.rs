@@ -1,9 +1,9 @@
 use crate::levels::{Level, Levels};
-use crate::{AnyError, VISUALIZE};
 use crate::logic::constraints::{choose_constraints, count_unreachable_rails};
 use crate::logic::grid::Grid;
 use crate::scenes::play::generate_grid;
 use crate::theme::Theme;
+use crate::{AnyError, STARTING_LEVEL, STARTING_SECTION, VISUALIZE};
 
 pub struct LevelHistory {
     pub current: GameTrack,
@@ -27,14 +27,27 @@ impl LevelHistory {
         }
         Ok(Self {
             current: GameTrack::Campaign {
-                section: 0,
-                level: -1,
+                section: STARTING_SECTION,
+                level: STARTING_LEVEL,
             },
             levels,
             solved,
         })
     }
-    pub fn next(&mut self) -> Option<Level> {
+    pub fn get_current(&self) -> Option<Level> {
+        match self.current {
+            GameTrack::Campaign { section, level } => Some(
+                self.levels
+                    .sections
+                    .get(section as usize)?
+                    .levels
+                    .get(level as usize)?
+                    .clone(),
+            ),
+            GameTrack::Procedural => None,
+        }
+    }
+    pub fn next(&mut self) -> &Self {
         match self.current {
             GameTrack::Campaign { section, level } => {
                 for i_section in (section as usize)..self.levels.sections.len() {
@@ -46,15 +59,15 @@ impl LevelHistory {
                                 section: i_section as i32,
                                 level: i_level as i32,
                             };
-                            return Some(self.levels.sections[i_section].levels[i_level].clone())
+                            return self;
                         }
                     }
                 }
                 self.current = GameTrack::Procedural;
-                None
             }
-            GameTrack::Procedural => None,
+            GameTrack::Procedural => {}
         }
+        self
     }
     pub fn solved(&mut self) {
         match self.current {
@@ -64,7 +77,6 @@ impl LevelHistory {
             GameTrack::Procedural => {}
         }
     }
-
 }
 
 pub async fn generate_procedural(visualize: bool, theme: &Theme) -> Level {
@@ -78,7 +90,11 @@ pub async fn generate_procedural(visualize: bool, theme: &Theme) -> Level {
     let mut grid = Grid::new(theme.default_rows(), theme.default_columns(), solution.root);
     grid.recalculate_rails();
     let constraints = choose_constraints(&solution);
-    Level{ initial_grid: grid, constraints, solution}
+    Level {
+        initial_grid: grid,
+        constraints,
+        solution,
+    }
 }
 
 impl GameTrack {

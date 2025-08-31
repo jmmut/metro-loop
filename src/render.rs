@@ -1,12 +1,11 @@
 use crate::logic::constraints::{matches_constraint_and_reachable, Satisfaction};
 use crate::logic::grid::get_cell;
 use crate::logic::intersection::{Crossing, Intersection};
-use crate::theme::{new_button, new_text, render_text, Theme};
+use crate::theme::{new_button, new_text, new_text_group, render_text, Theme};
 use crate::*;
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
-use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::Widget;
 use macroquad::math::f32;
 use macroquad::prelude::*;
@@ -25,14 +24,8 @@ pub fn render_satisfaction(
         render_text(&text, &STYLE.at_rest);
         text.rect()
     } else {
-        let font_size = theme.font_size() * 1.0;
         let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
-        let labels = LabelGroup {
-            font_size,
-            anchor,
-            alignment: Horizontal::Left,
-            font: Some(theme.resources.font),
-        };
+        let labels = new_text_group(anchor, theme);
         let text_rects = labels.create([
             &format!("{} incorrect rails", satisfaction.failing_rails),
             &format!("{} cells to activate", satisfaction.cell_diff),

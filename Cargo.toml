@@ -8,7 +8,8 @@ edition = "2021"
 [dependencies]
 macroquad = "=0.3.24"
 #quad-snd = "=0.2.8"
-juquad = { git = "https://github.com/jmmut/juquad.git", tag = "0.11.1" }
+juquad = { git = "https://github.com/jmmut/juquad.git", tag = "0.12.1" }
+#juquad = { path = "../juquad/" }
 
 [profile.release]
 strip = true

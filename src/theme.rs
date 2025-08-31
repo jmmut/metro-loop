@@ -1,8 +1,9 @@
 use crate::scenes::loading_screen::Resources;
 use crate::{choose_scale, NUM_COLUMNS, NUM_ROWS, STYLE};
 use juquad::draw::draw_rect;
-use juquad::widgets::anchor::Anchor;
+use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
+use juquad::widgets::button_group::{ButtonGroup, Direction, LabelGroup};
 use juquad::widgets::text::TextRect;
 use juquad::widgets::StateStyle;
 use juquad::widgets::Widget;
@@ -112,6 +113,9 @@ impl Theme {
     pub fn new_button(&self, text: &str, anchor: Anchor) -> Button {
         new_button(text, anchor, self)
     }
+    pub fn new_button_from_tr(&self, text_rect: TextRect) -> Button {
+        text_rect.into()
+    }
     pub fn new_text(&self, text: &str, anchor: Anchor) -> TextRect {
         self.new_text_size(text, anchor, 1.0)
     }
@@ -122,8 +126,27 @@ impl Theme {
 
 pub fn new_button(text: &str, anchor: Anchor, theme: &Theme) -> Button {
     let text_rect = new_text(text, anchor, 1.0, theme);
-    Button::new_from_text_rect(text_rect)
+    text_rect.into()
 }
+#[allow(unused)]
+pub fn new_button_group(anchor: Anchor, theme: &Theme) -> ButtonGroup {
+    new_button_group_direction(anchor, theme, Direction::Bottom)
+}
+pub fn new_button_group_direction(
+    anchor: Anchor,
+    theme: &Theme,
+    direction: Direction,
+) -> ButtonGroup {
+    let labels = LabelGroup::new_generic(
+        theme.font_size(),
+        Some(theme.resources.font),
+        anchor,
+        Horizontal::Center,
+        direction,
+    );
+    ButtonGroup::new_with_labels(labels)
+}
+
 pub fn render_button(button: &Button) {
     button.render_default(&STYLE);
 }
@@ -155,6 +178,11 @@ fn new_text_internal(
         macroquad::prelude::measure_text,
     )
 }
+#[allow(unused)]
+pub fn new_text_group(anchor: Anchor, theme: &Theme) -> LabelGroup {
+    LabelGroup::new_with_font(theme.font_size(), Some(theme.resources.font), anchor)
+}
+
 pub fn render_text(text_rect: &TextRect, style: &StateStyle) {
     draw_rect(text_rect.rect(), style.bg_color);
     text_rect.render_default(style)

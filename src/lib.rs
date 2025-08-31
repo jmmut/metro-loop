@@ -88,7 +88,7 @@ pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
     pub const CELL_WIDTH: f32 = 50.0;
     pub const CELL_HEIGHT: f32 = 50.0;
 
-    Layout::new(choose_font_size(screen_width, screen_height, FONT_SIZE), CELL_WIDTH, CELL_HEIGHT)
+    Layout::new(screen_width, screen_height, FONT_SIZE, CELL_WIDTH, CELL_HEIGHT)
 }
 
 pub fn grid_width(theme: &Theme) -> f32 {
@@ -110,7 +110,7 @@ const fn color_average_weight(color_1: Color, color_2: Color, weight: f32) -> Co
     )
 }
 
-const fn choose_font_size(width: f32, height: f32, font_size: f32) -> f32 {
+const fn choose_scale(width: f32, height: f32, font_size: f32) -> f32 {
     let min_side = width.min(height * 16.0 / 9.0);
     font_size
         * if min_side < 1600.0 {

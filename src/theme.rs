@@ -1,5 +1,5 @@
 use crate::scenes::loading_screen::Resources;
-use crate::STYLE;
+use crate::{choose_scale, CELL_PAD, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH, GRID_PAD, NUM_COLUMNS, STYLE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
@@ -20,8 +20,21 @@ pub struct Layout {
 }
 
 impl Layout {
-    pub const fn new(font_size: f32, cell_width: f32, cell_height: f32) -> Self {
-        Self { font_size, cell_width, cell_height }
+    pub fn new(screen_width: f32, screen_height: f32, mut font_size: f32, mut cell_width: f32, mut cell_height: f32) -> Self {
+        let update_scale = |value: &mut f32| {
+            *value = choose_scale(screen_width, screen_height, *value);
+        };
+        update_scale(&mut font_size);
+        let cells_per_screen_height = (DEFAULT_WINDOW_HEIGHT as f32 - GRID_PAD * 2.0 + CELL_PAD) / (cell_height+CELL_PAD);
+        let cell_height_2 = (screen_height - GRID_PAD * 2.0 + CELL_PAD) / cells_per_screen_height - CELL_PAD;
+        let cell_width_2 = cell_height_2;
+        let panel_width = DEFAULT_WINDOW_WIDTH as f32 - GRID_PAD * 3.0 - cell_width_2 * NUM_COLUMNS as f32 - CELL_PAD * (NUM_COLUMNS -1) as f32;
+
+        let grid_width = screen_width - GRID_PAD * 3.0 - screen_width * panel_width / DEFAULT_WINDOW_WIDTH as f32 ;
+        let cell_height_as_per_width = (grid_width + CELL_PAD) / NUM_COLUMNS as f32;
+        let cell_height_3 = cell_height_2.min(cell_height_as_per_width);
+        let cell_width_3 = cell_height_3;
+        Self { font_size, cell_width: cell_width_3, cell_height: cell_height_3 }
     }
 
     pub fn font_size(&self) -> f32 {

@@ -38,7 +38,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let mut refresh_render = true;
     let mut show_solution_button = None;
 
-    let button_panel = Rect::new(
+    let mut button_panel = Rect::new(
         grid_width(theme) + GRID_PAD * 2.0,
         GRID_PAD,
         BUTTON_PANEL_WIDTH,
@@ -60,6 +60,13 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             sh = new_sh;
             theme.layout = new_layout(sw, sh);
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
+
+            button_panel = Rect::new(
+                grid_width(theme) + GRID_PAD * 2.0,
+                GRID_PAD,
+                sw - GRID_PAD * 3.0 - grid_width(theme),
+                grid_height(theme),
+            );
         }
         if should_play_intro {
             play_sound_once(theme.resources.sounds.music_background_intro);

@@ -85,10 +85,10 @@ pub const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 
 pub type AnyError = Box<dyn std::error::Error>;
 
-pub const fn new_layout() -> Layout {
+pub const fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
     const FONT_SIZE: f32 = 15.0;
 
-    Layout::new(FONT_SIZE)
+    Layout::new(choose_font_size(screen_width, screen_height, FONT_SIZE))
 }
 
 pub const fn grid_width() -> f32 {
@@ -108,6 +108,18 @@ const fn color_average_weight(color_1: Color, color_2: Color, weight: f32) -> Co
         color_1.b * (1.0 - weight) + color_2.b * weight,
         color_1.a * (1.0 - weight) + color_2.a * weight,
     )
+}
+
+const fn choose_font_size(width: f32, height: f32, font_size: f32) -> f32 {
+    let min_side = width.min(height * 16.0 / 9.0);
+    font_size
+        * if min_side < 1600.0 {
+            1.0
+        } else if min_side < 2500.0 {
+            1.5
+        } else {
+            2.0
+        }
 }
 
 fn generate_nested_vec<T: Clone>(num_rows: usize, num_columns: usize, default: T) -> Vec<Vec<T>> {

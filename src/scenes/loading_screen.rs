@@ -33,7 +33,8 @@ pub async fn loading_screen() -> Result<Theme, AnyError> {
         ],
     );
 
-    let layout = new_layout();
+    let (sw, sh) = (screen_width(), screen_height());
+    let layout = new_layout(sw, sh);
     let mut sounds = None;
     loop {
         let (sw, sh) = (screen_width(), screen_height());

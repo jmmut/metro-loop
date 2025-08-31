@@ -4,11 +4,7 @@ use crate::logic::constraints::{
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
 use crate::theme::{new_button, new_text, render_button, render_text, Theme};
-use crate::{
-    grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT,
-    CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS,
-    NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
-};
+use crate::{grid_height, grid_width, new_layout, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Vertical};
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
@@ -38,7 +34,7 @@ pub struct State {
 
 pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let mut state = reset(VISUALIZE).await;
-    let (sw, sh) = (screen_width(), screen_height());
+    let (mut sw, mut sh) = (screen_width(), screen_height());
     let texture_params = DrawTextureParams {
         flip_y: true,
         ..Default::default()
@@ -64,6 +60,13 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     // play_sound(music_background, PlaySoundParams { looped: true, volume: 0.5 });
     let mut start_ts = None;
     loop {
+        let (new_sw, new_sh) = (screen_width(), screen_height());
+        if new_sw != sw || new_sh != sh {
+            refresh_render = true;
+            theme.layout = new_layout(new_sw, new_sh);
+            sw = new_sw;
+            sh = new_sh;
+        }
         if should_play_intro {
             play_sound_once(theme.resources.sounds.music_background_intro);
             start_ts = Some(now());

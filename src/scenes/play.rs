@@ -4,9 +4,7 @@ use crate::logic::constraints::{
 };
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
-use crate::theme::{
-    new_button, new_button_group_direction, new_text, render_button, render_text, Theme,
-};
+use crate::theme::{new_button, new_button_group_direction, new_text, render_button, render_text, Layout, Theme};
 use crate::{
     new_layout, AnyError, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
     FONT_SIZE_CHANGING, MAX_CELLS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
@@ -270,7 +268,7 @@ fn change_font_ui(button_panel: Rect, theme: &mut Theme, refresh_render: &mut bo
     render_button(&decrease);
 }
 
-async fn reset(visualize: bool, theme: &Theme) -> State {
+async fn reset(visualize: bool, theme: &mut Theme) -> State {
     let procedural = false;
     let (grid, constraints, solution) = if procedural {
         let mut solution = generate_grid(visualize, theme).await;
@@ -291,6 +289,11 @@ async fn reset(visualize: bool, theme: &Theme) -> State {
             constraints,
             solution,
         } = levels.sections[0].levels[0].clone();
+        theme.layout = Layout {
+            default_rows: initial_grid.rows(),
+            default_columns: initial_grid.columns(),
+            ..theme.layout
+        }.readjust();
         (initial_grid, constraints, solution)
     };
     let show_solution = DEFAULT_SHOW_SOLUTION;

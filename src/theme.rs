@@ -17,53 +17,43 @@ pub struct Theme {
 }
 
 pub struct Layout {
-    screen_width: f32,
-    screen_height: f32,
-    font_size: f32,
-    cell_width: f32,
-    cell_height: f32,
-    grid_pad: f32,
-    cell_pad: f32,
-    default_rows: i32,
-    default_columns: i32,
+    pub screen_width: f32,
+    pub screen_height: f32,
+    pub font_size: f32,
+    pub cell_width: f32,
+    pub cell_height: f32,
+    pub grid_pad: f32,
+    pub cell_pad: f32,
+    pub default_rows: i32,
+    pub default_columns: i32,
 }
 
 impl Layout {
-    pub fn new(
-        screen_width: f32,
-        screen_height: f32,
-        mut font_size: f32,
-        _cell_width: f32,
-        _cell_height: f32,
-        mut grid_pad: f32,
-        mut cell_pad: f32,
-        default_rows: i32,
-        default_columns: i32,
-    ) -> Self {
+    pub fn readjust(mut self) -> Self {
         let update_scale = |value: &mut f32| {
-            *value = choose_scale(screen_width, screen_height, *value);
+            *value = choose_scale(self.screen_width, self.screen_height, *value);
         };
-        update_scale(&mut font_size);
-        update_scale(&mut grid_pad);
-        update_scale(&mut cell_pad);
+        update_scale(&mut self.font_size);
+        update_scale(&mut self.grid_pad);
+        update_scale(&mut self.cell_pad);
 
-        let screen_height_proportional = screen_width * 9.0 / 16.0;
-        let screen_height = screen_height_proportional.min(screen_height);
+        let screen_height_proportional = self.screen_width * 9.0 / 16.0;
+        let screen_height = screen_height_proportional.min(self.screen_height);
         let screen_width = screen_height * 16.0 / 9.0;
 
         let cell_height =
-            (screen_height - grid_pad * 2.0 + cell_pad) / default_rows as f32 - cell_pad;
+            (screen_height - self.grid_pad * 2.0 + self.cell_pad) / self.default_rows as f32 - self.cell_pad;
         let cell_width = cell_height;
         Self {
             screen_width,
             screen_height,
-            font_size,
+            font_size: self.font_size,
             cell_width,
             cell_height,
-            grid_pad,
-            cell_pad,
-            default_rows,
-            default_columns,
+            grid_pad: self.grid_pad,
+            cell_pad: self.cell_pad,
+            default_rows: self.default_rows,
+            default_columns: self.default_columns,
         }
     }
     pub fn grid_pad(&self) -> f32 {

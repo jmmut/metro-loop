@@ -92,17 +92,17 @@ pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
     const NUM_ROWS: i32 = 10;
     const NUM_COLUMNS: i32 = 11;
 
-    Layout::new(
+    Layout {
         screen_width,
         screen_height,
-        FONT_SIZE,
-        CELL_WIDTH,
-        CELL_HEIGHT,
-        GRID_PAD,
-        CELL_PAD,
-        NUM_ROWS,
-        NUM_COLUMNS,
-    )
+        font_size: FONT_SIZE,
+        cell_width: CELL_WIDTH,
+        cell_height: CELL_HEIGHT,
+        grid_pad: GRID_PAD,
+        cell_pad: CELL_PAD,
+        default_rows: NUM_ROWS,
+        default_columns: NUM_COLUMNS,
+    }.readjust()
 }
 
 const fn color_average(color_1: Color, color_2: Color) -> Color {

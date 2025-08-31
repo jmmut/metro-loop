@@ -1,17 +1,15 @@
 use crate::logic::constraints::{matches_constraint_and_reachable, Satisfaction};
 use crate::logic::grid::get_cell;
 use crate::logic::intersection::{Crossing, Intersection};
-use crate::scenes::loading_screen::Resources;
+use crate::theme::{new_button, new_text, render_text, Theme};
 use crate::*;
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::LabelGroup;
-use juquad::widgets::text::TextRect;
 use juquad::widgets::Widget;
 use macroquad::math::f32;
 use macroquad::prelude::*;
-use crate::theme::{new_button, new_text, render_text, Theme};
 
 pub fn render_satisfaction(
     satisfaction: &Satisfaction,
@@ -27,7 +25,7 @@ pub fn render_satisfaction(
         render_text(&text, &STYLE.at_rest);
         text.rect()
     } else {
-        let font_size = FONT_SIZE * 1.0;
+        let font_size = theme.layout.font_size() * 1.0;
         let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
         let labels = LabelGroup {
             font_size,

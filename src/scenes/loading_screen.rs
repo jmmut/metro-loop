@@ -1,10 +1,13 @@
 use crate::sound::Sounds;
-use crate::{AnyError, BACKGROUND, CELL_PAD, DISABLED_CELL, ENABLED_CELL, FONT_SIZE, GRID_PAD, RAIL, STYLE, TRANSPARENT, TRIANGLE_BORDER};
+use crate::theme::{new_text_unloaded, render_text, Theme};
+use crate::{
+    new_layout, AnyError, BACKGROUND, CELL_PAD, DISABLED_CELL, ENABLED_CELL, GRID_PAD, RAIL, STYLE,
+    TRANSPARENT, TRIANGLE_BORDER,
+};
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::resource_loader::ResourceLoader;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::StateStyle;
-use juquad::widgets::text::TextRect;
 use macroquad::audio::{load_sound_from_bytes, Sound};
 use macroquad::color::DARKGRAY;
 use macroquad::math::Rect;
@@ -12,7 +15,6 @@ use macroquad::prelude::{
     clear_background, load_ttf_font_from_bytes, next_frame, screen_height, screen_width, Vec2,
 };
 use macroquad::text::Font;
-use crate::theme::{new_text_unloaded, render_text, Layout, Theme};
 
 pub struct Resources {
     pub sounds: Sounds,
@@ -31,7 +33,7 @@ pub async fn loading_screen() -> Result<Theme, AnyError> {
         ],
     );
 
-    let layout = Layout::new();
+    let layout = new_layout();
     let mut sounds = None;
     loop {
         let (sw, sh) = (screen_width(), screen_height());
@@ -79,7 +81,7 @@ pub async fn loading_screen() -> Result<Theme, AnyError> {
                     sounds: Sounds::new(sounds),
                     font,
                 };
-                return Ok(Theme {resources, layout});
+                return Ok(Theme { resources, layout });
                 // resources = None; // to see the loading screen in loop
             }
         }

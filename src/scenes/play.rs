@@ -2,12 +2,13 @@ use crate::logic::constraints::{
     choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction,
 };
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
-use crate::render::{
-    render_cells, render_constraints, render_grid,
-    render_satisfaction,
+use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
+use crate::theme::{new_button, new_text, render_button, render_text, Theme};
+use crate::{
+    grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT,
+    CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS,
+    NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
-use crate::scenes::loading_screen::Resources;
-use crate::{grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Vertical};
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
@@ -25,7 +26,6 @@ use macroquad::prelude::{
     DrawTextureParams,
 };
 use macroquad::rand::rand;
-use crate::theme::{new_button, new_text, render_button, render_text, Theme};
 
 pub struct State {
     solution: Grid,
@@ -234,14 +234,31 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             );
         }
         if FONT_SIZE_CHANGING {
-            let mut increase = new_button("increase font size", Anchor::bottom_right(button_panel.right(), button_panel.bottom()), &theme);
-            let mut decrease = new_button("decrease font size", Anchor::leftwards(increase.rect(), Vertical::Center, CELL_PAD), &theme);
+            let mut decrease = new_button(
+                "decrease",
+                Anchor::bottom_right(button_panel.right(), button_panel.bottom()),
+                &theme,
+            );
+            let mut increase = new_button(
+                "increase",
+                Anchor::leftwards(decrease.rect(), Vertical::Center, CELL_PAD),
+                &theme,
+            );
+            let font_size_text = new_text(
+                &format!("font size: {}", theme.layout.font_size()),
+                Anchor::leftwards(increase.rect(), Vertical::Center, CELL_PAD),
+                1.0,
+                &theme,
+            );
             if increase.interact().is_clicked() {
                 *theme.layout.font_size_mut() += 1.0;
+                refresh_render = true;
             }
             if decrease.interact().is_clicked() {
                 *theme.layout.font_size_mut() -= 1.0;
+                refresh_render = true;
             }
+            render_text(&font_size_text, &STYLE.at_rest);
             render_button(&increase);
             render_button(&decrease);
         }

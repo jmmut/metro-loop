@@ -1,6 +1,5 @@
-use crate::scenes::loading_screen::Resources;
-use crate::AnyError;
 use crate::theme::Theme;
+use crate::AnyError;
 
 pub async fn main_menu(_theme: &Theme) -> Result<(), AnyError> {
     Ok(())

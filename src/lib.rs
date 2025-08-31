@@ -19,6 +19,7 @@ pub mod scenes {
 
 use crate::logic::constraints::{Constraints, RailCoord};
 use crate::logic::grid::{get, Grid};
+use crate::theme::Layout;
 use juquad::widgets::anchor::Vertical;
 use juquad::widgets::{StateStyle, Style};
 use macroquad::prelude::*;
@@ -67,8 +68,6 @@ pub const STYLE: Style = Style {
     },
 };
 
-pub const FONT_SIZE: f32 = 20.0;
-
 pub const NUM_ROWS: i32 = 10;
 pub const NUM_COLUMNS: i32 = 11;
 pub const MAX_CELLS: usize = ((NUM_ROWS - 2) * (NUM_COLUMNS - 2)) as usize / 2;
@@ -85,6 +84,12 @@ pub const DEFAULT_WINDOW_HEIGHT: i32 = (grid_height() + 2.0 * GRID_PAD) as i32;
 pub const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 
 pub type AnyError = Box<dyn std::error::Error>;
+
+pub const fn new_layout() -> Layout {
+    const FONT_SIZE: f32 = 15.0;
+
+    Layout::new(FONT_SIZE)
+}
 
 pub const fn grid_width() -> f32 {
     (CELL_WIDTH + CELL_PAD) * NUM_COLUMNS as f32 - CELL_PAD

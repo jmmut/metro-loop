@@ -1,3 +1,4 @@
+use crate::level_history::LevelHistory;
 use crate::sound::Sounds;
 use crate::theme::{new_text_unloaded, render_text, Theme};
 use crate::{
@@ -19,6 +20,7 @@ use macroquad::text::Font;
 pub struct Resources {
     pub sounds: Sounds,
     pub font: Font,
+    pub level_history: LevelHistory,
     // textures
 }
 
@@ -79,9 +81,11 @@ pub async fn loading_screen() -> Result<Theme, AnyError> {
             Some(sounds) => {
                 let font_bytes = include_bytes!("../../assets/fonts/Saira-Regular.ttf");
                 let font = load_ttf_font_from_bytes(font_bytes).unwrap();
+                let level_history = LevelHistory::new()?;
                 let resources = Resources {
                     sounds: Sounds::new(sounds),
                     font,
+                    level_history,
                 };
                 return Ok(Theme { resources, layout });
                 // resources = None; // to see the loading screen in loop

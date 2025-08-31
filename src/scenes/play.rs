@@ -4,10 +4,12 @@ use crate::logic::constraints::{
 };
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
-use crate::theme::{new_button, new_button_group_direction, new_text, render_button, render_text, Layout, Theme};
+use crate::theme::{
+    new_button, new_button_group_direction, new_text, render_button, render_text, Layout, Theme,
+};
 use crate::{
-    new_layout, AnyError, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
-    FONT_SIZE_CHANGING, MAX_CELLS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
+    new_layout, AnyError, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING,
+    MAX_CELLS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
@@ -99,6 +101,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             &theme,
         );
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
+            theme.resources.level_history.next();
             state = reset(VISUALIZE, theme).await;
             refresh_render = true;
         }
@@ -173,6 +176,9 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
 
             draw_rect(button_panel, PANEL_BACKGROUND);
             let satisfaction = compute_satisfaction(&state.grid, &state.constraints);
+            if satisfaction.success() {
+                theme.resources.level_history.solved()
+            }
             show_solution_button = render_satisfaction(
                 &satisfaction,
                 reset_button.rect(),
@@ -269,7 +275,7 @@ fn change_font_ui(button_panel: Rect, theme: &mut Theme, refresh_render: &mut bo
 }
 
 async fn reset(visualize: bool, theme: &mut Theme) -> State {
-    let procedural = false;
+    let procedural = theme.resources.level_history.current.is_procedural();
     let (grid, constraints, solution) = if procedural {
         let mut solution = generate_grid(visualize, theme).await;
         solution.recalculate_rails();
@@ -293,7 +299,8 @@ async fn reset(visualize: bool, theme: &mut Theme) -> State {
             default_rows: initial_grid.rows(),
             default_columns: initial_grid.columns(),
             ..theme.layout
-        }.readjust();
+        }
+        .readjust();
         (initial_grid, constraints, solution)
     };
     let show_solution = DEFAULT_SHOW_SOLUTION;

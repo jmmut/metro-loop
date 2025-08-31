@@ -4,6 +4,7 @@ pub mod logic {
     pub mod intersection;
     pub mod rails;
 }
+pub mod level_history;
 pub mod levels;
 pub mod render;
 pub mod sound;
@@ -102,7 +103,8 @@ pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
         cell_pad: CELL_PAD,
         default_rows: NUM_ROWS,
         default_columns: NUM_COLUMNS,
-    }.readjust()
+    }
+    .readjust()
 }
 
 const fn color_average(color_1: Color, color_2: Color) -> Color {

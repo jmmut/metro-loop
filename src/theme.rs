@@ -41,8 +41,9 @@ impl Layout {
         let screen_height = screen_height_proportional.min(self.screen_height);
         let screen_width = screen_height * 16.0 / 9.0;
 
-        let cell_height =
-            (screen_height - self.grid_pad * 2.0 + self.cell_pad) / self.default_rows as f32 - self.cell_pad;
+        let cell_height = (screen_height - self.grid_pad * 2.0 + self.cell_pad)
+            / self.default_rows as f32
+            - self.cell_pad;
         let cell_width = cell_height;
         Self {
             screen_width,

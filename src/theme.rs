@@ -1,11 +1,12 @@
 use crate::scenes::loading_screen::Resources;
-use crate::{choose_scale, CELL_PAD, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH, GRID_PAD, NUM_COLUMNS, STYLE};
+use crate::{choose_scale, CELL_PAD, GRID_PAD, NUM_COLUMNS, NUM_ROWS, STYLE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
 use juquad::widgets::text::TextRect;
 use juquad::widgets::StateStyle;
 use juquad::widgets::Widget;
+use macroquad::math::{f32, Rect};
 use macroquad::prelude::Font;
 
 pub struct Theme {
@@ -14,29 +15,44 @@ pub struct Theme {
 }
 
 pub struct Layout {
+    screen_width: f32,
+    screen_height: f32,
     font_size: f32,
     cell_width: f32,
     cell_height: f32,
 }
 
 impl Layout {
-    pub fn new(screen_width: f32, screen_height: f32, mut font_size: f32, mut cell_width: f32, mut cell_height: f32) -> Self {
+    pub fn new(
+        screen_width: f32,
+        screen_height: f32,
+        mut font_size: f32,
+        _cell_width: f32,
+        _cell_height: f32,
+    ) -> Self {
         let update_scale = |value: &mut f32| {
             *value = choose_scale(screen_width, screen_height, *value);
         };
         update_scale(&mut font_size);
-        let cells_per_screen_height = (DEFAULT_WINDOW_HEIGHT as f32 - GRID_PAD * 2.0 + CELL_PAD) / (cell_height+CELL_PAD);
-        let cell_height_2 = (screen_height - GRID_PAD * 2.0 + CELL_PAD) / cells_per_screen_height - CELL_PAD;
-        let cell_width_2 = cell_height_2;
-        let panel_width = DEFAULT_WINDOW_WIDTH as f32 - GRID_PAD * 3.0 - cell_width_2 * NUM_COLUMNS as f32 - CELL_PAD * (NUM_COLUMNS -1) as f32;
 
-        let grid_width = screen_width - GRID_PAD * 3.0 - screen_width * panel_width / DEFAULT_WINDOW_WIDTH as f32 ;
-        let cell_height_as_per_width = (grid_width + CELL_PAD) / NUM_COLUMNS as f32;
-        let cell_height_3 = cell_height_2.min(cell_height_as_per_width);
-        let cell_width_3 = cell_height_3;
-        Self { font_size, cell_width: cell_width_3, cell_height: cell_height_3 }
+        let screen_height_proportional = screen_width * 9.0 / 16.0;
+        let screen_height = screen_height_proportional.min(screen_height);
+        let screen_width = screen_height * 16.0 / 9.0;
+
+        let cell_height = (screen_height - GRID_PAD * 2.0 + CELL_PAD) / NUM_ROWS as f32 - CELL_PAD;
+        let cell_width = cell_height;
+        Self {
+            screen_width,
+            screen_height,
+            font_size,
+            cell_width,
+            cell_height,
+        }
     }
 
+    pub fn useable_screen_size(&self) -> (f32, f32) {
+        (self.screen_width, self.screen_height)
+    }
     pub fn font_size(&self) -> f32 {
         self.font_size
     }
@@ -49,6 +65,27 @@ impl Layout {
     pub fn cell_height(&self) -> f32 {
         self.cell_height
     }
+}
+pub fn grid_width(theme: &Theme) -> f32 {
+    (theme.layout.cell_width() + CELL_PAD) * NUM_COLUMNS as f32 - CELL_PAD
+}
+
+pub fn grid_height(theme: &Theme) -> f32 {
+    (theme.layout.cell_height() + CELL_PAD) * NUM_ROWS as f32 - CELL_PAD
+}
+
+pub fn button_panel_width(theme: &Theme) -> f32 {
+    let (sw, _sh) = theme.layout.useable_screen_size();
+    sw - GRID_PAD * 3.0 - grid_width(theme)
+}
+
+pub fn button_panel_rect(theme: &mut Theme) -> Rect {
+    Rect::new(
+        grid_width(theme) + GRID_PAD * 2.0,
+        GRID_PAD,
+        button_panel_width(theme),
+        grid_height(theme),
+    )
 }
 
 pub fn new_button(text: &str, anchor: Anchor, theme: &Theme) -> Button {

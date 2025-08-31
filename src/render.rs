@@ -92,7 +92,13 @@ pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>, theme: &Them
                 color
             };
             let cell_pos = cell_top_left(i_row, i_column, theme);
-            draw_rectangle(cell_pos.x, cell_pos.y, theme.layout.cell_width(), theme.layout.cell_height(), color);
+            draw_rectangle(
+                cell_pos.x,
+                cell_pos.y,
+                theme.layout.cell_width(),
+                theme.layout.cell_height(),
+                color,
+            );
         }
     }
 }
@@ -267,7 +273,8 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
 
         let corner = top_left_rail_intersection(row, column, theme);
         let reverse = direction.x + direction.y < 0.0;
-        let start = corner - reverse as i32 as f32 * direction * (theme.layout.cell_width() + CELL_PAD);
+        let start =
+            corner - reverse as i32 as f32 * direction * (theme.layout.cell_width() + CELL_PAD);
         let end = start + direction * (theme.layout.cell_width() + CELL_PAD);
         let mid = (start + end) * 0.5;
         let diff = (end - start).normalize();

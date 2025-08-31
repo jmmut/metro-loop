@@ -19,7 +19,7 @@ pub mod scenes {
 
 use crate::logic::constraints::{Constraints, RailCoord};
 use crate::logic::grid::{get, Grid};
-use crate::theme::{Layout, Theme};
+use crate::theme::Layout;
 use juquad::widgets::anchor::Vertical;
 use juquad::widgets::{StateStyle, Style};
 use macroquad::prelude::*;
@@ -75,10 +75,11 @@ pub const CLUE_PERCENTAGE: u32 = 30;
 
 pub const CELL_PAD: f32 = 5.0;
 pub const GRID_PAD: f32 = 30.0;
-pub const BUTTON_PANEL_WIDTH: f32 = 300.0;
+// pub const BUTTON_PANEL_WIDTH: f32 = 300.0;
 
+const DEFAULT_ASPECT_RATIO: f32 = 16.0 / 9.0;
 pub const DEFAULT_WINDOW_WIDTH: i32 = 990;
-pub const DEFAULT_WINDOW_HEIGHT: i32 = 605;
+pub const DEFAULT_WINDOW_HEIGHT: i32 = width_to_height_default(DEFAULT_WINDOW_WIDTH as f32) as i32;
 pub const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 
 pub type AnyError = Box<dyn std::error::Error>;
@@ -88,14 +89,13 @@ pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
     pub const CELL_WIDTH: f32 = 50.0;
     pub const CELL_HEIGHT: f32 = 50.0;
 
-    Layout::new(screen_width, screen_height, FONT_SIZE, CELL_WIDTH, CELL_HEIGHT)
-}
-
-pub fn grid_width(theme: &Theme) -> f32 {
-    (theme.layout.cell_width() + CELL_PAD) * NUM_COLUMNS as f32 - CELL_PAD
-}
-pub fn grid_height(theme: &Theme) -> f32 {
-    (theme.layout.cell_height() + CELL_PAD) * NUM_ROWS as f32 - CELL_PAD
+    Layout::new(
+        screen_width,
+        screen_height,
+        FONT_SIZE,
+        CELL_WIDTH,
+        CELL_HEIGHT,
+    )
 }
 
 const fn color_average(color_1: Color, color_2: Color) -> Color {
@@ -128,4 +128,16 @@ fn generate_nested_vec<T: Clone>(num_rows: usize, num_columns: usize, default: T
     let mut inner = Vec::new();
     inner.resize(num_rows, row);
     inner
+}
+pub const fn width_to_height_default(width: f32) -> f32 {
+    width_to_height(width, DEFAULT_ASPECT_RATIO)
+}
+pub const fn width_to_height(width: f32, aspect_ratio: f32) -> f32 {
+    width / aspect_ratio
+}
+pub const fn height_to_width_default(height: f32) -> f32 {
+    width_to_height(height, DEFAULT_ASPECT_RATIO)
+}
+pub const fn height_to_width(height: f32, aspect_ratio: f32) -> f32 {
+    height * aspect_ratio
 }

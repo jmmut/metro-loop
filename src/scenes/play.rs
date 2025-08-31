@@ -4,7 +4,11 @@ use crate::logic::constraints::{
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
 use crate::theme::{new_button, new_text, render_button, render_text, Theme};
-use crate::{grid_height, grid_width, new_layout, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_PAD, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE};
+use crate::{
+    new_layout, theme, AnyError, BACKGROUND, BACKGROUND_2, CELL_PAD, DEFAULT_SHOW_SOLUTION,
+    FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS,
+    STEP_GENERATION, STYLE, VISUALIZE,
+};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Vertical};
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
@@ -14,10 +18,12 @@ use macroquad::input::{
     is_key_pressed, is_mouse_button_pressed, is_mouse_button_released, mouse_position, KeyCode,
     MouseButton,
 };
-use macroquad::math::{ivec2, vec2, Rect, Vec2};
+use macroquad::math::{ivec2, vec2, Vec2};
 use macroquad::miniquad::date::now;
 use macroquad::miniquad::FilterMode;
-use macroquad::prelude::{clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width, DrawTextureParams};
+use macroquad::prelude::{
+    clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width,
+};
 use macroquad::rand::rand;
 
 pub struct State {
@@ -38,12 +44,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let mut refresh_render = true;
     let mut show_solution_button = None;
 
-    let mut button_panel = Rect::new(
-        grid_width(theme) + GRID_PAD * 2.0,
-        GRID_PAD,
-        BUTTON_PANEL_WIDTH,
-        grid_height(theme),
-    );
+    let mut button_panel = theme::button_panel_rect(theme);
     let mut right_clicked = None;
     let mut _should_play_sound = false;
     let mut should_play_intro = true;
@@ -60,13 +61,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             sh = new_sh;
             theme.layout = new_layout(sw, sh);
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
-
-            button_panel = Rect::new(
-                grid_width(theme) + GRID_PAD * 2.0,
-                GRID_PAD,
-                sw - GRID_PAD * 3.0 - grid_width(theme),
-                grid_height(theme),
-            );
+            button_panel = theme::button_panel_rect(theme);
         }
         if should_play_intro {
             play_sound_once(theme.resources.sounds.music_background_intro);
@@ -104,8 +99,8 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             refresh_render = true;
         }
         let pos = Vec2::from(mouse_position());
-        let grid_indexes =
-            (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(theme.layout.cell_width(), theme.layout.cell_height()) + CELL_PAD);
+        let grid_indexes = (pos - GRID_PAD + CELL_PAD * 0.5)
+            / (vec2(theme.layout.cell_width(), theme.layout.cell_height()) + CELL_PAD);
         let i_row = grid_indexes.y as i32;
         let i_column = grid_indexes.x as i32;
         let hovered_cell = if in_range(&state.grid, i_row, i_column) {

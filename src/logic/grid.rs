@@ -1,8 +1,8 @@
-use crate::generate_nested_vec;
 use crate::logic::intersection::{
     crossing_to_char, horiz_to_char, vert_to_char, Crossing, Intersection, Intersections,
 };
 use crate::logic::rails::Rails;
+use crate::{generate_nested_vec, AnyError};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::prelude::{ivec2, IVec2};
 use std::fmt::{Display, Formatter};
@@ -24,15 +24,34 @@ pub struct Grid {
 
 impl Grid {
     pub fn new(num_rows: i32, num_columns: i32, root: IVec2) -> Self {
-        let cells = generate_nested_vec(num_rows as usize, num_columns as usize, false);
-        let fixed_cells = generate_nested_vec(num_rows as usize, num_columns as usize, false);
+        let mut cells = generate_nested_vec(num_rows as usize, num_columns as usize, false);
+        let mut fixed_cells = generate_nested_vec(num_rows as usize, num_columns as usize, false);
 
+        *get_mut(&mut cells, root.y, root.x) = true;
+        *get_mut(&mut fixed_cells, root.y, root.x) = true;
+        *get_mut(&mut fixed_cells, root.y - 1, root.x) = true;
+        for i_row in 0..num_rows {
+            *get_mut(&mut fixed_cells, i_row, 0) = true;
+            *get_mut(&mut fixed_cells, i_row, num_columns - 1) = true;
+        }
+        for i_column in 0..num_columns {
+            *get_mut(&mut fixed_cells, 0, i_column) = true;
+            *get_mut(&mut fixed_cells, num_rows - 1, i_column) = true;
+        }
+        Self::new_from_cells(num_rows, num_columns, root, cells, fixed_cells)
+    }
+    pub fn new_from_cells(
+        num_rows: i32,
+        num_columns: i32,
+        root: IVec2,
+        cells: Vec<Vec<Cell>>,
+        fixed_cells: Vec<Vec<Cell>>,
+    ) -> Grid {
         let rails = Rails::new(num_rows, num_columns, Horizontal::Center, Vertical::Center);
         let reachable_rails = Rails::new(num_rows, num_columns, false, false);
         let fixed_rails = Rails::new(num_rows, num_columns, false, false);
         let intersections = Intersections::new(num_rows, num_columns);
-
-        let mut grid = Self {
+        Self {
             num_rows,
             num_columns,
             cells,
@@ -44,20 +63,9 @@ impl Grid {
             intersections,
             total_rails: 0,
             reachable_rails_count: 0,
-        };
-        *get_cell_mut(&mut grid, root.y, root.x) = true;
-        *get_mut(&mut grid.fixed_cells, root.y, root.x) = true;
-        *get_mut(&mut grid.fixed_cells, root.y - 1, root.x) = true;
-        for i_row in 0..num_rows {
-            *get_mut(&mut grid.fixed_cells, i_row, 0) = true;
-            *get_mut(&mut grid.fixed_cells, i_row, num_columns - 1) = true;
         }
-        for i_column in 0..num_columns {
-            *get_mut(&mut grid.fixed_cells, 0, i_column) = true;
-            *get_mut(&mut grid.fixed_cells, num_rows - 1, i_column) = true;
-        }
-        grid
     }
+
     pub fn rows(&self) -> i32 {
         self.num_rows
     }
@@ -145,7 +153,7 @@ impl Grid {
                     row,
                     column,
                     rail_is_horizontal,
-                    grid_to_string(&self)
+                    rails_to_string(&self)
                 );
             }
             rail_coord = if rail_is_horizontal {
@@ -339,19 +347,22 @@ pub fn in_range(grid: &Grid, row: i32, column: i32) -> bool {
     row > 0 && row < grid.rows() - 1 && column > 0 && column < grid.columns() - 1
 }
 
-impl Display for Grid {
+pub struct GridAndRails<'a> {
+    grid: &'a Grid,
+}
+impl Display for GridAndRails<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for row in 0..self.rows() {
-            for column in 0..self.columns() {
-                let inter = self.intersections.get(row, column);
+        for row in 0..self.grid.rows() {
+            for column in 0..self.grid.columns() {
+                let inter = self.grid.intersections.get(row, column);
                 write!(f, "{}", crossing_to_char(inter))?;
                 // write!(f, "{}", right_to_char(inter.right))?;
-                let horiz = self.rails.get_horiz(row, column);
+                let horiz = self.grid.rails.get_horiz(row, column);
                 write!(f, "{}", horiz_to_char(horiz))?;
                 // let inter = self.intersections.get(row, column+1);
                 // write!(f, "{}", left_to_char(inter.left))?;
             }
-            let inter = self.intersections.get(row, self.columns());
+            let inter = self.grid.intersections.get(row, self.grid.columns());
             write!(f, "{}", crossing_to_char(inter))?;
             writeln!(f)?;
             // for column in 0..self.columns() +1 {
@@ -359,11 +370,11 @@ impl Display for Grid {
             //     write!(f, "{}   ", below_to_char(inter.below))?;
             // }
             // writeln!(f)?;
-            for column in 0..self.columns() {
-                let vert = self.rails.get_vert(row, column);
+            for column in 0..self.grid.columns() {
+                let vert = self.grid.rails.get_vert(row, column);
                 write!(f, "{} ", vert_to_char(vert))?;
             }
-            let vert = self.rails.get_vert(row, self.columns());
+            let vert = self.grid.rails.get_vert(row, self.grid.columns());
             write!(f, "{}", vert_to_char(vert))?;
             writeln!(f)?;
             // for column in 0..self.columns() +1 {
@@ -372,28 +383,147 @@ impl Display for Grid {
             // }
             // writeln!(f)?;
         }
-        let row = self.rows();
-        for column in 0..self.columns() {
-            let inter = self.intersections.get(row, column);
+        let row = self.grid.rows();
+        for column in 0..self.grid.columns() {
+            let inter = self.grid.intersections.get(row, column);
             write!(f, "{}", crossing_to_char(inter))?;
             // write!(f, "{}", right_to_char(inter.right))?;
-            let horiz = self.rails.get_horiz(row, column);
+            let horiz = self.grid.rails.get_horiz(row, column);
             write!(f, "{}", horiz_to_char(horiz))?;
             // let inter = self.intersections.get(row, column+1);
             // write!(f, "{}", left_to_char(inter.left))?;
         }
-        let inter = self.intersections.get(row, self.columns());
+        let inter = self.grid.intersections.get(row, self.grid.columns());
         write!(f, "{}", crossing_to_char(inter))?;
         writeln!(f)?;
         Ok(())
     }
 }
 
-pub fn grid_to_string(grid: &Grid) -> String {
-    grid.to_string()
+pub fn rails_to_string(grid: &Grid) -> String {
+    GridAndRails { grid }.to_string()
 }
+
+impl Display for Grid {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        // write!(f, "root_row {}, root_column {},\n", self.root.y, self.root.x)?
+        for row in 0..self.rows() {
+            for column in 0..self.columns() {
+                let cell = get(&self.cells, row, column);
+                let fixed_cell = get(&self.fixed_cells, row, column);
+                let letter = match (cell, fixed_cell) {
+                    (true, true) => '@',
+                    (true, false) => 'O',
+                    (false, true) => '.',
+                    (false, false) => ' ',
+                };
+                write!(f, "{}", letter)?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
+}
+
+impl Grid {
+    pub fn from_str(s: &str) -> Result<Grid, AnyError> {
+        let mut max_columns = 0;
+        let mut cells = Vec::new();
+        let mut fixed_cells = Vec::new();
+        let mut line_count = 0;
+        for line in s.lines() {
+            line_count += 1;
+            let mut cell_row = Vec::new();
+            let mut fixed_cell_row = Vec::new();
+            let mut letter_count = 0;
+            for letter in line.chars() {
+                letter_count += 1;
+                let (cell, fixed_cell) = match letter {
+                    '@' => (true, true),
+                    'O' => (true, false),
+                    '.' => (false, true),
+                    ' ' => (false, false),
+                    _ => {
+                        return Err(format!(
+                            "Wrong format for grid at (1-based) line {}, letter {}",
+                            line_count, letter_count
+                        )
+                        .into())
+                    }
+                };
+                cell_row.push(cell);
+                fixed_cell_row.push(fixed_cell);
+            }
+            if cell_row.len() > max_columns {
+                max_columns = cell_row.len();
+            }
+            cells.push(cell_row);
+            fixed_cells.push(fixed_cell_row);
+        }
+        for row in &mut cells {
+            row.resize(max_columns, false);
+        }
+        for row in &mut fixed_cells {
+            row.resize(max_columns, false);
+        }
+        let root = ivec2(max_columns as i32 / 2, cells.len() as i32 / 2);
+        Ok(Grid::new_from_cells(
+            cells.len() as i32,
+            max_columns as i32,
+            root,
+            cells,
+            fixed_cells,
+        ))
+    }
+}
+
 #[cfg(test)]
-mod tests {
+mod grid_serde_tests {
+    use super::*;
+    #[test]
+    fn test_minimal() {
+        let grid = Grid::new(2, 1, ivec2(0, 1));
+        let s = grid.to_string();
+        let parsed = Grid::from_str(&s).unwrap();
+        assert_eq!(parsed.cells, grid.cells);
+        assert_eq!(parsed.fixed_cells, grid.fixed_cells);
+        assert_eq!(parsed.root, grid.root);
+    }
+    #[test]
+    fn test_4_3() {
+        let grid = Grid::new(4, 3, ivec2(1, 2));
+        let s = grid.to_string();
+        let parsed = Grid::from_str(&s).unwrap();
+        assert_eq!(parsed.cells, grid.cells);
+        assert_eq!(parsed.fixed_cells, grid.fixed_cells);
+        assert_eq!(parsed.root, grid.root);
+    }
+    #[test]
+    fn test_6_5() {
+        let grid = Grid::new(6, 5, ivec2(2, 3));
+        let s = grid.to_string();
+        let parsed = Grid::from_str(&s).unwrap();
+        assert_eq!(parsed.cells, grid.cells);
+        assert_eq!(parsed.fixed_cells, grid.fixed_cells);
+        assert_eq!(parsed.root, grid.root);
+    }
+    #[test]
+    fn test_extra_enabled() {
+        let mut grid = Grid::new(6, 5, ivec2(2, 3));
+        *get_mut(&mut grid.cells, 1, 3) = true;
+        *get_mut(&mut grid.fixed_cells, 2, 3) = true;
+        *get_mut(&mut grid.cells, 2, 1) = true;
+        *get_mut(&mut grid.fixed_cells, 2, 1) = true;
+        let s = grid.to_string();
+        let parsed = Grid::from_str(&s).unwrap();
+        assert_eq!(parsed.cells, grid.cells);
+        assert_eq!(parsed.fixed_cells, grid.fixed_cells);
+        assert_eq!(parsed.root, grid.root);
+    }
+}
+
+#[cfg(test)]
+mod rails_tests {
     use super::*;
 
     #[test]
@@ -404,7 +534,7 @@ mod tests {
         let crossing = grid.intersections.get(2, 2);
         assert_eq!(crossing, Intersection::new(Crossing::VerticalOnTop));
         assert_eq!(
-            grid_to_string(&grid),
+            rails_to_string(&grid),
             r#"
 •-•-•-•-•
 | | | | |
@@ -427,7 +557,7 @@ mod tests {
         let crossing = grid.intersections.get(2, 2);
         assert_eq!(crossing, Intersection::new(Crossing::HorizontalOnTop));
         assert_eq!(
-            grid_to_string(&grid),
+            rails_to_string(&grid),
             r#"
 •-•-•-•-•
 | | | | |
@@ -450,7 +580,7 @@ mod tests {
         let crossing = grid.intersections.get(2, 2);
         assert_eq!(crossing, Intersection::new(Crossing::HorizontalOnTop));
         assert_eq!(
-            grid_to_string(&grid),
+            rails_to_string(&grid),
             r#"
 •-•-•-•-•
 | | | | |
@@ -473,7 +603,7 @@ mod tests {
         let crossing = grid.intersections.get(2, 2);
         assert_eq!(crossing, Intersection::new(Crossing::VerticalOnTop));
         assert_eq!(
-            grid_to_string(&grid),
+            rails_to_string(&grid),
             r#"
 •-•-•-•-•
 | | | | |

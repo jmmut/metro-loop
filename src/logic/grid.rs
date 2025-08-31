@@ -410,20 +410,24 @@ const ROOT_COLUMN: &str = "root_column";
 
 impl Display for Grid {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}={},{}={},\n",
-            ROOT_ROW, self.root.y, ROOT_COLUMN, self.root.x
-        )?;
+        // write!(
+        //     f,
+        //     "{}={},{}={},\n",
+        //     ROOT_ROW, self.root.y, ROOT_COLUMN, self.root.x
+        // )?;
         for row in 0..self.rows() {
             for column in 0..self.columns() {
                 let cell = get(&self.cells, row, column);
                 let fixed_cell = get(&self.fixed_cells, row, column);
-                let letter = match (cell, fixed_cell) {
-                    (true, true) => '@',
-                    (true, false) => 'O',
-                    (false, true) => '.',
-                    (false, false) => ' ',
+                let letter = if self.root.x == column && self.root.y == row {
+                    '%'
+                } else {
+                    match (cell, fixed_cell) {
+                        (true, true) => '@',
+                        (true, false) => 'O',
+                        (false, true) => '.',
+                        (false, false) => ' ',
+                    }
                 };
                 write!(f, "{}", letter)?;
             }
@@ -440,8 +444,7 @@ impl Grid {
         let mut fixed_cells = Vec::new();
         let mut line_count = 0;
         let mut lines = s.lines();
-        let first_line = lines.next();
-        let root = Self::parse_metadata_line(first_line)?;
+        let mut root = None;
         for line in lines {
             line_count += 1;
             let mut cell_row = Vec::new();
@@ -449,19 +452,23 @@ impl Grid {
             let mut letter_count = 0;
             for letter in line.chars() {
                 letter_count += 1;
-                let (cell, fixed_cell) = match letter {
-                    '@' => (true, true),
-                    'O' => (true, false),
-                    '.' => (false, true),
-                    ' ' => (false, false),
+                let (is_root, cell, fixed_cell) = match letter {
+                    '%' => (true, true, true),
+                    '@' => (false, true, true),
+                    'O' => (false, true, false),
+                    '.' => (false, false, true),
+                    ' ' => (false, false, false),
                     _ => {
                         return Err(format!(
-                            "Wrong format for grid at (1-based) line {}, letter {}",
-                            line_count, letter_count
+                            "Wrong format for grid at (1-based) line {}, letter {}: {}",
+                            line_count, letter_count, line
                         )
                         .into())
                     }
                 };
+                if is_root {
+                    root = Some(ivec2((letter_count - 1), (line_count - 1)));
+                }
                 cell_row.push(cell);
                 fixed_cell_row.push(fixed_cell);
             }
@@ -471,6 +478,9 @@ impl Grid {
             cells.push(cell_row);
             fixed_cells.push(fixed_cell_row);
         }
+        let Some(root) = root else {
+            return Err("missing a root cell ('%')".into());
+        };
         for row in &mut cells {
             row.resize(max_columns, false);
         }
@@ -486,6 +496,7 @@ impl Grid {
         ))
     }
 
+    #[allow(unused)]
     fn parse_metadata_line(first_line: Option<&str>) -> Result<IVec2, AnyError> {
         if let Some(first_line) = first_line {
             let mut root_x = None;

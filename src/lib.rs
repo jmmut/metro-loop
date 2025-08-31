@@ -4,9 +4,10 @@ pub mod logic {
     pub mod intersection;
     pub mod rails;
 }
+pub mod levels;
 pub mod render;
 pub mod sound;
-mod theme;
+pub mod theme;
 
 pub mod scenes {
     pub mod main_menu;

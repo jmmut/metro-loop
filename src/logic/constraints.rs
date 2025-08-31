@@ -21,6 +21,7 @@ pub struct Constraints {
     pub cell_count: i32,
 }
 
+#[derive(Eq, PartialEq, Debug)]
 pub struct Satisfaction {
     pub failing_rails: i32,
     pub cell_diff: i32,

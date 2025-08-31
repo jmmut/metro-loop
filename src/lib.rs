@@ -19,7 +19,7 @@ pub mod scenes {
 
 use crate::logic::constraints::{Constraints, RailCoord};
 use crate::logic::grid::{get, Grid};
-use crate::theme::Layout;
+use crate::theme::{Layout, Theme};
 use juquad::widgets::anchor::Vertical;
 use juquad::widgets::{StateStyle, Style};
 use macroquad::prelude::*;
@@ -77,25 +77,25 @@ pub const CELL_PAD: f32 = 5.0;
 pub const GRID_PAD: f32 = 30.0;
 pub const BUTTON_PANEL_WIDTH: f32 = 300.0;
 
-pub const DEFAULT_WINDOW_WIDTH: i32 = (grid_width() + BUTTON_PANEL_WIDTH + 3.0 * GRID_PAD) as i32;
-pub const DEFAULT_WINDOW_HEIGHT: i32 = (grid_height() + 2.0 * GRID_PAD) as i32;
+pub const DEFAULT_WINDOW_WIDTH: i32 = 990;
+pub const DEFAULT_WINDOW_HEIGHT: i32 = 605;
 pub const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 
 pub type AnyError = Box<dyn std::error::Error>;
 
+pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
+    const FONT_SIZE: f32 = 15.0;
     pub const CELL_WIDTH: f32 = 50.0;
     pub const CELL_HEIGHT: f32 = 50.0;
-pub const fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
-    const FONT_SIZE: f32 = 15.0;
 
-    Layout::new(choose_font_size(screen_width, screen_height, FONT_SIZE))
+    Layout::new(choose_font_size(screen_width, screen_height, FONT_SIZE), CELL_WIDTH, CELL_HEIGHT)
 }
 
-pub const fn grid_width() -> f32 {
-    (CELL_WIDTH + CELL_PAD) * NUM_COLUMNS as f32 - CELL_PAD
+pub fn grid_width(theme: &Theme) -> f32 {
+    (theme.layout.cell_width() + CELL_PAD) * NUM_COLUMNS as f32 - CELL_PAD
 }
-pub const fn grid_height() -> f32 {
-    (CELL_HEIGHT + CELL_PAD) * NUM_ROWS as f32 - CELL_PAD
+pub fn grid_height(theme: &Theme) -> f32 {
+    (theme.layout.cell_height() + CELL_PAD) * NUM_ROWS as f32 - CELL_PAD
 }
 
 const fn color_average(color_1: Color, color_2: Color) -> Color {

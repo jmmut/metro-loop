@@ -15,11 +15,13 @@ pub struct Theme {
 
 pub struct Layout {
     font_size: f32,
+    cell_width: f32,
+    cell_height: f32,
 }
 
 impl Layout {
-    pub const fn new(font_size: f32) -> Self {
-        Self { font_size }
+    pub const fn new(font_size: f32, cell_width: f32, cell_height: f32) -> Self {
+        Self { font_size, cell_width, cell_height }
     }
 
     pub fn font_size(&self) -> f32 {
@@ -27,6 +29,12 @@ impl Layout {
     }
     pub fn font_size_mut(&mut self) -> &mut f32 {
         &mut self.font_size
+    }
+    pub fn cell_width(&self) -> f32 {
+        self.cell_width
+    }
+    pub fn cell_height(&self) -> f32 {
+        self.cell_height
     }
 }
 

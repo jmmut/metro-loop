@@ -68,7 +68,7 @@ pub fn render_satisfaction(
     }
 }
 
-pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
+pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>, theme: &Theme) {
     for i_row in 0..NUM_ROWS {
         for i_column in 0..NUM_COLUMNS {
             let current_cell = *get_cell(grid, i_row, i_column);
@@ -91,18 +91,18 @@ pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>) {
             } else {
                 color
             };
-            let cell_pos = cell_top_left(i_row, i_column);
-            draw_rectangle(cell_pos.x, cell_pos.y, CELL_WIDTH, CELL_HEIGHT, color);
+            let cell_pos = cell_top_left(i_row, i_column, theme);
+            draw_rectangle(cell_pos.x, cell_pos.y, theme.layout.cell_width(), theme.layout.cell_height(), color);
         }
     }
 }
-pub fn render_grid(grid: &Grid) {
+pub fn render_grid(grid: &Grid, theme: &Theme) {
     for i_row in 0..NUM_ROWS {
         for i_column in 0..NUM_COLUMNS {
             let current_cell = *get(&grid.fixed_cells, i_row, i_column);
             if current_cell {
-                let mut intersection = top_left_rail_intersection(i_row, i_column);
-                intersection += vec2(CELL_WIDTH, CELL_HEIGHT) * 0.5;
+                let mut intersection = top_left_rail_intersection(i_row, i_column, theme);
+                intersection += vec2(theme.layout.cell_width(), theme.layout.cell_height()) * 0.5;
                 draw_rect(
                     Rect::new(intersection.x, intersection.y, CELL_PAD, CELL_PAD),
                     TRIANGLE_BORDER,
@@ -117,12 +117,12 @@ pub fn render_grid(grid: &Grid) {
             let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
             let direction = grid.rails.get_horiz(i_row, i_column);
             if direction != Horizontal::Center {
-                let start = top_left_rail_intersection(i_row, i_column);
-                let end = top_left_rail_intersection(i_row, i_column + 1);
+                let start = top_left_rail_intersection(i_row, i_column, theme);
+                let end = top_left_rail_intersection(i_row, i_column + 1, theme);
                 draw_line(start.x, start.y, end.x, end.y, CELL_PAD, color);
 
-                let top_left = cell_top_left(i_row, i_column) + vec2(0.0, 1.0);
-                let second_corner = top_left + vec2(CELL_WIDTH, 0.0);
+                let top_left = cell_top_left(i_row, i_column, theme) + vec2(0.0, 1.0);
+                let second_corner = top_left + vec2(theme.layout.cell_width(), 0.0);
                 draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
                 let top_left = top_left - vec2(0.0, CELL_PAD + 1.0);
                 let second_corner = second_corner - vec2(0.0, CELL_PAD + 1.0);
@@ -151,12 +151,12 @@ pub fn render_grid(grid: &Grid) {
             let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
             let direction = grid.rails.get_vert(i_row, i_column);
             if direction != Vertical::Center {
-                let start = top_left_rail_intersection(i_row, i_column);
-                let end = top_left_rail_intersection(i_row + 1, i_column);
+                let start = top_left_rail_intersection(i_row, i_column, theme);
+                let end = top_left_rail_intersection(i_row + 1, i_column, theme);
                 draw_line(start.x, start.y, end.x, end.y, CELL_PAD, color);
 
-                let top_left = cell_top_left(i_row, i_column) + vec2(0.0, 0.0);
-                let second_corner = top_left + vec2(0.0, CELL_WIDTH);
+                let top_left = cell_top_left(i_row, i_column, theme) + vec2(0.0, 0.0);
+                let second_corner = top_left + vec2(0.0, theme.layout.cell_width());
                 draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
                 let top_left = top_left - vec2(CELL_PAD + 1.0, 0.0);
                 let second_corner = second_corner - vec2(CELL_PAD + 1.0, 0.0);
@@ -196,7 +196,7 @@ pub fn render_grid(grid: &Grid) {
             } else {
                 UNREACHABLE_RAIL
             };
-            let bottom_right = cell_top_left(i_row, i_column);
+            let bottom_right = cell_top_left(i_row, i_column, theme);
             let top_left = bottom_right - CELL_PAD;
             let top_right = top_left + vec2(CELL_PAD, 0.0);
             let bottom_left = top_left + vec2(-1.0, CELL_PAD + 1.0);
@@ -229,7 +229,7 @@ pub fn render_grid(grid: &Grid) {
     }
 }
 
-pub fn render_constraints(constraints: &Constraints, grid: &Grid) {
+pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme) {
     let triangle_half_width = 4.0 * CELL_PAD;
     let small_triangle_half_width = 2.0 * CELL_PAD;
     let thickness = 1.5 * CELL_PAD;
@@ -265,10 +265,10 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid) {
             },
         };
 
-        let corner = top_left_rail_intersection(row, column);
+        let corner = top_left_rail_intersection(row, column, theme);
         let reverse = direction.x + direction.y < 0.0;
-        let start = corner - reverse as i32 as f32 * direction * (CELL_WIDTH + CELL_PAD);
-        let end = start + direction * (CELL_WIDTH + CELL_PAD);
+        let start = corner - reverse as i32 as f32 * direction * (theme.layout.cell_width() + CELL_PAD);
+        let end = start + direction * (theme.layout.cell_width() + CELL_PAD);
         let mid = (start + end) * 0.5;
         let diff = (end - start).normalize();
         let to_left = vec2(diff.y, -diff.x);
@@ -315,6 +315,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid) {
                     row,
                     column,
                     direction,
+                    theme,
                 );
             }
         }
@@ -330,6 +331,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid) {
                     row,
                     column,
                     direction,
+                    theme,
                 );
             }
         }
@@ -342,9 +344,10 @@ fn render_user_rail_constraint(
     row: i32,
     column: i32,
     direction: Vec2,
+    theme: &Theme,
 ) {
-    let start = top_left_rail_intersection(row, column);
-    let end = start + direction * (CELL_WIDTH + CELL_PAD);
+    let start = top_left_rail_intersection(row, column, theme);
+    let end = start + direction * (theme.layout.cell_width() + CELL_PAD);
     let mid = (start + end) * 0.5;
     let diff = (end - start).normalize();
     let to_left = vec2(diff.y, -diff.x);
@@ -360,13 +363,13 @@ fn render_user_rail_constraint(
     draw_lines(&[a, b, d, c, a], TRIANGLE_BORDER);
 }
 
-fn top_left_rail_intersection(i_row: i32, i_column: i32) -> Vec2 {
-    cell_top_left(i_row, i_column) - CELL_PAD * 0.5
+fn top_left_rail_intersection(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 {
+    cell_top_left(i_row, i_column, theme) - CELL_PAD * 0.5
 }
 
-fn cell_top_left(i_row: i32, i_column: i32) -> Vec2 {
-    let x = GRID_PAD + i_column as f32 * (CELL_WIDTH + CELL_PAD) + 0.5;
-    let y = GRID_PAD + i_row as f32 * (CELL_HEIGHT + CELL_PAD) + 0.5;
+fn cell_top_left(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 {
+    let x = GRID_PAD + i_column as f32 * (theme.layout.cell_width() + CELL_PAD) + 0.5;
+    let y = GRID_PAD + i_row as f32 * (theme.layout.cell_height() + CELL_PAD) + 0.5;
     vec2(x, y)
 }
 

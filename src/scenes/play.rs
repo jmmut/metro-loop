@@ -4,7 +4,7 @@ use crate::logic::constraints::{
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
 use crate::theme::{new_button, new_text, render_button, render_text, Theme};
-use crate::{grid_height, grid_width, new_layout, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE};
+use crate::{grid_height, grid_width, new_layout, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_PAD, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Vertical};
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
@@ -17,7 +17,7 @@ use macroquad::input::{
 use macroquad::math::{ivec2, vec2, Rect, Vec2};
 use macroquad::miniquad::date::now;
 use macroquad::miniquad::FilterMode;
-use macroquad::prelude::{clear_background, draw_texture, draw_texture_ex, get_fps, next_frame, screen_height, screen_width, DrawTextureParams};
+use macroquad::prelude::{clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width, DrawTextureParams};
 use macroquad::rand::rand;
 
 pub struct State {
@@ -30,7 +30,7 @@ pub struct State {
 }
 
 pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
-    let mut state = reset(VISUALIZE).await;
+    let mut state = reset(VISUALIZE, theme).await;
     let (mut sw, mut sh) = (screen_width(), screen_height());
     let mut render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
     render_target.texture.set_filter(FilterMode::Nearest);
@@ -39,10 +39,10 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let mut show_solution_button = None;
 
     let button_panel = Rect::new(
-        grid_width() + GRID_PAD * 2.0,
+        grid_width(theme) + GRID_PAD * 2.0,
         GRID_PAD,
         BUTTON_PANEL_WIDTH,
-        grid_height(),
+        grid_height(theme),
     );
     let mut right_clicked = None;
     let mut _should_play_sound = false;
@@ -93,12 +93,12 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             &theme,
         );
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
-            state = reset(VISUALIZE).await;
+            state = reset(VISUALIZE, theme).await;
             refresh_render = true;
         }
         let pos = Vec2::from(mouse_position());
         let grid_indexes =
-            (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(CELL_WIDTH, CELL_HEIGHT) + CELL_PAD);
+            (pos - GRID_PAD + CELL_PAD * 0.5) / (vec2(theme.layout.cell_width(), theme.layout.cell_height()) + CELL_PAD);
         let i_row = grid_indexes.y as i32;
         let i_column = grid_indexes.x as i32;
         let hovered_cell = if in_range(&state.grid, i_row, i_column) {
@@ -195,19 +195,19 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             state.previous_satisfaction = Some(satisfaction);
 
             if state.show_solution {
-                render_grid(&state.solution);
-                render_constraints(&state.constraints, &state.solution);
+                render_grid(&state.solution, theme);
+                render_constraints(&state.constraints, &state.solution, theme);
             } else {
-                render_grid(&state.grid);
-                render_constraints(&state.constraints, &state.grid);
+                render_grid(&state.grid, theme);
+                render_constraints(&state.constraints, &state.grid, theme);
             }
             set_default_camera();
         }
         clear_background(BACKGROUND);
         if state.show_solution {
-            render_cells(&state.solution, &hovered_cell);
+            render_cells(&state.solution, &hovered_cell, theme);
         } else {
-            render_cells(&state.grid, &hovered_cell);
+            render_cells(&state.grid, &hovered_cell, theme);
         }
         draw_texture(render_target.texture, 0., 0., WHITE);
         render_button(&reset_button);
@@ -264,11 +264,11 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     Ok(())
 }
 
-async fn reset(visualize: bool) -> State {
-    let mut solution = generate_grid(visualize).await;
+async fn reset(visualize: bool, theme: &Theme) -> State {
+    let mut solution = generate_grid(visualize, theme).await;
     solution.recalculate_rails();
     while count_unreachable_rails(&solution) > 0 {
-        solution = generate_grid(visualize).await;
+        solution = generate_grid(visualize, theme).await;
         solution.recalculate_rails();
     }
     // println!("tried {} iterations", i);
@@ -288,7 +288,7 @@ async fn reset(visualize: bool) -> State {
     }
 }
 
-async fn generate_grid(visualize: bool) -> Grid {
+async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
     let mut solution = Grid::new(NUM_ROWS, NUM_COLUMNS, ivec2(NUM_COLUMNS / 2, NUM_ROWS / 2));
     let mut enabled = Vec::new();
 
@@ -361,7 +361,7 @@ async fn generate_grid(visualize: bool) -> Grid {
         }
         if visualize {
             clear_background(BACKGROUND_2);
-            render_grid(&mut solution);
+            render_grid(&mut solution, theme);
             next_frame().await;
         }
     }

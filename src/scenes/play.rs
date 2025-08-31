@@ -3,17 +3,13 @@ use crate::logic::constraints::{
 };
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use crate::render::{
-    new_button, new_text, render_button, render_cells, render_constraints, render_grid,
-    render_satisfaction, render_text,
+    render_cells, render_constraints, render_grid,
+    render_satisfaction,
 };
 use crate::scenes::loading_screen::Resources;
-use crate::{
-    grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT,
-    CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS,
-    PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
-};
+use crate::{grid_height, grid_width, AnyError, BACKGROUND, BACKGROUND_2, BUTTON_PANEL_WIDTH, CELL_HEIGHT, CELL_PAD, CELL_WIDTH, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE};
 use juquad::draw::draw_rect;
-use juquad::widgets::anchor::Anchor;
+use juquad::widgets::anchor::{Anchor, Vertical};
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
@@ -29,6 +25,7 @@ use macroquad::prelude::{
     DrawTextureParams,
 };
 use macroquad::rand::rand;
+use crate::theme::{new_button, new_text, render_button, render_text, Theme};
 
 pub struct State {
     solution: Grid,
@@ -39,7 +36,7 @@ pub struct State {
     success_sound_played: bool,
 }
 
-pub async fn play(resources: &Resources) -> Result<(), AnyError> {
+pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let mut state = reset(VISUALIZE).await;
     let (sw, sh) = (screen_width(), screen_height());
     let texture_params = DrawTextureParams {
@@ -68,7 +65,7 @@ pub async fn play(resources: &Resources) -> Result<(), AnyError> {
     let mut start_ts = None;
     loop {
         if should_play_intro {
-            play_sound_once(resources.sounds.music_background_intro);
+            play_sound_once(theme.resources.sounds.music_background_intro);
             start_ts = Some(now());
             should_play_intro = false;
         }
@@ -77,7 +74,7 @@ pub async fn play(resources: &Resources) -> Result<(), AnyError> {
                 if should_play_background {
                     should_play_background = false;
                     play_sound(
-                        resources.sounds.music_background,
+                        theme.resources.sounds.music_background,
                         PlaySoundParams {
                             looped: true,
                             volume: 0.75,
@@ -96,6 +93,7 @@ pub async fn play(resources: &Resources) -> Result<(), AnyError> {
                 button_panel.x + button_panel.w * 0.5,
                 button_panel.y + GRID_PAD,
             ),
+            &theme,
         );
         if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
             state = reset(VISUALIZE).await;
@@ -176,6 +174,7 @@ pub async fn play(resources: &Resources) -> Result<(), AnyError> {
                 &satisfaction,
                 reset_button.rect(),
                 button_panel,
+                &theme,
                 &mut state.show_solution,
             );
             if satisfaction.success() {
@@ -229,9 +228,22 @@ pub async fn play(resources: &Resources) -> Result<(), AnyError> {
                     &format!("FPS: {}", get_fps()),
                     Anchor::top_left(0.0, 0.0),
                     1.0,
+                    &theme,
                 ),
                 &STYLE.pressed,
             );
+        }
+        if FONT_SIZE_CHANGING {
+            let mut increase = new_button("increase font size", Anchor::bottom_right(button_panel.right(), button_panel.bottom()), &theme);
+            let mut decrease = new_button("decrease font size", Anchor::leftwards(increase.rect(), Vertical::Center, CELL_PAD), &theme);
+            if increase.interact().is_clicked() {
+                *theme.layout.font_size_mut() += 1.0;
+            }
+            if decrease.interact().is_clicked() {
+                *theme.layout.font_size_mut() -= 1.0;
+            }
+            render_button(&increase);
+            render_button(&decrease);
         }
         next_frame().await
     }

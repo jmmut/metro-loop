@@ -6,6 +6,7 @@ pub mod logic {
 }
 pub mod render;
 pub mod sound;
+mod theme;
 
 pub mod scenes {
     pub mod main_menu;
@@ -25,6 +26,7 @@ use macroquad::prelude::*;
 pub const DEFAULT_SHOW_SOLUTION: bool = false;
 pub const SEE_SOLUTION_DURING_GAME: bool = true;
 pub const VISUALIZE: bool = false;
+pub const FONT_SIZE_CHANGING: bool = true;
 pub const STEP_GENERATION: bool = false;
 pub const SHOW_FPS: bool = false;
 
@@ -65,7 +67,7 @@ pub const STYLE: Style = Style {
     },
 };
 
-pub const FONT_SIZE: f32 = 16.0;
+pub const FONT_SIZE: f32 = 20.0;
 
 pub const NUM_ROWS: i32 = 10;
 pub const NUM_COLUMNS: i32 = 11;

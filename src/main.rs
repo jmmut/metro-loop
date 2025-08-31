@@ -10,9 +10,9 @@ async fn main() -> Result<(), AnyError> {
     let seed = now() as u64;
     srand(seed);
 
-    let resources = scenes::loading_screen().await?;
-    scenes::main_menu(&resources).await?;
-    scenes::play(&resources).await?;
+    let mut theme = scenes::loading_screen().await?;
+    scenes::main_menu(&theme).await?;
+    scenes::play(&mut theme).await?;
 
     Ok(())
 }

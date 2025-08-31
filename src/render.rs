@@ -1,6 +1,7 @@
 use crate::logic::constraints::{matches_constraint_and_reachable, Satisfaction};
 use crate::logic::grid::get_cell;
 use crate::logic::intersection::{Crossing, Intersection};
+use crate::scenes::loading_screen::Resources;
 use crate::*;
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
@@ -10,17 +11,19 @@ use juquad::widgets::text::TextRect;
 use juquad::widgets::Widget;
 use macroquad::math::f32;
 use macroquad::prelude::*;
+use crate::theme::{new_button, new_text, render_text, Theme};
 
 pub fn render_satisfaction(
     satisfaction: &Satisfaction,
     previous_rect: Rect,
     panel: Rect,
+    theme: &Theme,
     show_solution: &mut bool,
 ) -> Option<Button> {
     let solved = satisfaction.success();
     let mut rect = if solved {
         let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
-        let text = new_text(&"SOLVED!", anchor, 2.0);
+        let text = new_text(&"SOLVED!", anchor, 2.0, &theme);
         render_text(&text, &STYLE.at_rest);
         text.rect()
     } else {
@@ -30,7 +33,7 @@ pub fn render_satisfaction(
             font_size,
             anchor,
             alignment: Horizontal::Left,
-            font: None,
+            font: Some(theme.resources.font),
         };
         let text_rects = labels.create([
             &format!("{} incorrect rails", satisfaction.failing_rails),
@@ -60,7 +63,7 @@ pub fn render_satisfaction(
         } else {
             "Show possible solution"
         };
-        let show = new_button(show_text, show_anchor);
+        let show = new_button(show_text, show_anchor, &theme);
         Some(show)
     } else {
         None
@@ -367,21 +370,6 @@ fn cell_top_left(i_row: i32, i_column: i32) -> Vec2 {
     let x = GRID_PAD + i_column as f32 * (CELL_WIDTH + CELL_PAD) + 0.5;
     let y = GRID_PAD + i_row as f32 * (CELL_HEIGHT + CELL_PAD) + 0.5;
     vec2(x, y)
-}
-
-pub fn new_button(text: &str, anchor: Anchor) -> Button {
-    Button::new(text, anchor, FONT_SIZE)
-}
-pub fn render_button(button: &Button) {
-    button.render_default(&STYLE);
-}
-
-pub fn new_text(text: &str, anchor: Anchor, size_coef: f32) -> TextRect {
-    TextRect::new(text, anchor, FONT_SIZE * size_coef)
-}
-pub fn render_text(text_rect: &TextRect, style: &StateStyle) {
-    draw_rect(text_rect.rect(), style.bg_color);
-    text_rect.render_default(style)
 }
 
 pub fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, border: Color) {

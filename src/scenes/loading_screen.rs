@@ -1,25 +1,26 @@
-use crate::render::{new_text, render_text};
 use crate::sound::Sounds;
-use crate::{
-    AnyError, BACKGROUND, CELL_PAD, DISABLED_CELL, ENABLED_CELL, GRID_PAD, RAIL, STYLE,
-    TRANSPARENT, TRIANGLE_BORDER,
-};
+use crate::{AnyError, BACKGROUND, CELL_PAD, DISABLED_CELL, ENABLED_CELL, FONT_SIZE, GRID_PAD, RAIL, STYLE, TRANSPARENT, TRIANGLE_BORDER};
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::resource_loader::ResourceLoader;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::StateStyle;
+use juquad::widgets::text::TextRect;
 use macroquad::audio::{load_sound_from_bytes, Sound};
 use macroquad::color::DARKGRAY;
 use macroquad::math::Rect;
-use macroquad::prelude::{clear_background, next_frame, screen_height, screen_width, Vec2};
+use macroquad::prelude::{
+    clear_background, load_ttf_font_from_bytes, next_frame, screen_height, screen_width, Vec2,
+};
+use macroquad::text::Font;
+use crate::theme::{new_text_unloaded, render_text, Layout, Theme};
 
 pub struct Resources {
     pub sounds: Sounds,
-    // font
+    pub font: Font,
     // textures
 }
 
-pub async fn loading_screen() -> Result<Resources, AnyError> {
+pub async fn loading_screen() -> Result<Theme, AnyError> {
     let mut sound_loader = ResourceLoader::<_, Sound, _, _, _>::new(
         load_sound_from_bytes,
         &[
@@ -30,16 +31,17 @@ pub async fn loading_screen() -> Result<Resources, AnyError> {
         ],
     );
 
-    let mut resources = None;
+    let layout = Layout::new();
+    let mut sounds = None;
     loop {
         let (sw, sh) = (screen_width(), screen_height());
         let panel = Rect::new(GRID_PAD, GRID_PAD, sw - GRID_PAD * 2.0, sh - GRID_PAD * 2.0);
-        match resources {
+        match sounds {
             None => {
                 clear_background(BACKGROUND);
                 draw_rect(panel, DISABLED_CELL);
                 let center = Vec2::new(sw * 0.5, sh * 0.5);
-                let rect = new_text("Loading...", Anchor::center_v(center), 2.0);
+                let rect = new_text_unloaded("Loading...", Anchor::center_v(center), 2.0, &layout);
                 let mut bar_rect = rect.rect;
 
                 let outer_rect = Rect::new(
@@ -67,13 +69,17 @@ pub async fn loading_screen() -> Result<Resources, AnyError> {
                 );
 
                 if let Some(loaded) = sound_loader.get_resources()? {
-                    resources = Some(loaded);
+                    sounds = Some(loaded);
                 }
             }
             Some(sounds) => {
-                return Ok(Resources {
+                let font_bytes = include_bytes!("../../assets/fonts/Saira-Regular.ttf");
+                let font = load_ttf_font_from_bytes(font_bytes).unwrap();
+                let resources = Resources {
                     sounds: Sounds::new(sounds),
-                });
+                    font,
+                };
+                return Ok(Theme {resources, layout});
                 // resources = None; // to see the loading screen in loop
             }
         }

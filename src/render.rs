@@ -62,8 +62,8 @@ pub fn render_satisfaction(
 }
 
 pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>, theme: &Theme) {
-    for i_row in 0..NUM_ROWS {
-        for i_column in 0..NUM_COLUMNS {
+    for i_row in 0..grid.rows() {
+        for i_column in 0..grid.columns() {
             let current_cell = *get_cell(grid, i_row, i_column);
 
             let color = if current_cell {
@@ -96,8 +96,8 @@ pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>, theme: &Them
     }
 }
 pub fn render_grid(grid: &Grid, theme: &Theme) {
-    for i_row in 0..NUM_ROWS {
-        for i_column in 0..NUM_COLUMNS {
+    for i_row in 0..grid.rows() {
+        for i_column in 0..grid.columns() {
             let current_cell = *get(&grid.fixed_cells, i_row, i_column);
             if current_cell {
                 let mut intersection = top_left_rail_intersection(i_row, i_column, theme);

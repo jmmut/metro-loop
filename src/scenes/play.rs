@@ -1,3 +1,4 @@
+use crate::levels::{Level, Levels};
 use crate::logic::constraints::{
     choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction,
 };
@@ -7,9 +8,8 @@ use crate::theme::{
     new_button, new_button_group_direction, new_text, render_button, render_text, Theme,
 };
 use crate::{
-    new_layout, AnyError, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING,
-    MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE,
-    VISUALIZE,
+    new_layout, AnyError, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
+    FONT_SIZE_CHANGING, MAX_CELLS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
@@ -47,7 +47,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let mut refresh_render = true;
     let mut show_solution_button = None;
 
-    let mut button_panel = theme.button_panel_rect();
+    let mut button_panel = theme.button_panel_rect(&state.grid);
     let mut right_clicked = None;
     let mut _should_play_sound = false;
     let mut should_play_intro = true;
@@ -64,7 +64,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             sh = new_sh;
             theme.layout = new_layout(sw, sh);
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
-            button_panel = theme.button_panel_rect();
+            button_panel = theme.button_panel_rect(&state.grid);
         }
         if should_play_intro {
             play_sound_once(theme.resources.sounds.music_background_intro);
@@ -87,6 +87,9 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
         }
         if is_key_pressed(KeyCode::Escape) {
             break;
+        }
+        if is_key_pressed(KeyCode::P) {
+            println!("{}", state.grid);
         }
 
         let mut reset_button = new_button(
@@ -268,16 +271,28 @@ fn change_font_ui(button_panel: Rect, theme: &mut Theme, refresh_render: &mut bo
 }
 
 async fn reset(visualize: bool, theme: &Theme) -> State {
-    let mut solution = generate_grid(visualize, theme).await;
-    solution.recalculate_rails();
-    while count_unreachable_rails(&solution) > 0 {
-        solution = generate_grid(visualize, theme).await;
+    let procedural = false;
+    let (grid, constraints, solution) = if procedural {
+        let mut solution = generate_grid(visualize, theme).await;
         solution.recalculate_rails();
-    }
-    // println!("tried {} iterations", i);
-    let mut grid = Grid::new(NUM_ROWS, NUM_COLUMNS, solution.root);
-    grid.recalculate_rails();
-    let constraints = choose_constraints(&solution);
+        while count_unreachable_rails(&solution) > 0 {
+            solution = generate_grid(visualize, theme).await;
+            solution.recalculate_rails();
+        }
+        // println!("tried {} iterations", i);
+        let mut grid = Grid::new(theme.default_rows(), theme.default_columns(), solution.root);
+        grid.recalculate_rails();
+        let constraints = choose_constraints(&solution);
+        (grid, constraints, solution)
+    } else {
+        let levels = Levels::get().unwrap();
+        let Level {
+            initial_grid,
+            constraints,
+            solution,
+        } = levels.sections[0].levels[0].clone();
+        (initial_grid, constraints, solution)
+    };
     let show_solution = DEFAULT_SHOW_SOLUTION;
     let previous_satisfaction = None;
     let success_sound_played = false;
@@ -292,12 +307,15 @@ async fn reset(visualize: bool, theme: &Theme) -> State {
 }
 
 async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
-    let mut solution = Grid::new(NUM_ROWS, NUM_COLUMNS, ivec2(NUM_COLUMNS / 2, NUM_ROWS / 2));
+    let rows = theme.default_rows();
+    let columns = theme.default_columns();
+    let mut solution = Grid::new(rows, columns, ivec2(columns / 2, rows / 2));
     let mut enabled = Vec::new();
 
     enabled.push((solution.root.y, solution.root.x));
     let mut i = 0;
-    while enabled.len() < MAX_CELLS {
+    let max_cells = ((rows - 2) as f32 * (columns - 2) as f32 * MAX_CELLS) as usize;
+    while enabled.len() < max_cells {
         if visualize && is_key_pressed(KeyCode::Escape) {
             break;
         }

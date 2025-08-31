@@ -1,5 +1,6 @@
+use crate::logic::grid::Grid;
 use crate::scenes::loading_screen::Resources;
-use crate::{choose_scale, NUM_COLUMNS, NUM_ROWS, STYLE};
+use crate::{choose_scale, STYLE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
@@ -23,6 +24,8 @@ pub struct Layout {
     cell_height: f32,
     grid_pad: f32,
     cell_pad: f32,
+    default_rows: i32,
+    default_columns: i32,
 }
 
 impl Layout {
@@ -34,6 +37,8 @@ impl Layout {
         _cell_height: f32,
         mut grid_pad: f32,
         mut cell_pad: f32,
+        default_rows: i32,
+        default_columns: i32,
     ) -> Self {
         let update_scale = |value: &mut f32| {
             *value = choose_scale(screen_width, screen_height, *value);
@@ -46,7 +51,8 @@ impl Layout {
         let screen_height = screen_height_proportional.min(screen_height);
         let screen_width = screen_height * 16.0 / 9.0;
 
-        let cell_height = (screen_height - grid_pad * 2.0 + cell_pad) / NUM_ROWS as f32 - cell_pad;
+        let cell_height =
+            (screen_height - grid_pad * 2.0 + cell_pad) / default_rows as f32 - cell_pad;
         let cell_width = cell_height;
         Self {
             screen_width,
@@ -56,6 +62,8 @@ impl Layout {
             cell_height,
             grid_pad,
             cell_pad,
+            default_rows,
+            default_columns,
         }
     }
     pub fn grid_pad(&self) -> f32 {
@@ -90,24 +98,30 @@ impl Theme {
     pub fn cell_pad(&self) -> f32 {
         self.layout.cell_pad
     }
-    pub fn grid_width(&self) -> f32 {
-        (self.cell_width() + self.cell_pad()) * NUM_COLUMNS as f32 - self.cell_pad()
+    pub fn default_rows(&self) -> i32 {
+        self.layout.default_rows
+    }
+    pub fn default_columns(&self) -> i32 {
+        self.layout.default_columns
+    }
+    pub fn grid_width(&self, grid: &Grid) -> f32 {
+        (self.cell_width() + self.cell_pad()) * grid.columns() as f32 - self.cell_pad()
     }
 
-    pub fn grid_height(&self) -> f32 {
-        (self.cell_height() + self.cell_pad()) * NUM_ROWS as f32 - self.cell_pad()
+    pub fn grid_height(&self, grid: &Grid) -> f32 {
+        (self.cell_height() + self.cell_pad()) * grid.rows() as f32 - self.cell_pad()
     }
 
-    pub fn button_panel_width(&self) -> f32 {
+    pub fn button_panel_width(&self, grid: &Grid) -> f32 {
         let (sw, _sh) = self.useable_screen_size();
-        sw - self.grid_pad() * 3.0 - self.grid_width()
+        sw - self.grid_pad() * 3.0 - self.grid_width(grid)
     }
-    pub fn button_panel_rect(&mut self) -> Rect {
+    pub fn button_panel_rect(&mut self, grid: &Grid) -> Rect {
         Rect::new(
-            self.grid_width() + self.grid_pad() * 2.0,
+            self.grid_width(grid) + self.grid_pad() * 2.0,
             self.grid_pad(),
-            self.button_panel_width(),
-            self.grid_height(),
+            self.button_panel_width(grid),
+            self.grid_height(grid),
         )
     }
     pub fn new_button(&self, text: &str, anchor: Anchor) -> Button {

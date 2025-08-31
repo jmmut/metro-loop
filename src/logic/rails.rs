@@ -1,5 +1,6 @@
 use crate::generate_nested_vec;
 
+#[derive(Clone)]
 pub struct Rails<H, V> {
     pub horizontal: Vec<Vec<H>>,
     pub vertical: Vec<Vec<V>>,

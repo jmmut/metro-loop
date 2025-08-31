@@ -8,38 +8,41 @@ use std::fmt::{Display, Formatter};
 // pub const raw_levels() -> Result<Levels, AnyError> {
 pub const RAW_LEVELS: RawLevels = RawLevels {
     sections: &[RawSection {
-        levels: &[r#". . . . . .
-           
-. x x x x .
-           
-. x . x x .
-  " > >    
-.=?^%=*vx .
-  " < <    
-. x x x x .
-           
-. . . . . .
+        levels: &[r#". . . . .
+         
+. x x x .
+         
+. x . x .
+    >    
+. x % x .
+         
+. x * x .
+    <    
+. x x x .
+         
+. . . . .
 "#],
     }],
 };
 pub struct Levels {
-    sections: Vec<Section>,
+    pub sections: Vec<Section>,
 }
 pub struct RawLevels<'a> {
     sections: &'a [RawSection<'a>],
 }
 
 pub struct Section {
-    levels: Vec<Level>,
+    pub levels: Vec<Level>,
 }
 pub struct RawSection<'a> {
     levels: &'a [&'a str],
 }
 
+#[derive(Clone)]
 pub struct Level {
-    initial_grid: Grid,
-    constraints: Constraints,
-    solution: Grid,
+    pub initial_grid: Grid,
+    pub constraints: Constraints,
+    pub solution: Grid,
 }
 impl Levels {
     pub fn get() -> Result<Levels, AnyError> {
@@ -247,10 +250,22 @@ mod tests {
     use super::*;
     use crate::logic::constraints::{compute_satisfaction, Satisfaction};
 
+    const RAW_LEVEL: &str = r#". . . . . .
+           
+. x x x x .
+           
+. x . x x .
+  " > >    
+.=?^%=*vx .
+  " < <    
+. x x x x .
+           
+. . . . . .
+"#;
+
     #[test]
     fn basic_level() {
-        let raw_level = RAW_LEVELS.sections[0].levels[0];
-        let level = Level::from_str(raw_level).unwrap();
+        let level = Level::from_str(RAW_LEVEL).unwrap();
         assert_eq!(
             level.initial_grid.to_string(),
             r#"......
@@ -288,9 +303,8 @@ mod tests {
 
     #[test]
     fn roundtrip() {
-        let raw_level = RAW_LEVELS.sections[0].levels[0];
-        let level = Level::from_str(raw_level).unwrap();
+        let level = Level::from_str(RAW_LEVEL).unwrap();
         let serialized = level.to_string();
-        assert_eq!(serialized, raw_level);
+        assert_eq!(serialized, RAW_LEVEL);
     }
 }

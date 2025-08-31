@@ -72,6 +72,7 @@ impl Default for Intersection {
         }
     }
 }
+#[derive(Clone)]
 pub struct Intersections {
     inner: Vec<Vec<Intersection>>,
 }

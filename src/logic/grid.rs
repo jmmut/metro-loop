@@ -9,6 +9,7 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 pub type Cell = bool;
+#[derive(Clone)]
 pub struct Grid {
     pub num_rows: i32,
     pub num_columns: i32,

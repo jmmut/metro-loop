@@ -6,6 +6,7 @@ use crate::{generate_nested_vec, AnyError};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::prelude::{ivec2, IVec2};
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 pub type Cell = bool;
 pub struct Grid {
@@ -404,9 +405,16 @@ pub fn rails_to_string(grid: &Grid) -> String {
     GridAndRails { grid }.to_string()
 }
 
+const ROOT_ROW: &str = "root_row";
+const ROOT_COLUMN: &str = "root_column";
+
 impl Display for Grid {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        // write!(f, "root_row {}, root_column {},\n", self.root.y, self.root.x)?
+        write!(
+            f,
+            "{}={},{}={},\n",
+            ROOT_ROW, self.root.y, ROOT_COLUMN, self.root.x
+        )?;
         for row in 0..self.rows() {
             for column in 0..self.columns() {
                 let cell = get(&self.cells, row, column);
@@ -431,7 +439,10 @@ impl Grid {
         let mut cells = Vec::new();
         let mut fixed_cells = Vec::new();
         let mut line_count = 0;
-        for line in s.lines() {
+        let mut lines = s.lines();
+        let first_line = lines.next();
+        let root = Self::parse_metadata_line(first_line)?;
+        for line in lines {
             line_count += 1;
             let mut cell_row = Vec::new();
             let mut fixed_cell_row = Vec::new();
@@ -466,7 +477,6 @@ impl Grid {
         for row in &mut fixed_cells {
             row.resize(max_columns, false);
         }
-        let root = ivec2(max_columns as i32 / 2, cells.len() as i32 / 2);
         Ok(Grid::new_from_cells(
             cells.len() as i32,
             max_columns as i32,
@@ -474,6 +484,44 @@ impl Grid {
             cells,
             fixed_cells,
         ))
+    }
+
+    fn parse_metadata_line(first_line: Option<&str>) -> Result<IVec2, AnyError> {
+        if let Some(first_line) = first_line {
+            let mut root_x = None;
+            let mut root_y = None;
+            let without_spaces = first_line.replace(' ', "");
+            let pairs = without_spaces.split_terminator(',').collect::<Vec<_>>();
+            for pair in pairs {
+                let words = pair.split('=').collect::<Vec<_>>();
+                if words.len() != 2 {
+                    return Err(format!(
+                        "expected 2 words but got {} words in '{}'",
+                        words.len(),
+                        pair
+                    )
+                    .into());
+                }
+                let name = words[0];
+                let value = words[1];
+                if name == ROOT_ROW {
+                    root_y = Some(i32::from_str(value)?)
+                } else if name == ROOT_COLUMN {
+                    root_x = Some(i32::from_str(value)?);
+                } else {
+                    // future compatible: ignore unknown keys
+                }
+            }
+            if root_y.is_none() {
+                Err(format!("missing {}", ROOT_ROW).into())
+            } else if root_x.is_none() {
+                Err(format!("missing {}", ROOT_COLUMN).into())
+            } else {
+                Ok(ivec2(root_x.unwrap(), root_y.unwrap()))
+            }
+        } else {
+            Err("empty grid string".into())
+        }
     }
 }
 
@@ -519,6 +567,26 @@ mod grid_serde_tests {
         assert_eq!(parsed.cells, grid.cells);
         assert_eq!(parsed.fixed_cells, grid.fixed_cells);
         assert_eq!(parsed.root, grid.root);
+    }
+    #[test]
+    fn test_custom_root() {
+        let grid = Grid::new(6, 5, ivec2(1, 3));
+        let s = grid.to_string();
+        let parsed = Grid::from_str(&s).unwrap();
+        assert_eq!(parsed.cells, grid.cells);
+        assert_eq!(parsed.fixed_cells, grid.fixed_cells);
+        assert_eq!(parsed.root, grid.root);
+    }
+    #[test]
+    fn test_lenient_metadata() {
+        let parsed = Grid::parse_metadata_line(Some("root_row=3,root_column=5,"));
+        assert_eq!(parsed.unwrap(), ivec2(5, 3));
+        let parsed = Grid::parse_metadata_line(Some("root_row=3,root_column=5"));
+        assert_eq!(parsed.unwrap(), ivec2(5, 3));
+        let parsed = Grid::parse_metadata_line(Some("root_row = 3 , root_column = 5 "));
+        assert_eq!(parsed.unwrap(), ivec2(5, 3));
+        let parsed = Grid::parse_metadata_line(Some("root_row = 3 , root_column = 5 , "));
+        assert_eq!(parsed.unwrap(), ivec2(5, 3));
     }
 }
 

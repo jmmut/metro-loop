@@ -109,6 +109,15 @@ impl Theme {
             self.grid_height(),
         )
     }
+    pub fn new_button(&self, text: &str, anchor: Anchor) -> Button {
+        new_button(text, anchor, self)
+    }
+    pub fn new_text(&self, text: &str, anchor: Anchor) -> TextRect {
+        self.new_text_size(text, anchor, 1.0)
+    }
+    pub fn new_text_size(&self, text: &str, anchor: Anchor, size_coef: f32) -> TextRect {
+        new_text(text, anchor, size_coef, self)
+    }
 }
 
 pub fn new_button(text: &str, anchor: Anchor, theme: &Theme) -> Button {

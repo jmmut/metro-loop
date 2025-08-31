@@ -233,22 +233,18 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             );
         }
         if FONT_SIZE_CHANGING {
-            let mut decrease = new_button(
+            let mut decrease = theme.new_button(
                 "decrease",
                 Anchor::bottom_right(button_panel.right(), button_panel.bottom()),
-                &theme,
             );
-            let mut increase = new_button(
+            let mut increase = theme.new_button(
                 "increase",
                 Anchor::leftwards(decrease.rect(), Vertical::Center, theme.cell_pad()),
-                &theme,
             );
-            let font_size_text = new_text(
-                &format!("font size: {}", theme.font_size()),
-                Anchor::leftwards(increase.rect(), Vertical::Center, theme.cell_pad()),
-                1.0,
-                &theme,
-            );
+            let anchor = Anchor::leftwards(increase.rect(), Vertical::Center, theme.cell_pad());
+            let text = format!("font size: {}", theme.font_size());
+            let font_size_text = theme.new_text(&text, anchor);
+
             if increase.interact().is_clicked() {
                 *theme.font_size_mut() += 1.0;
                 refresh_render = true;

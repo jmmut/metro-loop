@@ -1,8 +1,8 @@
 use crate::sound::Sounds;
 use crate::theme::{new_text_unloaded, render_text, Theme};
 use crate::{
-    new_layout, AnyError, BACKGROUND, CELL_PAD, DISABLED_CELL, ENABLED_CELL, GRID_PAD, RAIL, STYLE,
-    TRANSPARENT, TRIANGLE_BORDER,
+    new_layout, AnyError, BACKGROUND, DISABLED_CELL, ENABLED_CELL, RAIL, STYLE, TRANSPARENT,
+    TRIANGLE_BORDER,
 };
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::resource_loader::ResourceLoader;
@@ -38,7 +38,8 @@ pub async fn loading_screen() -> Result<Theme, AnyError> {
     let mut sounds = None;
     loop {
         let (sw, sh) = (screen_width(), screen_height());
-        let panel = Rect::new(GRID_PAD, GRID_PAD, sw - GRID_PAD * 2.0, sh - GRID_PAD * 2.0);
+        let grid_pad = layout.grid_pad();
+        let panel = Rect::new(grid_pad, grid_pad, sw - grid_pad * 2.0, sh - grid_pad * 2.0);
         match sounds {
             None => {
                 clear_background(BACKGROUND);
@@ -48,10 +49,10 @@ pub async fn loading_screen() -> Result<Theme, AnyError> {
                 let mut bar_rect = rect.rect;
 
                 let outer_rect = Rect::new(
-                    bar_rect.x - CELL_PAD,
-                    bar_rect.y - CELL_PAD,
-                    bar_rect.w + 2.0 * CELL_PAD,
-                    bar_rect.h + 2.0 * CELL_PAD,
+                    bar_rect.x - layout.cell_pad(),
+                    bar_rect.y - layout.cell_pad(),
+                    bar_rect.w + 2.0 * layout.cell_pad(),
+                    bar_rect.h + 2.0 * layout.cell_pad(),
                 );
                 draw_rect(outer_rect, RAIL);
                 draw_rect_lines(outer_rect, 2.0, TRIANGLE_BORDER);

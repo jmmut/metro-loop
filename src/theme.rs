@@ -1,5 +1,5 @@
 use crate::scenes::loading_screen::Resources;
-use crate::{choose_scale, CELL_PAD, GRID_PAD, NUM_COLUMNS, NUM_ROWS, STYLE};
+use crate::{choose_scale, NUM_COLUMNS, NUM_ROWS, STYLE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
@@ -20,6 +20,8 @@ pub struct Layout {
     font_size: f32,
     cell_width: f32,
     cell_height: f32,
+    grid_pad: f32,
+    cell_pad: f32,
 }
 
 impl Layout {
@@ -29,17 +31,21 @@ impl Layout {
         mut font_size: f32,
         _cell_width: f32,
         _cell_height: f32,
+        mut grid_pad: f32,
+        mut cell_pad: f32,
     ) -> Self {
         let update_scale = |value: &mut f32| {
             *value = choose_scale(screen_width, screen_height, *value);
         };
         update_scale(&mut font_size);
+        update_scale(&mut grid_pad);
+        update_scale(&mut cell_pad);
 
         let screen_height_proportional = screen_width * 9.0 / 16.0;
         let screen_height = screen_height_proportional.min(screen_height);
         let screen_width = screen_height * 16.0 / 9.0;
 
-        let cell_height = (screen_height - GRID_PAD * 2.0 + CELL_PAD) / NUM_ROWS as f32 - CELL_PAD;
+        let cell_height = (screen_height - grid_pad * 2.0 + cell_pad) / NUM_ROWS as f32 - cell_pad;
         let cell_width = cell_height;
         Self {
             screen_width,
@@ -47,45 +53,62 @@ impl Layout {
             font_size,
             cell_width,
             cell_height,
+            grid_pad,
+            cell_pad,
         }
     }
-
-    pub fn useable_screen_size(&self) -> (f32, f32) {
-        (self.screen_width, self.screen_height)
+    pub fn grid_pad(&self) -> f32 {
+        self.grid_pad
     }
     pub fn font_size(&self) -> f32 {
         self.font_size
     }
+    pub fn cell_pad(&self) -> f32 {
+        self.cell_pad
+    }
+}
+impl Theme {
+    pub fn useable_screen_size(&self) -> (f32, f32) {
+        (self.layout.screen_width, self.layout.screen_height)
+    }
+    pub fn font_size(&self) -> f32 {
+        self.layout.font_size
+    }
     pub fn font_size_mut(&mut self) -> &mut f32 {
-        &mut self.font_size
+        &mut self.layout.font_size
     }
     pub fn cell_width(&self) -> f32 {
-        self.cell_width
+        self.layout.cell_width
     }
     pub fn cell_height(&self) -> f32 {
-        self.cell_height
+        self.layout.cell_height
     }
-}
-pub fn grid_width(theme: &Theme) -> f32 {
-    (theme.layout.cell_width() + CELL_PAD) * NUM_COLUMNS as f32 - CELL_PAD
-}
+    pub fn grid_pad(&self) -> f32 {
+        self.layout.grid_pad
+    }
+    pub fn cell_pad(&self) -> f32 {
+        self.layout.cell_pad
+    }
+    pub fn grid_width(&self) -> f32 {
+        (self.cell_width() + self.cell_pad()) * NUM_COLUMNS as f32 - self.cell_pad()
+    }
 
-pub fn grid_height(theme: &Theme) -> f32 {
-    (theme.layout.cell_height() + CELL_PAD) * NUM_ROWS as f32 - CELL_PAD
-}
+    pub fn grid_height(&self) -> f32 {
+        (self.cell_height() + self.cell_pad()) * NUM_ROWS as f32 - self.cell_pad()
+    }
 
-pub fn button_panel_width(theme: &Theme) -> f32 {
-    let (sw, _sh) = theme.layout.useable_screen_size();
-    sw - GRID_PAD * 3.0 - grid_width(theme)
-}
-
-pub fn button_panel_rect(theme: &mut Theme) -> Rect {
-    Rect::new(
-        grid_width(theme) + GRID_PAD * 2.0,
-        GRID_PAD,
-        button_panel_width(theme),
-        grid_height(theme),
-    )
+    pub fn button_panel_width(&self) -> f32 {
+        let (sw, _sh) = self.useable_screen_size();
+        sw - self.grid_pad() * 3.0 - self.grid_width()
+    }
+    pub fn button_panel_rect(&mut self) -> Rect {
+        Rect::new(
+            self.grid_width() + self.grid_pad() * 2.0,
+            self.grid_pad(),
+            self.button_panel_width(),
+            self.grid_height(),
+        )
+    }
 }
 
 pub fn new_button(text: &str, anchor: Anchor, theme: &Theme) -> Button {

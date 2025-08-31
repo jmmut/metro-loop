@@ -5,9 +5,9 @@ use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut,
 use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
 use crate::theme::{new_button, new_text, render_button, render_text, Theme};
 use crate::{
-    new_layout, theme, AnyError, BACKGROUND, BACKGROUND_2, CELL_PAD, DEFAULT_SHOW_SOLUTION,
-    FONT_SIZE_CHANGING, GRID_PAD, MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS,
-    STEP_GENERATION, STYLE, VISUALIZE,
+    new_layout, AnyError, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING,
+    MAX_CELLS, NUM_COLUMNS, NUM_ROWS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE,
+    VISUALIZE,
 };
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Vertical};
@@ -44,7 +44,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let mut refresh_render = true;
     let mut show_solution_button = None;
 
-    let mut button_panel = theme::button_panel_rect(theme);
+    let mut button_panel = theme.button_panel_rect();
     let mut right_clicked = None;
     let mut _should_play_sound = false;
     let mut should_play_intro = true;
@@ -61,7 +61,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             sh = new_sh;
             theme.layout = new_layout(sw, sh);
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
-            button_panel = theme::button_panel_rect(theme);
+            button_panel = theme.button_panel_rect();
         }
         if should_play_intro {
             play_sound_once(theme.resources.sounds.music_background_intro);
@@ -90,7 +90,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             "New Game",
             Anchor::top_center(
                 button_panel.x + button_panel.w * 0.5,
-                button_panel.y + GRID_PAD,
+                button_panel.y + theme.grid_pad(),
             ),
             &theme,
         );
@@ -99,8 +99,8 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             refresh_render = true;
         }
         let pos = Vec2::from(mouse_position());
-        let grid_indexes = (pos - GRID_PAD + CELL_PAD * 0.5)
-            / (vec2(theme.layout.cell_width(), theme.layout.cell_height()) + CELL_PAD);
+        let grid_indexes = (pos - theme.grid_pad() + theme.cell_pad() * 0.5)
+            / (vec2(theme.cell_width(), theme.cell_height()) + theme.cell_pad());
         let i_row = grid_indexes.y as i32;
         let i_column = grid_indexes.x as i32;
         let hovered_cell = if in_range(&state.grid, i_row, i_column) {
@@ -240,21 +240,21 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             );
             let mut increase = new_button(
                 "increase",
-                Anchor::leftwards(decrease.rect(), Vertical::Center, CELL_PAD),
+                Anchor::leftwards(decrease.rect(), Vertical::Center, theme.cell_pad()),
                 &theme,
             );
             let font_size_text = new_text(
-                &format!("font size: {}", theme.layout.font_size()),
-                Anchor::leftwards(increase.rect(), Vertical::Center, CELL_PAD),
+                &format!("font size: {}", theme.font_size()),
+                Anchor::leftwards(increase.rect(), Vertical::Center, theme.cell_pad()),
                 1.0,
                 &theme,
             );
             if increase.interact().is_clicked() {
-                *theme.layout.font_size_mut() += 1.0;
+                *theme.font_size_mut() += 1.0;
                 refresh_render = true;
             }
             if decrease.interact().is_clicked() {
-                *theme.layout.font_size_mut() -= 1.0;
+                *theme.font_size_mut() -= 1.0;
                 refresh_render = true;
             }
             render_text(&font_size_text, &STYLE.at_rest);

@@ -73,8 +73,6 @@ pub const NUM_COLUMNS: i32 = 11;
 pub const MAX_CELLS: usize = ((NUM_ROWS - 2) * (NUM_COLUMNS - 2)) as usize / 2;
 pub const CLUE_PERCENTAGE: u32 = 30;
 
-pub const CELL_PAD: f32 = 5.0;
-pub const GRID_PAD: f32 = 30.0;
 // pub const BUTTON_PANEL_WIDTH: f32 = 300.0;
 
 const DEFAULT_ASPECT_RATIO: f32 = 16.0 / 9.0;
@@ -86,8 +84,10 @@ pub type AnyError = Box<dyn std::error::Error>;
 
 pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
     const FONT_SIZE: f32 = 15.0;
-    pub const CELL_WIDTH: f32 = 50.0;
-    pub const CELL_HEIGHT: f32 = 50.0;
+    const CELL_WIDTH: f32 = 50.0;
+    const CELL_HEIGHT: f32 = 50.0;
+    const GRID_PAD: f32 = 30.0;
+    const CELL_PAD: f32 = 5.0;
 
     Layout::new(
         screen_width,
@@ -95,6 +95,8 @@ pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
         FONT_SIZE,
         CELL_WIDTH,
         CELL_HEIGHT,
+        GRID_PAD,
+        CELL_PAD,
     )
 }
 

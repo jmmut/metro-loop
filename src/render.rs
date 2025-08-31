@@ -10,9 +10,10 @@ use juquad::widgets::Widget;
 use macroquad::math::f32;
 use macroquad::prelude::*;
 
+#[derive(PartialEq)]
 pub enum RenderRail {
-    Triangle{mid: Vec2, direction: Vec2},
-    Disconnected,
+    Triangle { start_intersection: Vec2, end_intersection: Vec2 },
+    Disconnected { start_intersection: Vec2, end_intersection: Vec2 },
     None,
 }
 pub fn render_satisfaction(
@@ -64,6 +65,9 @@ pub fn render_satisfaction(
     } else {
         None
     }
+}
+pub fn is_horizontal_center(horizontal: Horizontal) -> bool {
+    horizontal.opposite() == horizontal
 }
 
 pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>, theme: &Theme) {
@@ -122,68 +126,48 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
     // horizontal rails
     for i_row in 1..grid.rails.horiz_rows() - 1 {
         for i_column in 1..grid.rails.horiz_columns() - 1 {
-            let reachable = grid.reachable_rails.get_horiz(i_row, i_column);
-            let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
             let direction = grid.rails.get_horiz(i_row, i_column);
-            if direction != Horizontal::Center {
-                let start = top_left_rail_intersection(i_row, i_column, theme);
-                let end = top_left_rail_intersection(i_row, i_column + 1, theme);
-                draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
-
-                let top_left = cell_top_left(i_row, i_column, theme) + vec2(0.0, 1.0);
-                let second_corner = top_left + vec2(theme.cell_width(), 0.0);
-                draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
-                let top_left = top_left - vec2(0.0, theme.cell_pad() + 1.0);
-                let second_corner = second_corner - vec2(0.0, theme.cell_pad() + 1.0);
-                draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
-                if reachable {
-                    let sign = match direction {
-                        Horizontal::Left => -1.0,
-                        Horizontal::Center => 0.0,
-                        Horizontal::Right => 1.0,
-                    };
-                    let mid = (start.x + end.x) * 0.5;
-                    let triangle_width = 2.0 * theme.cell_pad();
-                    let above = vec2(mid, start.y - triangle_width);
-                    let below = vec2(mid, start.y + triangle_width);
-                    let tip = vec2(mid + triangle_width * sign, start.y);
-                    draw_bordered_triangle(above, below, tip, color, TRIANGLE_BORDER);
+            let is_center = direction == direction.opposite();
+            let rail = if is_center {
+                RenderRail::None
+            } else {
+                let (i_start, i_end) = match direction {
+                    Horizontal::Left => (1, 0),
+                    Horizontal::Center | Horizontal::Right => (0, 1),
+                };
+                let start_intersection = top_left_rail_intersection(i_row, i_column + i_start, theme);
+                let end_intersection = top_left_rail_intersection(i_row, i_column + i_end, theme);
+                if grid.reachable_rails.get_horiz(i_row, i_column) {
+                    RenderRail::Triangle { start_intersection, end_intersection }
+                } else {
+                    RenderRail::Disconnected { start_intersection, end_intersection }
                 }
-            }
+            };
+            render_rail(rail, theme);
         }
     }
 
     // vertical rails
     for i_row in 1..grid.rails.vert_rows() - 1 {
         for i_column in 1..grid.rails.vert_columns() - 1 {
-            let reachable = grid.reachable_rails.get_vert(i_row, i_column);
-            let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
             let direction = grid.rails.get_vert(i_row, i_column);
-            if direction != Vertical::Center {
-                let start = top_left_rail_intersection(i_row, i_column, theme);
-                let end = top_left_rail_intersection(i_row + 1, i_column, theme);
-                draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
-
-                let top_left = cell_top_left(i_row, i_column, theme) + vec2(0.0, 0.0);
-                let second_corner = top_left + vec2(0.0, theme.cell_width());
-                draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
-                let top_left = top_left - vec2(theme.cell_pad() + 1.0, 0.0);
-                let second_corner = second_corner - vec2(theme.cell_pad() + 1.0, 0.0);
-                draw_line_v(top_left, second_corner, TRIANGLE_BORDER);
-                if reachable {
-                    let sign = match direction {
-                        Vertical::Top => -1.0,
-                        Vertical::Center => 0.0,
-                        Vertical::Bottom => 1.0,
-                    };
-                    let mid = (start.y + end.y) * 0.5;
-                    let triangle_width = 2.0 * theme.cell_pad();
-                    let left = vec2(start.x - triangle_width, mid);
-                    let right = vec2(start.x + triangle_width, mid);
-                    let tip = vec2(start.x, mid + triangle_width * sign);
-                    draw_bordered_triangle(left, right, tip, color, TRIANGLE_BORDER);
+            let is_center = direction == direction.opposite();
+            let rail = if is_center {
+                RenderRail::None
+            } else {
+                let (i_start, i_end) = match direction {
+                    Vertical::Top => (1, 0),
+                    Vertical::Center | Vertical::Bottom => (0, 1),
+                };
+                let start_intersection = top_left_rail_intersection(i_row+i_start, i_column, theme);
+                let end_intersection = top_left_rail_intersection(i_row+i_end, i_column, theme);
+                if grid.reachable_rails.get_vert(i_row, i_column) {
+                    RenderRail::Triangle { start_intersection, end_intersection }
+                } else {
+                    RenderRail::Disconnected { start_intersection, end_intersection }
                 }
-            }
+            };
+            render_rail(rail, theme);
         }
     }
     // intersections
@@ -239,6 +223,35 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
     }
 }
 
+pub fn render_rail(render_rail: RenderRail, theme: &Theme) {
+    if render_rail != RenderRail::None {
+        let (reachable, color, start, end) = match render_rail {
+            RenderRail::Triangle { start_intersection, end_intersection } => (true, RAIL, start_intersection, end_intersection),
+            RenderRail::Disconnected { start_intersection, end_intersection } => (false, UNREACHABLE_RAIL, start_intersection, end_intersection),
+            RenderRail::None => panic!("should be unreachable"),
+        };
+        draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
+        let direction = (end - start).normalize();
+        let border_start = start + direction * theme.cell_pad() * 0.5;
+        let leftwards = vec2(direction.y, -direction.x);
+        let left_border_start = border_start + leftwards * theme.cell_pad() * 0.5;
+        let right_border_start = border_start - leftwards * theme.cell_pad() * 0.5;
+        let border_end = end - direction * theme.cell_pad() * 0.5;
+        let left_border_end = border_end + leftwards * theme.cell_pad() * 0.5;
+        let right_border_end = border_end - leftwards * theme.cell_pad() * 0.5;
+        draw_line_v(left_border_start, left_border_end, TRIANGLE_BORDER);
+        draw_line_v(right_border_start, right_border_end, TRIANGLE_BORDER);
+
+        if reachable {
+            let mid = (start + end) * 0.5;
+            let triangle_width = 2.0 * theme.cell_pad();
+            let left = mid + leftwards * triangle_width;
+            let right = mid - leftwards * triangle_width;
+            let tip = mid + triangle_width * direction;
+            draw_bordered_triangle(left, right, tip, color, TRIANGLE_BORDER);
+        }
+    }
+}
 pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme) {
     let triangle_half_width = 4.0 * theme.cell_pad();
     let small_triangle_half_width = 2.0 * theme.cell_pad();

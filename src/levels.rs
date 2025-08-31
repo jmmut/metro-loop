@@ -1,6 +1,5 @@
 use crate::logic::constraints::{Constraints, RailCoord};
 use crate::logic::grid::{get, get_cell, Grid};
-use crate::logic::intersection::{crossing_to_char, horiz_to_char, vert_to_char};
 use crate::{generate_nested_vec, AnyError};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::math::ivec2;
@@ -10,15 +9,15 @@ use std::fmt::{Display, Formatter};
 pub const RAW_LEVELS: RawLevels = RawLevels {
     sections: &[RawSection {
         levels: &[r#". . . . . .
-
+           
 . x x x x .
-
+           
 . x . x x .
-  " > >
+  " > >    
 .=?^%=*vx .
-  " < <
+  " < <    
 . x x x x .
-
+           
 . . . . . .
 "#],
     }],
@@ -65,7 +64,7 @@ impl Level {
         let mut rails: Vec<RailCoord> = Vec::new();
         let mut cell_count = 0;
         let mut line_count = 0;
-        let mut lines = s.lines();
+        let lines = s.lines();
         let mut root = None;
         enum Code {
             Cell {
@@ -177,60 +176,68 @@ impl Level {
 }
 impl Display for Level {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        // let columns = self.initial_grid.columns();
-        // let rows = self.initial_grid.rows();
-        // let lines = generate_nested_vec(rows as usize * 2 - 1, columns as usize * 2 - 1, ' ');
-        // for row in 0..rows {
-        //     for column in 0..columns {
-        //         if self.initial_grid.root ==
-        //         let cell = get_cell(&self.initial_grid, row, column);
-        //         let solution_cell = get_cell(&self.solution, row, column);
-        //         let fixed_cell = get(&self.solution.fixed_cells, row, column);
-        //         if
-        //         match (cell, fixed_cell, solution_cell) {
-        //             (true, )
-        //         }
-        //         write!(f, "{}", crossing_to_char(inter))?;
-        //         // write!(f, "{}", right_to_char(inter.right))?;
-        //         let horiz = self.grid.rails.get_horiz(row, column);
-        //         write!(f, "{}", horiz_to_char(horiz))?;
-        //         // let inter = self.intersections.get(row, column+1);
-        //         // write!(f, "{}", left_to_char(inter.left))?;
-        //     }
-        //     let inter = self.grid.intersections.get(row, columns);
-        //     write!(f, "{}", crossing_to_char(inter))?;
-        //     writeln!(f)?;
-        //     // for column in 0..self.columns() +1 {
-        //     //     let inter = self.intersections.get(row, column);
-        //     //     write!(f, "{}   ", below_to_char(inter.below))?;
-        //     // }
-        //     // writeln!(f)?;
-        //     for column in 0..columns {
-        //         let vert = self.grid.rails.get_vert(row, column);
-        //         write!(f, "{} ", vert_to_char(vert))?;
-        //     }
-        //     let vert = self.grid.rails.get_vert(row, columns);
-        //     write!(f, "{}", vert_to_char(vert))?;
-        //     writeln!(f)?;
-        //     // for column in 0..self.columns() +1 {
-        //     //     let inter = self.intersections.get(row+1, column);
-        //     //     write!(f, "{}   ", above_to_char(inter.above))?;
-        //     // }
-        //     // writeln!(f)?;
-        // }
-        // let row = self.grid.rows();
-        // for column in 0..columns {
-        //     let inter = self.grid.intersections.get(row, column);
-        //     write!(f, "{}", crossing_to_char(inter))?;
-        //     // write!(f, "{}", right_to_char(inter.right))?;
-        //     let horiz = self.grid.rails.get_horiz(row, column);
-        //     write!(f, "{}", horiz_to_char(horiz))?;
-        //     // let inter = self.intersections.get(row, column+1);
-        //     // write!(f, "{}", left_to_char(inter.left))?;
-        // }
-        // let inter = self.grid.intersections.get(row, columns);
-        // write!(f, "{}", crossing_to_char(inter))?;
-        // writeln!(f)?;
+        let columns = self.initial_grid.columns();
+        let rows = self.initial_grid.rows();
+        let mut lines = generate_nested_vec(rows as usize * 2 - 1, columns as usize * 2 - 1, ' ');
+        for row in 0..rows {
+            for column in 0..columns {
+                let letter = if self.initial_grid.root == ivec2(column, row) {
+                    '%'
+                } else {
+                    let cell = get_cell(&self.initial_grid, row, column);
+                    let solution_cell = get_cell(&self.solution, row, column);
+                    let fixed_cell = get(&self.solution.fixed_cells, row, column);
+                    match (cell, fixed_cell, solution_cell) {
+                        (true, true, true) => '@',
+                        (true, false, true) => 'O',
+                        (true, false, false) => '?',
+                        (false, true, false) => '.',
+                        (false, false, false) => 'x',
+                        (false, false, true) => '*',
+                        _ => panic!("logic error, should not reach here"),
+                    }
+                };
+                lines[row as usize * 2][column as usize * 2] = letter;
+            }
+        }
+        for constraint in &self.constraints.rails {
+            match *constraint {
+                RailCoord::Horizontal {
+                    row,
+                    column,
+                    direction,
+                } => {
+                    lines[row as usize * 2 - 1][column as usize * 2] = match direction {
+                        Horizontal::Left => '<',
+                        Horizontal::Center => '"',
+                        Horizontal::Right => '>',
+                    };
+                }
+                RailCoord::Vertical {
+                    row,
+                    column,
+                    direction,
+                } => {
+                    lines[row as usize * 2][column as usize * 2 - 1] = match direction {
+                        Vertical::Top => '^',
+                        Vertical::Center => '=',
+                        Vertical::Bottom => 'v',
+                    };
+                }
+            }
+        }
+        write!(
+            f,
+            "{}",
+            lines
+                .into_iter()
+                .map(|mut chars| {
+                    chars.push('\n');
+                    chars.into_iter().collect::<String>()
+                })
+                .collect::<Vec<_>>()
+                .join("")
+        )?;
         Ok(())
     }
 }
@@ -279,11 +286,11 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn roundtrip() {
-    //     let raw_level = RAW_LEVELS.sections[0].levels[0];
-    //     let level = Level::from_str(raw_level).unwrap();
-    //     let serialized = level.to_string();
-    //     assert_eq!(serialized, raw_level);
-    // }
+    #[test]
+    fn roundtrip() {
+        let raw_level = RAW_LEVELS.sections[0].levels[0];
+        let level = Level::from_str(raw_level).unwrap();
+        let serialized = level.to_string();
+        assert_eq!(serialized, raw_level);
+    }
 }

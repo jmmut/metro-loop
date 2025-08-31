@@ -443,7 +443,7 @@ impl Grid {
         let mut cells = Vec::new();
         let mut fixed_cells = Vec::new();
         let mut line_count = 0;
-        let mut lines = s.lines();
+        let lines = s.lines();
         let mut root = None;
         for line in lines {
             line_count += 1;
@@ -467,7 +467,7 @@ impl Grid {
                     }
                 };
                 if is_root {
-                    root = Some(ivec2((letter_count - 1), (line_count - 1)));
+                    root = Some(ivec2(letter_count - 1, line_count - 1));
                 }
                 cell_row.push(cell);
                 fixed_cell_row.push(fixed_cell);

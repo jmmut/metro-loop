@@ -1,5 +1,9 @@
-use crate::levels::Levels;
-use crate::AnyError;
+use crate::levels::{Level, Levels};
+use crate::{AnyError, VISUALIZE};
+use crate::logic::constraints::{choose_constraints, count_unreachable_rails};
+use crate::logic::grid::Grid;
+use crate::scenes::play::generate_grid;
+use crate::theme::Theme;
 
 pub struct LevelHistory {
     pub current: GameTrack,
@@ -24,31 +28,32 @@ impl LevelHistory {
         Ok(Self {
             current: GameTrack::Campaign {
                 section: 0,
-                level: 0,
+                level: -1,
             },
             levels,
             solved,
         })
     }
-    pub fn next(&mut self) {
+    pub fn next(&mut self) -> Option<Level> {
         match self.current {
             GameTrack::Campaign { section, level } => {
                 for i_section in (section as usize)..self.levels.sections.len() {
                     for i_level in
-                        (level as usize + 1)..self.levels.sections[i_section].levels.len()
+                        (level + 1) as usize..self.levels.sections[i_section].levels.len()
                     {
                         if !self.solved[i_section][i_level] {
                             self.current = GameTrack::Campaign {
                                 section: i_section as i32,
                                 level: i_level as i32,
                             };
-                            return;
+                            return Some(self.levels.sections[i_section].levels[i_level].clone())
                         }
                     }
                 }
                 self.current = GameTrack::Procedural;
+                None
             }
-            GameTrack::Procedural => {}
+            GameTrack::Procedural => None,
         }
     }
     pub fn solved(&mut self) {
@@ -59,7 +64,23 @@ impl LevelHistory {
             GameTrack::Procedural => {}
         }
     }
+
 }
+
+pub async fn generate_procedural(visualize: bool, theme: &Theme) -> Level {
+    let mut solution = generate_grid(visualize, theme).await;
+    solution.recalculate_rails();
+    while count_unreachable_rails(&solution) > 0 {
+        solution = generate_grid(visualize, theme).await;
+        solution.recalculate_rails();
+    }
+    // println!("tried {} iterations", i);
+    let mut grid = Grid::new(theme.default_rows(), theme.default_columns(), solution.root);
+    grid.recalculate_rails();
+    let constraints = choose_constraints(&solution);
+    Level{ initial_grid: grid, constraints, solution}
+}
+
 impl GameTrack {
     pub fn is_procedural(&self) -> bool {
         match self {

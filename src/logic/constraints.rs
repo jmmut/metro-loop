@@ -158,23 +158,56 @@ pub fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
     }
 }
 
-pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> bool {
+#[derive(PartialEq)]
+pub enum Reverse {
+    Reverse,
+    None,
+    Regular,
+}
+impl Reverse {
+    pub fn is_reverse(&self) -> bool {
+        *self == Reverse::Reverse
+    }
+}
+impl From<Horizontal> for Reverse {
+    fn from(value: Horizontal) -> Self {
+        match value {
+            Horizontal::Left => Reverse::Reverse,
+            Horizontal::Center => Reverse::None,
+            Horizontal::Right => Reverse::Regular,
+        }
+    }
+}
+impl From<Vertical> for Reverse {
+    fn from(value: Vertical) -> Self {
+        match value {
+            Vertical::Top => Reverse::Reverse,
+            Vertical::Center => Reverse::None,
+            Vertical::Bottom => Reverse::Regular,
+        }
+    }
+}
+pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> (bool, Reverse) {
     match *constraint {
         RailCoord::Horizontal {
             row,
             column,
             direction,
         } => {
-            grid.rails.get_horiz(row, column) == direction
-                && (direction == Horizontal::Center || grid.reachable_rails.get_horiz(row, column))
+            let rail = grid.rails.get_horiz(row, column);
+            (rail == direction
+                && (direction == Horizontal::Center || grid.reachable_rails.get_horiz(row, column)),
+             rail.into())
         }
         RailCoord::Vertical {
             row,
             column,
             direction,
         } => {
-            grid.rails.get_vert(row, column) == direction
-                && (direction == Vertical::Center || grid.reachable_rails.get_vert(row, column))
+            let rail = grid.rails.get_vert(row, column);
+            (rail == direction
+                && (direction == Vertical::Center || grid.reachable_rails.get_vert(row, column)),
+             rail.into())
         }
     }
 }

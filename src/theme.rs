@@ -30,13 +30,6 @@ pub struct Layout {
 
 impl Layout {
     pub fn readjust(mut self) -> Self {
-        let update_scale = |value: &mut f32| {
-            *value = choose_scale(self.screen_width, self.screen_height, *value);
-        };
-        update_scale(&mut self.font_size);
-        update_scale(&mut self.grid_pad);
-        update_scale(&mut self.cell_pad);
-
         let screen_height_proportional = self.screen_width * 9.0 / 16.0;
         let screen_height = screen_height_proportional.min(self.screen_height);
         let screen_width = screen_height * 16.0 / 9.0;

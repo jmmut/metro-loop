@@ -98,14 +98,19 @@ pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
     const NUM_ROWS: i32 = 10;
     const NUM_COLUMNS: i32 = 11;
 
+    let update_scale = |value: f32| choose_scale(screen_width, screen_height, value);
+    let font_size = update_scale(FONT_SIZE);
+    let grid_pad = update_scale(GRID_PAD);
+    let cell_pad = update_scale(CELL_PAD);
+
     Layout {
         screen_width,
         screen_height,
-        font_size: FONT_SIZE,
+        font_size,
         cell_width: CELL_WIDTH,
         cell_height: CELL_HEIGHT,
-        grid_pad: GRID_PAD,
-        cell_pad: CELL_PAD,
+        grid_pad,
+        cell_pad,
         default_rows: NUM_ROWS,
         default_columns: NUM_COLUMNS,
     }

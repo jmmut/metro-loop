@@ -195,9 +195,12 @@ pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> 
             direction,
         } => {
             let rail = grid.rails.get_horiz(row, column);
-            (rail == direction
-                && (direction == Horizontal::Center || grid.reachable_rails.get_horiz(row, column)),
-             rail.into())
+            (
+                rail == direction
+                    && (direction == Horizontal::Center
+                        || grid.reachable_rails.get_horiz(row, column)),
+                rail.into(),
+            )
         }
         RailCoord::Vertical {
             row,
@@ -205,9 +208,12 @@ pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> 
             direction,
         } => {
             let rail = grid.rails.get_vert(row, column);
-            (rail == direction
-                && (direction == Vertical::Center || grid.reachable_rails.get_vert(row, column)),
-             rail.into())
+            (
+                rail == direction
+                    && (direction == Vertical::Center
+                        || grid.reachable_rails.get_vert(row, column)),
+                rail.into(),
+            )
         }
     }
 }

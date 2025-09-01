@@ -12,7 +12,12 @@ use macroquad::prelude::*;
 
 #[derive(PartialEq)]
 pub enum RenderRail {
-    Some {reachable: bool, start: IVec2, end: IVec2, coord: IVec2 },
+    Some {
+        reachable: bool,
+        start: IVec2,
+        end: IVec2,
+        coord: IVec2,
+    },
     None,
 }
 pub fn render_satisfaction(
@@ -131,11 +136,16 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
                 RenderRail::None
             } else {
                 let (start, end) = match direction {
-                    Horizontal::Left => (ivec2(1,0), ivec2(0, 0)),
+                    Horizontal::Left => (ivec2(1, 0), ivec2(0, 0)),
                     Horizontal::Center | Horizontal::Right => (ivec2(0, 0), ivec2(1, 0)),
                 };
                 let reachable = grid.reachable_rails.get_horiz(i_row, i_column);
-                RenderRail::Some { reachable, start, end, coord: ivec2(i_column, i_row) }
+                RenderRail::Some {
+                    reachable,
+                    start,
+                    end,
+                    coord: ivec2(i_column, i_row),
+                }
             };
             render_rail(rail, theme);
         }
@@ -150,11 +160,16 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
                 RenderRail::None
             } else {
                 let (start, end) = match direction {
-                    Vertical::Top => (ivec2(0,1), ivec2(0, 0)),
-                    Vertical::Center | Vertical::Bottom =>  (ivec2(0, 0), ivec2(0, 1)),
+                    Vertical::Top => (ivec2(0, 1), ivec2(0, 0)),
+                    Vertical::Center | Vertical::Bottom => (ivec2(0, 0), ivec2(0, 1)),
                 };
                 let reachable = grid.reachable_rails.get_vert(i_row, i_column);
-                RenderRail::Some { reachable, start, end, coord: ivec2(i_column, i_row) }
+                RenderRail::Some {
+                    reachable,
+                    start,
+                    end,
+                    coord: ivec2(i_column, i_row),
+                }
             };
             render_rail(rail, theme);
         }
@@ -214,33 +229,54 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
 
 pub fn render_rail(render_rail: RenderRail, theme: &Theme) {
     match render_rail {
-         RenderRail::None => {},
-         RenderRail::Some {reachable, start, end, coord} => {
-             let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
-             let start = coord + start;
-             let end = coord + end;
-             let start= top_left_rail_intersection(start.y, start.x, theme);
-             let end = top_left_rail_intersection(end.y, end.x, theme);
-             draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
-             let direction = (end - start).normalize();
-             let border_start = start + direction * theme.cell_pad() * 0.5;
-             let leftwards = vec2(direction.y, -direction.x);
-             let left_border_start = border_start + leftwards * theme.cell_pad() * 0.5;
-             let right_border_start = border_start - leftwards * theme.cell_pad() * 0.5;
-             let border_end = end - direction * theme.cell_pad() * 0.5;
-             let left_border_end = border_end + leftwards * theme.cell_pad() * 0.5;
-             let right_border_end = border_end - leftwards * theme.cell_pad() * 0.5;
-             draw_line_v(left_border_start, left_border_end, TRIANGLE_BORDER);
-             draw_line_v(right_border_start, right_border_end, TRIANGLE_BORDER);
+        RenderRail::None => {}
+        RenderRail::Some {
+            reachable,
+            start,
+            end,
+            coord,
+        } => {
+            let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
+            let start = coord + start;
+            let end = coord + end;
+            let start = top_left_rail_intersection(start.y, start.x, theme);
+            let end = top_left_rail_intersection(end.y, end.x, theme);
+            draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
+            let direction = (end - start).normalize();
+            let border_start = start + direction * theme.cell_pad() * 0.5;
+            let leftwards = vec2(direction.y, -direction.x);
+            let left_border_start = border_start + leftwards * theme.cell_pad() * 0.5;
+            let right_border_start = border_start - leftwards * theme.cell_pad() * 0.5;
+            let border_end = end - direction * theme.cell_pad() * 0.5;
+            let left_border_end = border_end + leftwards * theme.cell_pad() * 0.5;
+            let right_border_end = border_end - leftwards * theme.cell_pad() * 0.5;
+            draw_line_v(left_border_start, left_border_end, TRIANGLE_BORDER);
+            draw_line_v(right_border_start, right_border_end, TRIANGLE_BORDER);
 
-             if reachable {
-                 calculate_and_draw_triangle(theme, color, start, end, direction, leftwards, TRIANGLE_BORDER);
-             }
-         }
+            if reachable {
+                calculate_and_draw_triangle(
+                    theme,
+                    color,
+                    start,
+                    end,
+                    direction,
+                    leftwards,
+                    TRIANGLE_BORDER,
+                );
+            }
+        }
     }
 }
 
-fn calculate_and_draw_triangle(theme: &Theme, color: Color, start: Vec2, end: Vec2, direction: Vec2, leftwards: Vec2, color_border: Color) {
+fn calculate_and_draw_triangle(
+    theme: &Theme,
+    color: Color,
+    start: Vec2,
+    end: Vec2,
+    direction: Vec2,
+    leftwards: Vec2,
+    color_border: Color,
+) {
     let mid = (start + end) * 0.5;
     let triangle_width = 2.0 * theme.cell_pad();
     let left = mid + leftwards * triangle_width;
@@ -318,7 +354,15 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                 if !success {
                     if reversed_rail != Reverse::None {
                         diff *= -1.0;
-                        calculate_and_draw_triangle(theme, color_border, start, end, diff, to_left, color);
+                        calculate_and_draw_triangle(
+                            theme,
+                            color_border,
+                            start,
+                            end,
+                            diff,
+                            to_left,
+                            color,
+                        );
                     }
                 }
             }
@@ -408,12 +452,16 @@ fn draw_blockade(
     let b = mid + forward - leftward;
     let c = mid - forward + leftward;
     let d = mid - forward - leftward;
-    let (blockade_color, blockade_color_border) = if success { (color, color_border) } else { (color_border, color) };
+    let (blockade_color, blockade_color_border) = if success {
+        (color, color_border)
+    } else {
+        (color_border, color)
+    };
     // if success {
-        draw_triangle(a, c, b, color);
-        draw_triangle(b, c, d, color);
-        // draw_triangle(a, c, b, blockade_color);
-        // draw_triangle(b, c, d, blockade_color);
+    draw_triangle(a, c, b, color);
+    draw_triangle(b, c, d, color);
+    // draw_triangle(a, c, b, blockade_color);
+    // draw_triangle(b, c, d, blockade_color);
     // }
     // draw_lines(&[a, b, d, c, a], color_border);
     // draw_lines(&[d, c], blockade_color_border);
@@ -426,17 +474,25 @@ fn draw_blockade(
             direction *= -1.0;
         }
         // calculate_and_draw_triangle(theme, color, start, end, direction, to_left, color_border);
-        calculate_and_draw_triangle(theme, color_border, start, end, direction, to_left, color_border);
+        calculate_and_draw_triangle(
+            theme,
+            color_border,
+            start,
+            end,
+            direction,
+            to_left,
+            color_border,
+        );
         // calculate_and_draw_triangle(theme, RAIL, start, end, direction, to_left, TRIANGLE_BORDER);
-        
-    //     let forward = diff * thickness * 0.5;
-    //     let leftward = to_left * theme.cell_pad() * 0.75;
-    //     let a = mid + forward + leftward;
-    //     let b = mid + forward - leftward;
-    //     let c = mid - forward + leftward;
-    //     let d = mid - forward - leftward;
-    //     draw_triangle(a, c, b, color_border);
-    //     draw_triangle(b, c, d, color_border);
+
+        //     let forward = diff * thickness * 0.5;
+        //     let leftward = to_left * theme.cell_pad() * 0.75;
+        //     let a = mid + forward + leftward;
+        //     let b = mid + forward - leftward;
+        //     let c = mid - forward + leftward;
+        //     let d = mid - forward - leftward;
+        //     draw_triangle(a, c, b, color_border);
+        //     draw_triangle(b, c, d, color_border);
     }
 }
 

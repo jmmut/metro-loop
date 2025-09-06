@@ -196,11 +196,9 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
             let bottom_right = cell_top_left(i_row, i_column, theme);
             let top_left = bottom_right - theme.cell_pad();
             let top_right = top_left + vec2(theme.cell_pad(), 0.0);
-            let bottom_left = top_left + vec2(-1.0, theme.cell_pad() + 1.0);
+            let bottom_left = top_left + vec2(0.0, theme.cell_pad());
             let intersection_rect =
                 Rect::new(top_left.x, top_left.y, theme.cell_pad(), theme.cell_pad());
-            let bottom_right = bottom_right + vec2(0.0, 1.0);
-            let top_left = top_left + vec2(-1.0, 0.0);
             match crossing {
                 Crossing::None => {}
                 Crossing::Single => draw_rect(intersection_rect, color),
@@ -214,11 +212,19 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
                 }
                 Crossing::VerticalOnTop => {
                     draw_rect(intersection_rect, color);
+                    let top_left = top_left + vec2(-0.5, 0.0);
+                    let bottom_left = bottom_left + vec2(-0.5, 0.0);
+                    let top_right = top_right + vec2(0.5, 0.0);
+                    let bottom_right = bottom_right + vec2(0.5, 0.0);
                     draw_line_v(top_right, bottom_right, TRIANGLE_BORDER);
                     draw_line_v(top_left, bottom_left, TRIANGLE_BORDER);
                 }
                 Crossing::HorizontalOnTop => {
                     draw_rect(intersection_rect, color);
+                    let top_left = top_left + vec2(0.0, -0.5);
+                    let bottom_left = bottom_left + vec2(0.0, 0.5);
+                    let top_right = top_right + vec2(0.0, -0.5);
+                    let bottom_right = bottom_right + vec2(0.0, 0.5);
                     draw_line_v(top_right, top_left, TRIANGLE_BORDER);
                     draw_line_v(bottom_right, bottom_left, TRIANGLE_BORDER);
                 }
@@ -245,11 +251,11 @@ pub fn render_rail(render_rail: RenderRail, theme: &Theme) {
             let direction = (end - start).normalize();
             let border_start = start + direction * theme.cell_pad() * 0.5;
             let leftwards = vec2(direction.y, -direction.x);
-            let left_border_start = border_start + leftwards * theme.cell_pad() * 0.5;
-            let right_border_start = border_start - leftwards * theme.cell_pad() * 0.5;
+            let left_border_start = border_start + leftwards * (theme.cell_pad() * 0.5 + 0.5);
+            let right_border_start = border_start - leftwards * (theme.cell_pad() * 0.5 + 0.5);
             let border_end = end - direction * theme.cell_pad() * 0.5;
-            let left_border_end = border_end + leftwards * theme.cell_pad() * 0.5;
-            let right_border_end = border_end - leftwards * theme.cell_pad() * 0.5;
+            let left_border_end = border_end + leftwards * (theme.cell_pad() * 0.5 + 0.5);
+            let right_border_end = border_end - leftwards * (theme.cell_pad() * 0.5 + 0.5);
             draw_line_v(left_border_start, left_border_end, TRIANGLE_BORDER);
             draw_line_v(right_border_start, right_border_end, TRIANGLE_BORDER);
 
@@ -533,8 +539,8 @@ fn top_left_rail_intersection(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 
 }
 
 fn cell_top_left(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 {
-    let x = theme.grid_pad() + i_column as f32 * (theme.cell_width() + theme.cell_pad()) + 0.5;
-    let y = theme.grid_pad() + i_row as f32 * (theme.cell_height() + theme.cell_pad()) + 0.5;
+    let x = theme.grid_pad() + i_column as f32 * (theme.cell_width() + theme.cell_pad());
+    let y = theme.grid_pad() + i_row as f32 * (theme.cell_height() + theme.cell_pad());
     vec2(x, y)
 }
 

@@ -105,7 +105,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
                 Level {
                     initial_grid: state.grid.clone(),
                     constraints: state.constraints.clone(),
-                    solution: state.grid.clone(),
+                    solution: state.solution.clone(),
                 }
             );
         }

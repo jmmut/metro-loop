@@ -24,7 +24,7 @@ pub struct Resources {
     // textures
 }
 
-pub async fn loading_screen() -> Result<Theme, AnyError> {
+pub async fn loading_screen(section: i32, level: i32) -> Result<Theme, AnyError> {
     let mut sound_loader = ResourceLoader::<_, Sound, _, _, _>::new(
         load_sound_from_bytes,
         &[
@@ -81,7 +81,7 @@ pub async fn loading_screen() -> Result<Theme, AnyError> {
             Some(sounds) => {
                 let font_bytes = include_bytes!("../../assets/fonts/Saira-Regular.ttf");
                 let font = load_ttf_font_from_bytes(font_bytes).unwrap();
-                let level_history = LevelHistory::new()?;
+                let level_history = LevelHistory::new(section, level)?;
                 let resources = Resources {
                     sounds: Sounds::new(sounds),
                     font,

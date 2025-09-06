@@ -3,7 +3,7 @@ use crate::logic::constraints::{choose_constraints, count_unreachable_rails};
 use crate::logic::grid::Grid;
 use crate::scenes::play::generate_grid;
 use crate::theme::Theme;
-use crate::{AnyError, STARTING_LEVEL, STARTING_SECTION, VISUALIZE};
+use crate::AnyError;
 
 pub struct LevelHistory {
     pub current: GameTrack,
@@ -17,7 +17,7 @@ pub enum GameTrack {
 }
 
 impl LevelHistory {
-    pub fn new() -> Result<Self, AnyError> {
+    pub fn new(section: i32, level: i32) -> Result<Self, AnyError> {
         let levels = Levels::get()?;
         let mut solved = Vec::new();
         for section in &levels.sections {
@@ -26,10 +26,7 @@ impl LevelHistory {
             solved.push(solved_in_section);
         }
         Ok(Self {
-            current: GameTrack::Campaign {
-                section: STARTING_SECTION,
-                level: STARTING_LEVEL,
-            },
+            current: GameTrack::Campaign { section, level },
             levels,
             solved,
         })

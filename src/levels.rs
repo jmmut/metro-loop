@@ -61,7 +61,7 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 ---------
 .=x-x-x-.
 ----"----
-.-.=.=.-.
+.-x=x=x-.
 ------"--
 .-.-.-.-.
 

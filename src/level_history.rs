@@ -5,12 +5,14 @@ use crate::scenes::play::generate_grid;
 use crate::theme::Theme;
 use crate::AnyError;
 
+#[derive(Debug)]
 pub struct LevelHistory {
     pub current: GameTrack,
     pub levels: Levels,
     pub solved: Vec<Vec<bool>>,
 }
 
+#[derive(Debug)]
 pub enum GameTrack {
     Campaign { section: i32, level: i32 },
     Procedural,

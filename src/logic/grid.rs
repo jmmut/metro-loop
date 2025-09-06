@@ -5,7 +5,7 @@ use crate::logic::rails::Rails;
 use crate::{generate_nested_vec, AnyError};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::prelude::{ivec2, IVec2};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
 pub type Cell = bool;
@@ -435,6 +435,11 @@ impl Display for Grid {
             writeln!(f)?;
         }
         Ok(())
+    }
+}
+impl Debug for Grid {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self)
     }
 }
 

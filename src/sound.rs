@@ -1,5 +1,6 @@
 use macroquad::audio::Sound;
 
+#[derive(Debug)]
 pub struct Sounds {
     pub _sound_incorrect: Sound,
     pub sound_correct: Sound,

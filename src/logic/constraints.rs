@@ -3,7 +3,7 @@ use crate::CLUE_PERCENTAGE;
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::rand::rand;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum RailCoord {
     Horizontal {
         row: i32,
@@ -16,8 +16,7 @@ pub enum RailCoord {
         direction: Vertical,
     },
 }
-
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Constraints {
     pub rails: Vec<RailCoord>,
     pub cell_count: i32,

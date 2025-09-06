@@ -64,11 +64,27 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x=x=x-.
 ------"--
 .-.-.-.-.
-
 "#,
         ],
-    }],
+    }, RawSection {levels: &[
+        
+//             r#".-.-.-.-.-.-.-.-.
+// ------<-------<--
+// .-*-*-*-.-*-*-*-.
+// ----<-------<----
+// .v*-.-*-.v*-.-*-.
+// ---->------->----
+// .=x-x-*-%=x-x-*-.
+// -----------------
+// .=x-x-x-.=x-x-x-.
+// ----"-------"----
+// .-x=x=x-.-x=x=x-.
+// ------"-------"--
+// .-.-.-.-.-.-.-.-.
+// "#,
+    ]}],
 };
+#[derive(Debug)]
 pub struct Levels {
     pub sections: Vec<Section>,
 }
@@ -76,6 +92,7 @@ pub struct RawLevels<'a> {
     sections: &'a [RawSection<'a>],
 }
 
+#[derive(Debug)]
 pub struct Section {
     pub levels: Vec<Level>,
 }
@@ -83,7 +100,7 @@ pub struct RawSection<'a> {
     levels: &'a [&'a str],
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Level {
     pub initial_grid: Grid,
     pub constraints: Constraints,

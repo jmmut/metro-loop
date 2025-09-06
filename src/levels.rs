@@ -31,25 +31,40 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
     >    
 . x % x .
          
-. x x *.
+. x ? *. 
       >  
 . x x x .
          
 . . . . .
 "#,
-            r#". . . . .
-         
-. *=* x .
-  "      
-. * . x .
-  " > "  
-. O=% x .
-         
-. x x x .
-         
-. x x x .
-         
-. . . . .
+            r#".-.-.-.-.
+---------
+.-*=*-x-.
+--"------
+.-*-.-x-.
+--"->-"--
+.-O=%-x-.
+---------
+.-x-x-x-.
+---------
+.-x-x-x-.
+---------
+.-.-.-.-.
+"#,
+            r#".-.-.-.-.
+------<--
+.-*-*-*-.
+----<----
+.v*-.-*-.
+---->----
+.=x-%-*-.
+---------
+.=x-x-x-.
+----"----
+.-.=.=.-.
+------"--
+.-.-.-.-.
+
 "#,
         ],
     }],
@@ -126,7 +141,7 @@ impl Level {
                     'x' => Code::Cell{is_root: false, cell: false, fixed_cell: false, solution: false},
                     '?' => Code::Cell{is_root: false, cell: true, fixed_cell: false, solution: false},
                     '.' => Code::Cell{is_root: false, cell: false, fixed_cell: true, solution: false},
-                    ' ' => Code::NoRailConstraint,
+                    ' ' | '-' => Code::NoRailConstraint,
                     'v' => Code::Constraint(RailCoord::Vertical {row: (line_count-1)/2, column: (letter_count+1)/2, direction: Vertical::Bottom}),
                     '=' => Code::Constraint(RailCoord::Vertical {row: (line_count-1)/2, column: (letter_count+1)/2, direction: Vertical::Center}),
                     '^' => Code::Constraint(RailCoord::Vertical {row: (line_count-1)/2, column: (letter_count+1)/2, direction: Vertical::Top}),
@@ -211,7 +226,7 @@ impl Display for Level {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let columns = self.initial_grid.columns();
         let rows = self.initial_grid.rows();
-        let mut lines = generate_nested_vec(rows as usize * 2 - 1, columns as usize * 2 - 1, ' ');
+        let mut lines = generate_nested_vec(rows as usize * 2 - 1, columns as usize * 2 - 1, '-');
         for row in 0..rows {
             for column in 0..columns {
                 let letter = if self.initial_grid.root == ivec2(column, row) {
@@ -280,17 +295,17 @@ mod tests {
     use super::*;
     use crate::logic::constraints::{compute_satisfaction, Satisfaction};
 
-    const RAW_LEVEL: &str = r#". . . . . .
-           
-. x x x x .
-           
-. x . x x .
-  " > >    
-.=?^%=*vx .
-  " < <    
-. x x x x .
-           
-. . . . . .
+    const RAW_LEVEL: &str = r#".-.-.-.-.-.
+-----------
+.-x-x-x-x-.
+-----------
+.-x-.-x-x-.
+--"->->----
+.=?^%=*vx-.
+--"-<-<----
+.-x-x-x-x-.
+-----------
+.-.-.-.-.-.
 "#;
 
     #[test]

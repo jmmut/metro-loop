@@ -100,7 +100,14 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             break;
         }
         if is_key_pressed(KeyCode::P) {
-            println!("{}", state.grid);
+            println!(
+                "{}",
+                Level {
+                    initial_grid: state.grid.clone(),
+                    constraints: state.constraints.clone(),
+                    solution: state.grid.clone(),
+                }
+            );
         }
 
         let mut reset_button = new_button(

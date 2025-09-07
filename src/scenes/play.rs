@@ -39,6 +39,7 @@ pub struct Panel {
     rect: Rect,
     level_title: TextRect,
     next_game: Button,
+    main_menu: Button,
     // show_solution: Option<Button>,
 }
 
@@ -195,6 +196,9 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         draw_texture(render_target.texture, 0., 0., WHITE);
 
+        if panel.main_menu.interact().is_clicked() || is_key_pressed(KeyCode::Escape) {
+            return Ok(NextStage::MainMenu);
+        }
         panel.render_interactive();
 
         if is_key_pressed(KeyCode::N) || panel.next_game.interact().is_clicked() {
@@ -219,9 +223,6 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
                 ),
                 &STYLE.pressed,
             );
-        }
-        if is_key_pressed(KeyCode::Escape) {
-            return Ok(NextStage::MainMenu);
         }
         next_frame().await
     }
@@ -347,7 +348,7 @@ impl Panel {
     pub fn new(panel_rect: Rect, theme: &Theme) -> Self {
         let anchor_point = vec2(
             panel_rect.x + panel_rect.w * 0.5,
-            panel_rect.y + theme.grid_pad(),
+            panel_rect.y + theme.button_pad(),
         );
         let half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
 
@@ -358,10 +359,17 @@ impl Panel {
         let anchor_right = Anchor::top_left_v(anchor_point + half_pad);
         let next_game = new_button("Next Game", anchor_right, &theme);
 
+        let anchor_bottom = Anchor::bottom_center_v(vec2(
+            panel_rect.x + panel_rect.w * 0.5,
+            panel_rect.bottom() - theme.button_pad(),
+        ));
+        let main_menu = new_button("Main menu", anchor_bottom, theme);
+
         Self {
             rect: panel_rect,
             level_title,
             next_game,
+            main_menu,
         }
     }
     pub fn filled_rect(&self) -> Rect {
@@ -375,5 +383,6 @@ impl Panel {
     }
     pub fn render_interactive(&self) {
         render_button(&self.next_game);
+        render_button(&self.main_menu);
     }
 }

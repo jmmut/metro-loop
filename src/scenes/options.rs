@@ -26,6 +26,7 @@ pub async fn options(theme: &mut Theme) -> Result<NextStage, AnyError> {
         draw_rect(panel, PANEL_BACKGROUND);
 
         change_font_ui(panel, theme);
+
         let anchor_point = vec2(panel.center().x, panel.bottom() - theme.button_pad());
         let mut back = new_button("Back", Anchor::bottom_center_v(anchor_point), theme);
         if is_key_pressed(KeyCode::Escape) || back.interact().is_clicked() {

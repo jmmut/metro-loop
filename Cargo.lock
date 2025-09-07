@@ -169,8 +169,8 @@ dependencies = [
 
 [[package]]
 name = "juquad"
-version = "0.12.3"
-source = "git+https://github.com/jmmut/juquad.git?tag=0.12.3#ead6bc0cf852fbf4422a42dc1da5dc0e143aea3f"
+version = "0.12.4"
+source = "git+https://github.com/jmmut/juquad.git?tag=0.12.4#8df6440717d2b88f181cc7f770d3b52bd681c1c5"
 dependencies = [
  "macroquad",
 ]

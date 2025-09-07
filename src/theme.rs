@@ -145,21 +145,57 @@ pub fn new_button(text: &str, anchor: Anchor, theme: &Theme) -> Button {
     let text_rect = new_text(text, anchor, 1.0, theme);
     text_rect.into()
 }
+
+pub fn labels_from_theme(theme: &Theme) -> LabelGroup {
+    LabelGroup {
+        font_size: 1.0,
+        font: Some(theme.resources.font),
+        alignment: Horizontal::Center,
+        direction: Direction::Bottom,
+        anchor: Default::default(),
+        pad_x: None,
+        pad_y: None,
+        margin: 0.0,
+    }
+}
 pub fn new_button_group(anchor: Anchor, theme: &Theme) -> ButtonGroup {
-    new_button_group_direction(anchor, theme, Direction::Bottom)
+    new_button_group_generic(
+        theme,
+        LabelGroup {
+            anchor,
+            ..labels_from_theme(theme)
+        },
+    )
+}
+pub fn new_button_group_size(anchor: Anchor, theme: &Theme, font_size_coef: f32) -> ButtonGroup {
+    new_button_group_generic(
+        theme,
+        LabelGroup {
+            anchor,
+            font_size: font_size_coef,
+            ..labels_from_theme(theme)
+        },
+    )
 }
 pub fn new_button_group_direction(
     anchor: Anchor,
     theme: &Theme,
     direction: Direction,
 ) -> ButtonGroup {
-    let labels = LabelGroup::new_generic(
-        theme.font_size(),
-        Some(theme.resources.font),
-        anchor,
-        Horizontal::Center,
-        direction,
-    );
+    new_button_group_generic(
+        theme,
+        LabelGroup {
+            anchor,
+            direction,
+            ..labels_from_theme(theme)
+        },
+    )
+}
+pub fn new_button_group_generic(theme: &Theme, labels: LabelGroup) -> ButtonGroup {
+    let labels = LabelGroup {
+        font_size: labels.font_size * theme.font_size(),
+        ..labels
+    };
     ButtonGroup::new_with_labels(labels)
 }
 

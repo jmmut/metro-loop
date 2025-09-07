@@ -2,14 +2,14 @@ use crate::level_history::LevelHistory;
 use crate::sound::Sounds;
 use crate::theme::{new_text_unloaded, render_text, Theme};
 use crate::{
-    new_layout, AnyError, BACKGROUND, DISABLED_CELL, ENABLED_CELL, RAIL, STYLE, TRANSPARENT,
-    TRIANGLE_BORDER,
+    new_layout, AnyError, BACKGROUND, DEFAULT_VOLUME, DISABLED_CELL, ENABLED_CELL, RAIL, STYLE,
+    TRANSPARENT, TRIANGLE_BORDER,
 };
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::resource_loader::ResourceLoader;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::StateStyle;
-use macroquad::audio::{load_sound_from_bytes, Sound};
+use macroquad::audio::{load_sound_from_bytes, play_sound, stop_sound, PlaySoundParams, Sound};
 use macroquad::color::DARKGRAY;
 use macroquad::math::Rect;
 use macroquad::prelude::{
@@ -30,14 +30,19 @@ impl TryFrom<Loading> for Resources {
     fn try_from(value: Loading) -> Result<Self, Self::Error> {
         match value {
             Loading {
-                sounds: Some(sounds),
+                sound_intro: Some(sound_intro),
+                sounds_2: Some(mut other_sounds),
                 font: Some(font),
                 level_history: Some(level_history),
-            } => Ok(Resources {
-                sounds,
-                font,
-                level_history,
-            }),
+            } => {
+                other_sounds.push(sound_intro);
+                let sounds = Sounds::new(other_sounds);
+                Ok(Resources {
+                    sounds,
+                    font,
+                    level_history,
+                })
+            }
             _ => Err(format!(
                 "logic error: tried to convert to Resources from an incomplete Loading: {:?}",
                 value
@@ -49,39 +54,61 @@ impl TryFrom<Loading> for Resources {
 
 #[derive(Debug)]
 pub struct Loading {
-    pub sounds: Option<Sounds>,
+    pub sound_intro: Option<Sound>,
+    pub sounds_2: Option<Vec<Sound>>,
     pub font: Option<Font>,
     pub level_history: Option<LevelHistory>,
 }
 
+const LOOPED_SOUND: PlaySoundParams = PlaySoundParams {
+    looped: true,
+    volume: DEFAULT_VOLUME,
+};
+
 pub async fn loading_screen(section: i32, level: i32) -> Result<Theme, AnyError> {
-    let mut sound_loader = ResourceLoader::<_, Sound, _, _, _>::new(
+    let mut sound_loader_1 = ResourceLoader::<_, Sound, _, _, _>::new(
+        load_sound_from_bytes,
+        &[include_bytes!("../../assets/sound/background_intro.ogg")],
+    );
+    let mut sound_loader_2 = ResourceLoader::<_, Sound, _, _, _>::new(
         load_sound_from_bytes,
         &[
             include_bytes!("../../assets/sound/incorrect.wav"),
             include_bytes!("../../assets/sound/satisfied.wav"),
             include_bytes!("../../assets/sound/background.ogg"),
-            include_bytes!("../../assets/sound/background_intro.ogg"),
         ],
     );
 
     let (sw, sh) = (screen_width(), screen_height());
     let layout = new_layout(sw, sh);
     let mut loading = Loading {
-        sounds: None,
+        sound_intro: None,
+        sounds_2: None,
         font: None,
         level_history: None,
     };
-    let total_progress = sound_loader.get_progress().total_to_load
+    let total_progress = sound_loader_1.get_progress().total_to_load
+        + sound_loader_2.get_progress().total_to_load
         + 1 // font
         + 1 // levels
         ;
     let mut progress = 0;
     loop {
-        if loading.sounds.is_none() {
-            let sound_progress = sound_loader.get_progress();
-            if let Some(loaded) = sound_loader.get_resources()? {
-                loading.sounds = Some(Sounds::new(loaded));
+        if loading.sound_intro.is_none() {
+            let sound_progress = sound_loader_1.get_progress();
+            if let Some(loaded) = sound_loader_1.get_resources()? {
+                loading.sound_intro = Some(loaded[0]);
+                play_sound(*loading.sound_intro.as_ref().unwrap(), LOOPED_SOUND);
+                progress = sound_progress.total_to_load;
+            } else {
+                progress = sound_progress.loaded;
+            }
+        } else if loading.sounds_2.is_none() {
+            let sound_progress = sound_loader_2.get_progress();
+            if let Some(loaded) = sound_loader_2.get_resources()? {
+                loading.sounds_2 = Some(loaded);
+                play_sound(loading.sounds_2.as_ref().unwrap()[2], LOOPED_SOUND);
+                stop_sound(*loading.sound_intro.as_ref().unwrap());
                 progress = sound_progress.total_to_load;
             } else {
                 progress = sound_progress.loaded;

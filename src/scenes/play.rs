@@ -6,13 +6,13 @@ use crate::render::{render_cells, render_constraints, render_grid, render_satisf
 use crate::theme::{new_button, new_text, render_button, render_text, Theme};
 use crate::{
     new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
-    MAX_CELLS_COEF, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
+    DEFAULT_VOLUME, MAX_CELLS_COEF, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
 use juquad::widgets::text::TextRect;
-use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
+use macroquad::audio::{play_sound, PlaySoundParams};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
 use macroquad::input::{
@@ -20,7 +20,6 @@ use macroquad::input::{
     MouseButton,
 };
 use macroquad::math::{ivec2, vec2, Rect, Vec2};
-use macroquad::miniquad::date::now;
 use macroquad::miniquad::FilterMode;
 use macroquad::prelude::{
     clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width,
@@ -54,13 +53,6 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
     let mut show_solution_button = None;
 
     let mut right_clicked = None;
-    let mut _should_play_sound = false;
-    let mut should_play_intro = true;
-    let mut should_play_background = true;
-    // play_sound_once(music_background_intro);
-    // play_sound_once(music_background);
-    // play_sound(music_background, PlaySoundParams { looped: true, volume: 0.5 });
-    let mut start_ts = None;
     loop {
         let (new_sw, new_sh) = (screen_width(), screen_height());
         if new_sw != sw || new_sh != sh {
@@ -70,25 +62,6 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             theme.layout = new_layout(sw, sh).resize_grid(state.grid.rows(), state.grid.columns());
             panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
-        }
-        if should_play_intro {
-            play_sound_once(theme.resources.sounds.music_background_intro);
-            start_ts = Some(now());
-            should_play_intro = false;
-        }
-        if let Some(start_ts) = &start_ts {
-            if now() - start_ts > 6.0 {
-                if should_play_background {
-                    should_play_background = false;
-                    play_sound(
-                        theme.resources.sounds.music_background,
-                        PlaySoundParams {
-                            looped: true,
-                            volume: 0.75,
-                        },
-                    );
-                }
-            }
         }
         if is_key_pressed(KeyCode::P) {
             println!(
@@ -152,7 +125,6 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
                         let cell = get_cell_mut(&mut state.grid, i_row, i_column);
                         *cell = !*cell;
                         state.grid.recalculate_rails();
-                        _should_play_sound = true;
                         refresh_render = true;
                     }
                 }
@@ -184,9 +156,14 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             if satisfaction.success() {
                 if !state.success_sound_played {
                     state.success_sound_played = true;
-                    // if let Some(sound_correct) = sound_correct {
-                    //     play_sound(sound_correct, PlaySoundParams::default());
-                    // }
+                    let sound_correct = theme.resources.sounds.sound_correct;
+                    play_sound(
+                        sound_correct,
+                        PlaySoundParams {
+                            looped: false,
+                            volume: DEFAULT_VOLUME * 0.05,
+                        },
+                    );
                 }
             }
             // if let Some(previous) = &previous_satisfaction {

@@ -38,6 +38,8 @@ pub const FONT_SIZE_CHANGING: bool = false;
 pub const STEP_GENERATION: bool = false;
 pub const SHOW_FPS: bool = false;
 
+pub const DEFAULT_VOLUME: f32 = 0.7;
+
 pub const TRANSPARENT: Color = Color::new(0.0, 0.0, 0.0, 0.0);
 pub const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 pub const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);

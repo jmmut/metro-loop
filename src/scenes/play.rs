@@ -45,7 +45,6 @@ pub struct Panel {
 
 pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
     let (mut sw, mut sh) = (screen_width(), screen_height());
-    theme.layout = new_layout(sw, sh);
     let current_level = theme.resources.level_history.get_current();
     let (mut state, mut panel) = reset(VISUALIZE, current_level, theme).await;
     let mut render_target = macroquad::prelude::render_target(sw as u32, sh as u32);

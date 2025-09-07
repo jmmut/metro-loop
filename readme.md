@@ -10,8 +10,8 @@ Clone this repo, then [Install rust](https://www.rust-lang.org/tools/install), t
 
 ## Ideas for improvements
 
-- main menu
-- options screen
+- [x] main menu
+- [/] options screen
 - Select difficulty
 - [/] campaign/random/incremental modes
 - diagonal constraint

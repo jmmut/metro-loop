@@ -16,6 +16,7 @@ pub struct Theme {
     pub layout: Layout,
 }
 
+#[derive(Debug)]
 pub struct Layout {
     pub screen_width: f32,
     pub screen_height: f32,
@@ -29,7 +30,7 @@ pub struct Layout {
 }
 
 impl Layout {
-    pub fn readjust(mut self) -> Self {
+    pub fn readjust(self) -> Self {
         let screen_height_proportional = self.screen_width * 9.0 / 16.0;
         let screen_height = screen_height_proportional.min(self.screen_height);
         let screen_width = screen_height * 16.0 / 9.0;
@@ -184,4 +185,16 @@ pub fn new_text_group(anchor: Anchor, theme: &Theme) -> LabelGroup {
 pub fn render_text(text_rect: &TextRect, style: &StateStyle) {
     draw_rect(text_rect.rect(), style.bg_color);
     text_rect.render_default(style)
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{new_layout, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH};
+    use super::*;
+    
+    #[test]
+    fn test_basic_layout() {
+        let layout = new_layout(DEFAULT_WINDOW_WIDTH as f32, DEFAULT_WINDOW_HEIGHT as f32);
+        println!("{:?}", layout);
+    }
 }

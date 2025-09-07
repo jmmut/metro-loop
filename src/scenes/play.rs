@@ -78,6 +78,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             refresh_render = true;
             sw = new_sw;
             sh = new_sh;
+            theme.layout = new_layout(sw, sh);
             (state, panel) = reset(VISUALIZE, theme.resources.level_history.get_current(), theme).await;
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
         }

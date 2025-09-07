@@ -190,7 +190,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             }
             show_solution_button = render_satisfaction(
                 &satisfaction,
-                panel.next_game.rect(),
+                panel.filled_rect(),
                 panel.rect,
                 &theme,
                 &mut state.show_solution,
@@ -407,21 +407,29 @@ pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
 
 impl Panel {
     pub fn new(panel_rect: Rect, theme: &Theme) -> Self {
-        let anchor = Anchor::top_center(
+        let anchor_point = vec2(
             panel_rect.x + panel_rect.w * 0.5,
             panel_rect.y + theme.grid_pad(),
         );
-        let level_name = theme.resources.level_history.current.to_string();
-        let level_title = new_text(&level_name, anchor, 1.0, theme);
+        let half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
 
-        let anchor = Anchor::below(level_title.rect(), Horizontal::Center, theme.button_pad());
-        let next_game = new_button("Next Game", anchor, &theme);
+        let level_name = theme.resources.level_history.current.to_string();
+        let anchor_left = Anchor::top_right_v(anchor_point - half_pad);
+        let level_title = new_text(&level_name, anchor_left, 1.0, theme);
+
+        let anchor_right = Anchor::top_left_v(anchor_point + half_pad);
+        let next_game = new_button("Next Game", anchor_right, &theme);
 
         Self {
             rect: panel_rect,
             level_title,
             next_game,
         }
+    }
+    pub fn filled_rect(&self) -> Rect {
+        let mut rect = self.rect;
+        rect.h = self.next_game.rect().bottom() - rect.y;
+        rect
     }
     pub fn render_static(&self) {
         draw_rect(self.rect, PANEL_BACKGROUND);

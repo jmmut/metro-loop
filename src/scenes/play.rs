@@ -47,13 +47,10 @@ pub struct Panel {
 }
 
 pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
-    let (mut state, mut panel) = reset(
-        VISUALIZE,
-        theme.resources.level_history.get_current(),
-        theme,
-    )
-    .await;
     let (mut sw, mut sh) = (screen_width(), screen_height());
+    theme.layout = new_layout(sw, sh);
+    let current_level = theme.resources.level_history.get_current();
+    let (mut state, mut panel) = reset(VISUALIZE, current_level, theme).await;
     let mut render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
     render_target.texture.set_filter(FilterMode::Nearest);
 

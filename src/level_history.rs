@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use crate::levels::{Level, Levels};
 use crate::logic::constraints::{choose_constraints, count_unreachable_rails};
 use crate::logic::grid::Grid;
@@ -101,6 +102,19 @@ impl GameTrack {
         match self {
             GameTrack::Campaign { .. } => false,
             GameTrack::Procedural => true,
+        }
+    }
+}
+
+impl Display for GameTrack {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            GameTrack::Campaign { section, level } => {
+                write!(f, "Level: {}-{}", section, level)                
+            }
+            GameTrack::Procedural => {
+                write!(f, "Level: Random")
+            }
         }
     }
 }

@@ -29,12 +29,12 @@ pub fn render_satisfaction(
 ) -> Option<Button> {
     let solved = satisfaction.success();
     let mut rect = if solved {
-        let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
+        let anchor = Anchor::below(previous_rect, Horizontal::Center, theme.button_pad());
         let text = new_text(&"SOLVED!", anchor, 2.0, &theme);
         render_text(&text, &STYLE.at_rest);
         text.rect()
     } else {
-        let anchor = Anchor::below(previous_rect, Horizontal::Center, 30.0);
+        let anchor = Anchor::below(previous_rect, Horizontal::Center, theme.button_pad());
         let labels = new_text_group(anchor, theme);
         let text_rects = labels.create([
             &format!("{} incorrect rails", satisfaction.failing_rails),
@@ -58,7 +58,7 @@ pub fn render_satisfaction(
     if solved || SEE_SOLUTION_DURING_GAME {
         rect.x = panel.x;
         rect.w = panel.w;
-        let show_anchor = Anchor::below(rect, Horizontal::Center, 30.0);
+        let show_anchor = Anchor::below(rect, Horizontal::Center, theme.button_pad());
         let show_text = if *show_solution {
             "Hide solution"
         } else {

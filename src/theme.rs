@@ -101,7 +101,10 @@ impl Theme {
         let (sw, _sh) = self.useable_screen_size();
         sw - self.grid_pad() * 3.0 - self.grid_width(grid)
     }
-    pub fn button_panel_rect(&mut self, grid: &Grid) -> Rect {
+    pub fn button_pad(&self) -> f32 {
+        self.grid_pad()
+    }
+    pub fn button_panel_rect(&self, grid: &Grid) -> Rect {
         Rect::new(
             self.grid_width(grid) + self.grid_pad() * 2.0,
             self.grid_pad(),

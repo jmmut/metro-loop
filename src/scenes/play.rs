@@ -1,3 +1,4 @@
+use juquad::widgets::Widget;
 use crate::level_history::generate_procedural;
 use crate::levels::{Level, Levels};
 use crate::logic::constraints::{
@@ -13,8 +14,10 @@ use crate::{
     MAX_CELLS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
-use juquad::widgets::anchor::Anchor;
+use juquad::widgets::anchor::{Anchor, Horizontal};
+use juquad::widgets::button::Button;
 use juquad::widgets::button_group;
+use juquad::widgets::text::TextRect;
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
@@ -39,8 +42,16 @@ pub struct State {
     success_sound_played: bool,
 }
 
+pub struct Panel {
+    rect: Rect,
+    level_title: TextRect,
+    next_game: Button,
+    // show_solution: Option<Button>,
+}
+
+
 pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
-    let mut state = reset(
+    let (mut state, mut panel) = reset(
         VISUALIZE,
         theme.resources.level_history.get_current(),
         theme,
@@ -53,7 +64,6 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let mut refresh_render = true;
     let mut show_solution_button = None;
 
-    let mut button_panel = theme.button_panel_rect(&state.grid);
     let mut right_clicked = None;
     let mut _should_play_sound = false;
     let mut should_play_intro = true;
@@ -68,14 +78,8 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             refresh_render = true;
             sw = new_sw;
             sh = new_sh;
-            theme.layout = Layout {
-                default_rows: theme.default_rows(),
-                default_columns: theme.default_columns(),
-                ..new_layout(sw, sh)
-            }
-            .readjust();
+            (state, panel) = reset(VISUALIZE, theme.resources.level_history.get_current(), theme).await;
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
-            button_panel = theme.button_panel_rect(&state.grid);
         }
         if should_play_intro {
             play_sound_once(theme.resources.sounds.music_background_intro);
@@ -110,14 +114,6 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             );
         }
 
-        let mut reset_button = new_button(
-            "New Game",
-            Anchor::top_center(
-                button_panel.x + button_panel.w * 0.5,
-                button_panel.y + theme.grid_pad(),
-            ),
-            &theme,
-        );
         let pos = Vec2::from(mouse_position());
         let grid_indexes = (pos - theme.grid_pad() + theme.cell_pad() * 0.5)
             / (vec2(theme.cell_width(), theme.cell_height()) + theme.cell_pad());
@@ -186,16 +182,15 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             });
 
             clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
-
-            draw_rect(button_panel, PANEL_BACKGROUND);
+            panel.render_static();
             let satisfaction = compute_satisfaction(&state.grid, &state.constraints);
             if satisfaction.success() {
                 theme.resources.level_history.solved()
             }
             show_solution_button = render_satisfaction(
                 &satisfaction,
-                reset_button.rect(),
-                button_panel,
+                panel.next_game.rect(),
+                panel.rect,
                 &theme,
                 &mut state.show_solution,
             );
@@ -235,13 +230,13 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             render_cells(&state.grid, &hovered_cell, theme);
         }
         draw_texture(render_target.texture, 0., 0., WHITE);
-        render_button(&reset_button);
+        
+        panel.render_interactive();
 
-        if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
+        if is_key_pressed(KeyCode::N) || panel.next_game.interact().is_clicked() {
             let level = theme.resources.level_history.next().get_current();
-            state = reset(VISUALIZE, level, theme).await;
+            (state, panel) = reset(VISUALIZE, level, theme).await;
             refresh_render = true;
-            button_panel = theme.button_panel_rect(&state.grid);
         }
         if let Some(show) = show_solution_button.as_mut() {
             if show.interact().is_clicked() {
@@ -262,7 +257,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             );
         }
         if FONT_SIZE_CHANGING {
-            change_font_ui(button_panel, theme, &mut refresh_render);
+            change_font_ui(panel.rect, theme, &mut refresh_render);
         }
         next_frame().await
     }
@@ -293,7 +288,7 @@ fn change_font_ui(button_panel: Rect, theme: &mut Theme, refresh_render: &mut bo
     render_button(&decrease);
 }
 
-async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> State {
+async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> (State, Panel) {
     let (grid, constraints, solution) = if let Some(Level {
         initial_grid,
         constraints,
@@ -319,14 +314,16 @@ async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> Stat
     let show_solution = DEFAULT_SHOW_SOLUTION;
     let previous_satisfaction = None;
     let success_sound_played = false;
-    State {
+    let state = State {
         solution,
         grid,
         constraints,
         show_solution,
         previous_satisfaction,
         success_sound_played,
-    }
+    };
+    let panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
+    (state, panel)
 }
 
 pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
@@ -410,4 +407,27 @@ pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
         }
     }
     solution
+}
+
+impl Panel {
+    pub fn new(panel_rect: Rect, theme: &Theme) -> Self {
+        let anchor = Anchor::top_center(
+            panel_rect.x + panel_rect.w * 0.5,
+            panel_rect.y + theme.grid_pad(),
+        );
+        let level_name = theme.resources.level_history.current.to_string();
+        let level_title = new_text(&level_name, anchor, 1.0, theme);
+
+        let anchor = Anchor::below(level_title.rect(), Horizontal::Center, theme.button_pad());
+        let next_game = new_button("Next Game", anchor, &theme);
+        
+        Self { rect: panel_rect, level_title, next_game }
+    }
+    pub fn render_static(&self) {
+        draw_rect(self.rect, PANEL_BACKGROUND);
+        render_text(&self.level_title, &STYLE.at_rest);
+    }
+    pub fn render_interactive(&self) {
+        render_button(&self.next_game);
+    }
 }

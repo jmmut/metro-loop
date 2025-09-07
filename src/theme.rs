@@ -16,7 +16,7 @@ pub struct Theme {
     pub layout: Layout,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Layout {
     pub screen_width: f32,
     pub screen_height: f32,
@@ -50,6 +50,21 @@ impl Layout {
             default_rows: self.default_rows,
             default_columns: self.default_columns,
         }
+    }
+    pub fn resize_grid(mut self, new_rows: i32, new_columns: i32) -> Self {
+        self.resize_grid_mut(new_rows, new_columns);
+        self
+    }
+    /// for some reason, `a = A {..a}` works, but if we put that inside a function
+    /// `fn recreate(self) -> A { A {..self} }`, then `a = a.recreate()` doesn't work.
+    /// That's why we need this second function that takes mut refs.
+    pub fn resize_grid_mut(&mut self, new_rows: i32, new_columns: i32) {
+        *self = Layout {
+            default_rows: new_rows,
+            default_columns: new_columns,
+            ..*self
+        }
+        .readjust()
     }
     pub fn grid_pad(&self) -> f32 {
         self.grid_pad
@@ -192,71 +207,69 @@ pub fn render_text(text_rect: &TextRect, style: &StateStyle) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{new_layout, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH};
     use super::*;
-    
+    use crate::{new_layout, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH};
+
     #[test]
     fn test_basic_layout() {
         let layout = new_layout(DEFAULT_WINDOW_WIDTH as f32, DEFAULT_WINDOW_HEIGHT as f32);
-        assert_eq!(layout, Layout {
-            screen_width: 988.44446,
-            screen_height: 556.0,
-            font_size: 15.0,
-            cell_width: 45.1,
-            cell_height: 45.1,
-            grid_pad: 30.0,
-            cell_pad: 5.0,
-            default_rows: 10,
-            default_columns: 11
-        });
+        assert_eq!(
+            layout,
+            Layout {
+                screen_width: 988.44446,
+                screen_height: 556.0,
+                font_size: 15.0,
+                cell_width: 45.1,
+                cell_height: 45.1,
+                grid_pad: 30.0,
+                cell_pad: 5.0,
+                default_rows: 10,
+                default_columns: 11
+            }
+        );
     }
     #[test]
     fn test_resize_grid() {
-        let layout = new_layout(DEFAULT_WINDOW_WIDTH as f32, DEFAULT_WINDOW_HEIGHT as f32);
         let new_rows = 8;
         let new_columns = 9;
-        let layout = Layout {
-            default_rows: new_rows,
-            default_columns: new_columns,
-            ..layout
-        }
-            .readjust();
-        assert_eq!(layout, Layout {
-            screen_width: 988.44446,
-            screen_height: 556.0,
-            font_size: 15.0,
-            cell_width: 57.625,
-            cell_height: 57.625,
-            grid_pad: 30.0,
-            cell_pad: 5.0,
-            default_rows: 8,
-            default_columns: 9
-        });
-        
+        let layout = new_layout(DEFAULT_WINDOW_WIDTH as f32, DEFAULT_WINDOW_HEIGHT as f32)
+            .resize_grid(new_rows, new_columns);
+
+        assert_eq!(
+            layout,
+            Layout {
+                screen_width: 988.44446,
+                screen_height: 556.0,
+                font_size: 15.0,
+                cell_width: 57.625,
+                cell_height: 57.625,
+                grid_pad: 30.0,
+                cell_pad: 5.0,
+                default_rows: 8,
+                default_columns: 9
+            }
+        );
     }
     #[test]
     fn test_resize_screen() {
         let layout = new_layout(DEFAULT_WINDOW_WIDTH as f32, DEFAULT_WINDOW_HEIGHT as f32);
         let sw = DEFAULT_WINDOW_WIDTH as f32 * 2.0;
         let sh = DEFAULT_WINDOW_HEIGHT as f32 * 2.0;
-        let layout = Layout {
-            default_rows: layout.default_rows,
-            default_columns: layout.default_columns,
-            ..new_layout(sw, sh)
-        }
-            .readjust();
+        let layout = new_layout(sw, sh).resize_grid(layout.default_rows, layout.default_columns);
 
-        assert_eq!(layout, Layout {
-            screen_width: 1976.8889,
-            screen_height: 1112.0,
-            font_size: 22.5,
-            cell_width: 95.45,
-            cell_height: 95.45,
-            grid_pad: 45.0,
-            cell_pad: 7.5,
-            default_rows: 10,
-            default_columns: 11
-        });
-        
+        assert_eq!(
+            layout,
+            Layout {
+                screen_width: 1976.8889,
+                screen_height: 1112.0,
+                font_size: 22.5,
+                cell_width: 95.45,
+                cell_height: 95.45,
+                grid_pad: 45.0,
+                cell_pad: 7.5,
+                default_rows: 10,
+                default_columns: 11
+            }
+        );
     }
 }

@@ -1,4 +1,3 @@
-use juquad::widgets::Widget;
 use crate::level_history::generate_procedural;
 use crate::levels::{Level, Levels};
 use crate::logic::constraints::{
@@ -18,6 +17,7 @@ use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group;
 use juquad::widgets::text::TextRect;
+use juquad::widgets::Widget;
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
@@ -49,7 +49,6 @@ pub struct Panel {
     // show_solution: Option<Button>,
 }
 
-
 pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
     let (mut state, mut panel) = reset(
         VISUALIZE,
@@ -78,8 +77,9 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             refresh_render = true;
             sw = new_sw;
             sh = new_sh;
+            let current_level = theme.resources.level_history.get_current();
             theme.layout = new_layout(sw, sh);
-            (state, panel) = reset(VISUALIZE, theme.resources.level_history.get_current(), theme).await;
+            (state, panel) = reset(VISUALIZE, current_level, theme).await;
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
         }
         if should_play_intro {
@@ -231,7 +231,7 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             render_cells(&state.grid, &hovered_cell, theme);
         }
         draw_texture(render_target.texture, 0., 0., WHITE);
-        
+
         panel.render_interactive();
 
         if is_key_pressed(KeyCode::N) || panel.next_game.interact().is_clicked() {
@@ -306,12 +306,7 @@ async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> (Sta
 
         (initial_grid, constraints, solution)
     };
-    theme.layout = Layout {
-        default_rows: grid.rows(),
-        default_columns: grid.columns(),
-        ..theme.layout
-    }
-    .readjust();
+    theme.layout.resize_grid_mut(grid.rows(), grid.columns());
     let show_solution = DEFAULT_SHOW_SOLUTION;
     let previous_satisfaction = None;
     let success_sound_played = false;
@@ -421,8 +416,12 @@ impl Panel {
 
         let anchor = Anchor::below(level_title.rect(), Horizontal::Center, theme.button_pad());
         let next_game = new_button("Next Game", anchor, &theme);
-        
-        Self { rect: panel_rect, level_title, next_game }
+
+        Self {
+            rect: panel_rect,
+            level_title,
+            next_game,
+        }
     }
     pub fn render_static(&self) {
         draw_rect(self.rect, PANEL_BACKGROUND);

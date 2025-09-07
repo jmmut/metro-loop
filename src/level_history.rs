@@ -1,10 +1,10 @@
-use std::fmt::{Display, Formatter};
 use crate::levels::{Level, Levels};
 use crate::logic::constraints::{choose_constraints, count_unreachable_rails};
 use crate::logic::grid::Grid;
 use crate::scenes::play::generate_grid;
 use crate::theme::Theme;
 use crate::AnyError;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
 pub struct LevelHistory {
@@ -110,7 +110,7 @@ impl Display for GameTrack {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             GameTrack::Campaign { section, level } => {
-                write!(f, "Level: {}-{}", section, level)                
+                write!(f, "Level: {}-{}", section, level)
             }
             GameTrack::Procedural => {
                 write!(f, "Level: Random")

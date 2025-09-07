@@ -29,18 +29,20 @@ impl TryFrom<Loading> for Resources {
 
     fn try_from(value: Loading) -> Result<Self, Self::Error> {
         match value {
-            Loading { sounds: Some(sounds),
-                font: Some(font), 
-                level_history: Some(level_history) } => {
-                Ok(Resources {
-                    sounds,
-                    font,
-                    level_history,
-                })
-            }
-            _ => {
-                Err(format!("logic error: tried to convert to Resources from an incomplete Loading: {:?}", value).into())
-            }
+            Loading {
+                sounds: Some(sounds),
+                font: Some(font),
+                level_history: Some(level_history),
+            } => Ok(Resources {
+                sounds,
+                font,
+                level_history,
+            }),
+            _ => Err(format!(
+                "logic error: tried to convert to Resources from an incomplete Loading: {:?}",
+                value
+            )
+            .into()),
         }
     }
 }

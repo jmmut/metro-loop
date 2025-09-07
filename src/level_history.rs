@@ -48,11 +48,10 @@ impl LevelHistory {
     }
     pub fn next(&mut self) -> &Self {
         match self.current {
-            GameTrack::Campaign { section, level } => {
+            GameTrack::Campaign { section, mut level } => {
+                level += 1;
                 for i_section in (section as usize)..self.levels.sections.len() {
-                    for i_level in
-                        (level + 1) as usize..self.levels.sections[i_section].levels.len()
-                    {
+                    for i_level in level as usize..self.levels.sections[i_section].levels.len() {
                         if !self.solved[i_section][i_level] {
                             self.current = GameTrack::Campaign {
                                 section: i_section as i32,
@@ -61,6 +60,7 @@ impl LevelHistory {
                             return self;
                         }
                     }
+                    level = 0;
                 }
                 self.current = GameTrack::Procedural;
             }

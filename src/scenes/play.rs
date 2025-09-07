@@ -118,11 +118,6 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             ),
             &theme,
         );
-        if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
-            let level = theme.resources.level_history.next().get_current();
-            state = reset(VISUALIZE, level, theme).await;
-            refresh_render = true;
-        }
         let pos = Vec2::from(mouse_position());
         let grid_indexes = (pos - theme.grid_pad() + theme.cell_pad() * 0.5)
             / (vec2(theme.cell_width(), theme.cell_height()) + theme.cell_pad());
@@ -242,6 +237,12 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
         draw_texture(render_target.texture, 0., 0., WHITE);
         render_button(&reset_button);
 
+        if is_key_pressed(KeyCode::R) || reset_button.interact().is_clicked() {
+            let level = theme.resources.level_history.next().get_current();
+            state = reset(VISUALIZE, level, theme).await;
+            refresh_render = true;
+            button_panel = theme.button_panel_rect(&state.grid);
+        }
         if let Some(show) = show_solution_button.as_mut() {
             if show.interact().is_clicked() {
                 state.show_solution = !state.show_solution;

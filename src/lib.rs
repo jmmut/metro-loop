@@ -77,7 +77,7 @@ pub const STYLE: Style = Style {
 
 // pub const NUM_ROWS: i32 = 10;
 // pub const NUM_COLUMNS: i32 = 11;
-pub const MAX_CELLS: f32 = 0.5;
+pub const MAX_CELLS_COEF: f32 = 0.5;
 pub const CLUE_PERCENTAGE: u32 = 30;
 
 // pub const BUTTON_PANEL_WIDTH: f32 = 300.0;

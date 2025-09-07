@@ -10,7 +10,7 @@ use crate::theme::{
 };
 use crate::{
     new_layout, AnyError, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING,
-    MAX_CELLS, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
+    MAX_CELLS_COEF, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
@@ -78,8 +78,8 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             sw = new_sw;
             sh = new_sh;
             let current_level = theme.resources.level_history.get_current();
-            theme.layout = new_layout(sw, sh);
-            (state, panel) = reset(VISUALIZE, current_level, theme).await;
+            theme.layout = new_layout(sw, sh).resize_grid(state.grid.rows(), state.grid.columns());
+            panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
         }
         if should_play_intro {
@@ -330,7 +330,7 @@ pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
 
     enabled.push((solution.root.y, solution.root.x));
     let mut i = 0;
-    let max_cells = ((rows - 2) as f32 * (columns - 2) as f32 * MAX_CELLS) as usize;
+    let max_cells = ((rows - 2) as f32 * (columns - 2) as f32 * MAX_CELLS_COEF) as usize;
     while enabled.len() < max_cells {
         if visualize && is_key_pressed(KeyCode::Escape) {
             break;

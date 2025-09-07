@@ -26,4 +26,12 @@ impl Sounds {
             music_background_intro: sounds[3],
         }
     }
+    pub fn list(&self) -> Vec<Sound> {
+        vec![
+            self.sound_correct,
+            self._sound_incorrect,
+            self.music_background,
+            self.music_background_intro,
+        ]
+    }
 }

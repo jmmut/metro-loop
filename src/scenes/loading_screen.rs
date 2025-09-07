@@ -51,6 +51,14 @@ impl TryFrom<Loading> for Resources {
         }
     }
 }
+impl Drop for Resources {
+    fn drop(&mut self) {
+        // in wasm, if you exit, apparently the sound keeps playing (?)
+        for sound in self.sounds.list() {
+            stop_sound(sound);
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Loading {

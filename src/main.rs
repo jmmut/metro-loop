@@ -15,18 +15,12 @@ async fn main() -> Result<(), AnyError> {
     let mut theme = scenes::loading_screen(args.section, args.level).await?;
     let mut next_stage = NextStage::MainMenu;
     loop {
-        match next_stage {
-            NextStage::MainMenu => {
-                next_stage = scenes::main_menu(&mut theme).await?;
-            }
-            NextStage::Campaign => {
-                next_stage = scenes::play(&mut theme).await?;
-            }
-            NextStage::Options => {
-                next_stage = scenes::options(&mut theme).await?;
-            }
+        next_stage = match next_stage {
+            NextStage::MainMenu => scenes::main_menu(&mut theme).await?,
+            NextStage::Campaign => scenes::play(&mut theme).await?,
+            NextStage::Options => scenes::options(&mut theme).await?,
             NextStage::Quit => return Ok(()),
-        }
+        };
         next_frame().await
     }
 }

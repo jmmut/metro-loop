@@ -1,23 +1,20 @@
 use crate::level_history::generate_procedural;
-use crate::levels::{Level, Levels};
-use crate::logic::constraints::{
-    choose_constraints, compute_satisfaction, count_unreachable_rails, Constraints, Satisfaction,
-};
+use crate::levels::Level;
+use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
 use crate::theme::{
-    new_button, new_button_group_direction, new_text, render_button, render_text, Layout, Theme,
+    new_button, new_button_group_direction, new_text, render_button, render_text, Theme,
 };
 use crate::{
     new_layout, AnyError, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING,
     MAX_CELLS_COEF, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
-use juquad::widgets::anchor::{Anchor, Horizontal};
+use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group;
 use juquad::widgets::text::TextRect;
-use juquad::widgets::Widget;
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
@@ -77,7 +74,6 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
             refresh_render = true;
             sw = new_sw;
             sh = new_sh;
-            let current_level = theme.resources.level_history.get_current();
             theme.layout = new_layout(sw, sh).resize_grid(state.grid.rows(), state.grid.columns());
             panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);

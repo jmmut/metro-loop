@@ -294,7 +294,6 @@ fn calculate_and_draw_triangle(
 pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme) {
     let triangle_half_width = 4.0 * theme.cell_pad();
     let small_triangle_half_width = 2.0 * theme.cell_pad();
-    let thickness = 1.5 * theme.cell_pad();
     enum Constraint {
         Station,
         Blockade,
@@ -376,7 +375,6 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                 draw_blockade(
                     theme,
                     small_triangle_half_width,
-                    thickness,
                     success,
                     color,
                     color_border,
@@ -402,7 +400,6 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                 };
                 render_user_rail_constraint(
                     small_triangle_half_width,
-                    thickness,
                     row,
                     column,
                     direction,
@@ -425,7 +422,6 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                 };
                 render_user_rail_constraint(
                     small_triangle_half_width,
-                    thickness,
                     row,
                     column,
                     direction,
@@ -441,7 +437,6 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
 fn draw_blockade(
     theme: &Theme,
     small_triangle_half_width: f32,
-    thickness: f32,
     success: bool,
     color: Color,
     color_border: Color,
@@ -458,11 +453,11 @@ fn draw_blockade(
     let b = mid + forward - leftward;
     let c = mid - forward + leftward;
     let d = mid - forward - leftward;
-    let (blockade_color, blockade_color_border) = if success {
-        (color, color_border)
-    } else {
-        (color_border, color)
-    };
+    // let (blockade_color, blockade_color_border) = if success {
+    //     (color, color_border)
+    // } else {
+    //     (color_border, color)
+    // };
     // if success {
     draw_triangle(a, c, b, color);
     draw_triangle(b, c, d, color);
@@ -504,7 +499,6 @@ fn draw_blockade(
 
 fn render_user_rail_constraint(
     small_triangle_half_width: f32,
-    thickness: f32,
     row: i32,
     column: i32,
     direction: Vec2,
@@ -521,7 +515,6 @@ fn render_user_rail_constraint(
     draw_blockade(
         theme,
         small_triangle_half_width,
-        thickness,
         success,
         RAIL,
         TRIANGLE_BORDER,

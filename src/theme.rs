@@ -1,6 +1,6 @@
 use crate::logic::grid::Grid;
 use crate::scenes::loading_screen::Resources;
-use crate::{choose_scale, STYLE};
+use crate::STYLE;
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;

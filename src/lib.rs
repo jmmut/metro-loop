@@ -13,6 +13,8 @@ pub mod theme;
 pub mod scenes {
     pub mod main_menu;
     pub use main_menu::main_menu;
+    pub mod options;
+    pub use options::options;
     pub mod loading_screen;
     pub use loading_screen::loading_screen;
     pub mod play;
@@ -115,6 +117,13 @@ pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
         default_columns: NUM_COLUMNS,
     }
     .readjust()
+}
+
+pub enum NextStage {
+    MainMenu,
+    Campaign,
+    Options,
+    Quit,
 }
 
 const fn color_average(color_1: Color, color_2: Color) -> Color {

@@ -1,8 +1,8 @@
 use macroquad::miniquad::date::now;
-use macroquad::prelude::Conf;
+use macroquad::prelude::{next_frame, Conf};
 use macroquad::rand::srand;
 use metro_loop::{
-    scenes, AnyError, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH,
+    scenes, AnyError, NextStage, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH,
     STARTING_LEVEL, STARTING_SECTION,
 };
 
@@ -13,10 +13,22 @@ async fn main() -> Result<(), AnyError> {
 
     let args = parse_args()?;
     let mut theme = scenes::loading_screen(args.section, args.level).await?;
-    scenes::main_menu(&theme).await?;
-    scenes::play(&mut theme).await?;
-
-    Ok(())
+    let mut next_stage = NextStage::MainMenu;
+    loop {
+        match next_stage {
+            NextStage::MainMenu => {
+                next_stage = scenes::main_menu(&mut theme).await?;
+            }
+            NextStage::Campaign => {
+                next_stage = scenes::play(&mut theme).await?;
+            }
+            NextStage::Options => {
+                next_stage = scenes::options(&mut theme).await?;
+            }
+            NextStage::Quit => return Ok(()),
+        }
+        next_frame().await
+    }
 }
 
 fn window_conf() -> Conf {

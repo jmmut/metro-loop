@@ -145,7 +145,6 @@ pub fn new_button(text: &str, anchor: Anchor, theme: &Theme) -> Button {
     let text_rect = new_text(text, anchor, 1.0, theme);
     text_rect.into()
 }
-#[allow(unused)]
 pub fn new_button_group(anchor: Anchor, theme: &Theme) -> ButtonGroup {
     new_button_group_direction(anchor, theme, Direction::Bottom)
 }

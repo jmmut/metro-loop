@@ -3,17 +3,14 @@ use crate::levels::Level;
 use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
 use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
-use crate::theme::{
-    new_button, new_button_group_direction, new_text, render_button, render_text, Theme,
-};
+use crate::theme::{new_button, new_text, render_button, render_text, Theme};
 use crate::{
-    new_layout, AnyError, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION, FONT_SIZE_CHANGING,
+    new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
     MAX_CELLS_COEF, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
-use juquad::widgets::button_group;
 use juquad::widgets::text::TextRect;
 use macroquad::audio::{play_sound, play_sound_once, PlaySoundParams};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
@@ -46,7 +43,7 @@ pub struct Panel {
     // show_solution: Option<Button>,
 }
 
-pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
+pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
     let (mut sw, mut sh) = (screen_width(), screen_height());
     theme.layout = new_layout(sw, sh);
     let current_level = theme.resources.level_history.get_current();
@@ -93,9 +90,6 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
                     );
                 }
             }
-        }
-        if is_key_pressed(KeyCode::Escape) {
-            break;
         }
         if is_key_pressed(KeyCode::P) {
             println!(
@@ -250,36 +244,11 @@ pub async fn play(theme: &mut Theme) -> Result<(), AnyError> {
                 &STYLE.pressed,
             );
         }
-        if FONT_SIZE_CHANGING {
-            change_font_ui(panel.rect, theme, &mut refresh_render);
+        if is_key_pressed(KeyCode::Escape) {
+            return Ok(NextStage::MainMenu);
         }
         next_frame().await
     }
-    Ok(())
-}
-
-fn change_font_ui(button_panel: Rect, theme: &mut Theme, refresh_render: &mut bool) {
-    let half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
-    let anchor_point = vec2(button_panel.center().x, button_panel.bottom());
-
-    let anchor = Anchor::bottom_right_v(anchor_point - half_pad);
-    let title = theme.new_text(&format!("font size: {}", theme.font_size()), anchor);
-
-    let anchor = Anchor::bottom_left_v(anchor_point + half_pad);
-    let labels = new_button_group_direction(anchor, theme, button_group::Direction::Right);
-    let [mut increase, mut decrease] = labels.create(["increase", "decrease"]);
-
-    if increase.interact().is_clicked() {
-        *theme.font_size_mut() += 1.0;
-        *refresh_render = true;
-    }
-    if decrease.interact().is_clicked() {
-        *theme.font_size_mut() -= 1.0;
-        *refresh_render = true;
-    }
-    render_text(&title, &STYLE.at_rest);
-    render_button(&increase);
-    render_button(&decrease);
 }
 
 async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> (State, Panel) {

@@ -26,14 +26,11 @@ pub async fn options(theme: &mut Theme) -> Result<NextStage, AnyError> {
         clear_background(BACKGROUND);
         draw_rect(panel, PANEL_BACKGROUND);
 
-        let point = vec2(panel.center().x, panel.y + theme.button_pad());
-        let point = change_font_ui(theme, point);
-        let point = point + vec2(0.0, theme.button_pad());
-        let point = change_rows(theme, point);
-        let point = point + vec2(0.0, theme.button_pad());
-        let point = change_columns(theme, point);
-        let point = point + vec2(0.0, theme.button_pad());
-        let point = change_volume(theme, point);
+        let mut point = vec2(panel.center().x, panel.y + theme.button_pad());
+        for f in [change_font_ui, change_rows, change_columns, change_volume] {
+            point = f(theme, point);
+            point += vec2(0.0, theme.button_pad());
+        }
 
         let anchor_point = vec2(panel.center().x, panel.bottom() - theme.button_pad());
         let mut back = new_button("Back", Anchor::bottom_center_v(anchor_point), theme);

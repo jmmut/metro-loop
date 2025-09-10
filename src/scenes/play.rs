@@ -6,13 +6,12 @@ use crate::render::{render_cells, render_constraints, render_grid, render_satisf
 use crate::theme::{new_button, new_text, render_button, render_text, Theme};
 use crate::{
     new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
-    DEFAULT_VOLUME, MAX_CELLS_COEF, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
+    MAX_CELLS_COEF, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
 };
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
 use juquad::widgets::text::TextRect;
-use macroquad::audio::{play_sound, PlaySoundParams};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
 use macroquad::input::{

@@ -1,4 +1,3 @@
-use crate::theme::Preferences;
 use crate::DEFAULT_VOLUME;
 use macroquad::audio::{play_sound, set_sound_volume, stop_sound, PlaySoundParams, Sound};
 

@@ -9,7 +9,7 @@ use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::resource_loader::ResourceLoader;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::StateStyle;
-use macroquad::audio::{load_sound_from_bytes, play_sound, stop_sound, PlaySoundParams, Sound};
+use macroquad::audio::{load_sound_from_bytes, stop_sound, Sound};
 use macroquad::color::DARKGRAY;
 use macroquad::math::Rect;
 use macroquad::prelude::{

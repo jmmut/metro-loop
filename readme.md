@@ -8,13 +8,18 @@ Play in your browser (or download the game) at https://jmmut.itch.io/metro-loop.
 
 Clone this repo, then [Install rust](https://www.rust-lang.org/tools/install), then do `cargo run --release`.
 
+If that fails, you might need some system packages. If you're on linux, see how [the CI code](.github/workflows/release.yml) installs the dependencies. Look for `apt-get install`.
+
 ## Ideas for improvements
 
-- [x] main menu
 - [/] options screen
-- Select difficulty
-- [/] campaign/random/incremental modes
-- diagonal constraint
-- adjacent rail constraint
-- sound
-- [/] music
+  - [ ] should add a slider for the volume?
+  - [ ] a checkbox for enabling disabling sound?
+- [/] Select difficulty (should have easy/medium/hard?)
+- [ ] diagonal constraint
+- [ ] rail constraint
+- [ ] constraint animations
+- [/] sound
+  - [ ] better sounds
+  - [ ] longer music
+- [ ] contrasting font for the title

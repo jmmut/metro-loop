@@ -157,14 +157,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             if satisfaction.success() {
                 if !state.success_sound_played {
                     state.success_sound_played = true;
-                    let sound_correct = theme.resources.sounds.sound_correct;
-                    play_sound(
-                        sound_correct,
-                        PlaySoundParams {
-                            looped: false,
-                            volume: DEFAULT_VOLUME * 0.05,
-                        },
-                    );
+                    theme.resources.sounds.play_correct();
                 }
             }
             // if let Some(previous) = &previous_satisfaction {

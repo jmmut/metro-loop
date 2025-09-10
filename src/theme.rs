@@ -18,7 +18,6 @@ pub struct Theme {
 }
 
 pub struct Preferences {
-    pub volume: f32,
     pub rows: i32,
     pub columns: i32,
 }
@@ -26,7 +25,6 @@ pub struct Preferences {
 impl Preferences {
     pub fn new() -> Self {
         Self {
-            volume: DEFAULT_VOLUME,
             rows: NUM_ROWS,
             columns: NUM_COLUMNS,
         }
@@ -157,10 +155,10 @@ impl Theme {
         &mut self.preferences.columns
     }
     pub fn volume(&self) -> f32 {
-        self.preferences.volume
+        self.resources.sounds.volume
     }
-    pub fn volume_mut(&mut self) -> &mut f32 {
-        &mut self.preferences.volume
+    pub fn set_volume(&mut self, volume: f32) {
+        self.resources.sounds.set_volume(volume)
     }
 
     pub fn new_button(&self, text: &str, anchor: Anchor) -> Button {

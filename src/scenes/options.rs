@@ -56,6 +56,7 @@ fn change_rows(theme: &mut Theme, anchor_point: Vec2) -> Vec2 {
     let rows = theme.preferred_rows();
     let text = format!("Rows in procedural levels: {}", rows);
     let (value, new_anchor_point) = inc_dec(theme, anchor_point, text, rows, 1);
+    let value = value.clamp(4, 50);
     *theme.preferred_rows_mut() = value;
     new_anchor_point
 }
@@ -63,15 +64,16 @@ fn change_columns(theme: &mut Theme, anchor_point: Vec2) -> Vec2 {
     let columns = theme.preferred_columns();
     let text = format!("Columns in procedural levels: {}", columns);
     let (value, new_anchor_point) = inc_dec(theme, anchor_point, text, columns, 1);
+    let value = value.clamp(3, 51);
     *theme.preferred_columns_mut() = value;
     new_anchor_point
 }
 fn change_volume(theme: &mut Theme, anchor_point: Vec2) -> Vec2 {
     let columns = theme.volume();
-    let text = format!("Audio volume: {}", columns);
+    let text = format!("Audio volume: {:.2}", columns);
     let (value, new_anchor_point) = inc_dec(theme, anchor_point, text, columns, 0.05);
-
-    *theme.volume_mut() = value;
+    let value = value.clamp(0.0, 1.0);
+    theme.set_volume(value);
     new_anchor_point
 }
 fn inc_dec<T: Add<Output = T> + Sub<Output = T>>(

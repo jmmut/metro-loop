@@ -262,8 +262,8 @@ async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> (Sta
 }
 
 pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
-    let rows = theme.default_rows();
-    let columns = theme.default_columns();
+    let rows = theme.preferred_rows();
+    let columns = theme.preferred_columns();
     let mut solution = Grid::new(rows, columns, ivec2(columns / 2, rows / 2));
     let mut enabled = Vec::new();
 

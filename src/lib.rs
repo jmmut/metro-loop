@@ -79,8 +79,8 @@ pub const STYLE: Style = Style {
     },
 };
 
-// pub const NUM_ROWS: i32 = 10;
-// pub const NUM_COLUMNS: i32 = 11;
+pub const NUM_ROWS: i32 = 10;
+pub const NUM_COLUMNS: i32 = 11;
 pub const MAX_CELLS_COEF: f32 = 0.5;
 pub const CLUE_PERCENTAGE: u32 = 30;
 
@@ -99,8 +99,6 @@ pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
     const CELL_HEIGHT: f32 = 50.0;
     const GRID_PAD: f32 = 30.0;
     const CELL_PAD: f32 = 5.0;
-    const NUM_ROWS: i32 = 10;
-    const NUM_COLUMNS: i32 = 11;
 
     let update_scale = |value: f32| choose_scale(screen_width, screen_height, value);
     let font_size = update_scale(FONT_SIZE);
@@ -153,11 +151,9 @@ const fn choose_scale(width: f32, height: f32, font_size: f32) -> f32 {
 }
 
 fn generate_nested_vec<T: Clone>(num_rows: usize, num_columns: usize, default: T) -> Vec<Vec<T>> {
-    let mut row = Vec::new();
-    row.resize(num_columns, default);
-    let mut inner = Vec::new();
-    inner.resize(num_rows, row);
-    inner
+    let row = vec![default; num_columns];
+    let rows = vec![row; num_rows];
+    rows
 }
 pub const fn width_to_height_default(width: f32) -> f32 {
     width_to_height(width, DEFAULT_ASPECT_RATIO)

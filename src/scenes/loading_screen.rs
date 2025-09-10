@@ -1,6 +1,6 @@
 use crate::level_history::LevelHistory;
 use crate::sound::Sounds;
-use crate::theme::{new_text_unloaded, render_text, Theme};
+use crate::theme::{new_text_unloaded, render_text, Preferences, Theme};
 use crate::{
     new_layout, AnyError, BACKGROUND, DEFAULT_VOLUME, DISABLED_CELL, ENABLED_CELL, RAIL, STYLE,
     TRANSPARENT, TRIANGLE_BORDER,
@@ -131,7 +131,12 @@ pub async fn loading_screen(section: i32, level: i32) -> Result<Theme, AnyError>
             progress += 1;
         } else {
             let resources = loading.try_into()?;
-            return Ok(Theme { resources, layout });
+            let preferences = Preferences::new();
+            return Ok(Theme {
+                resources,
+                layout,
+                preferences,
+            });
         }
         // resources = None; // to see the loading screen in loop
 

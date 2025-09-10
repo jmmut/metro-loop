@@ -24,8 +24,7 @@ impl LevelHistory {
         let levels = Levels::get()?;
         let mut solved = Vec::new();
         for section in &levels.sections {
-            let mut solved_in_section = Vec::new();
-            solved_in_section.resize(section.levels.len(), false);
+            let solved_in_section = vec![false; section.levels.len()];
             solved.push(solved_in_section);
         }
         Ok(Self {
@@ -87,7 +86,7 @@ pub async fn generate_procedural(visualize: bool, theme: &Theme) -> Level {
         solution.recalculate_rails();
     }
     // println!("tried {} iterations", i);
-    let mut grid = Grid::new(theme.default_rows(), theme.default_columns(), solution.root);
+    let mut grid = Grid::new(solution.rows(), solution.columns(), solution.root);
     grid.recalculate_rails();
     let constraints = choose_constraints(&solution);
     Level {

@@ -1,6 +1,6 @@
 use crate::logic::grid::Grid;
 use crate::scenes::loading_screen::Resources;
-use crate::STYLE;
+use crate::{DEFAULT_VOLUME, NUM_COLUMNS, NUM_ROWS, STYLE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
@@ -14,6 +14,23 @@ use macroquad::prelude::Font;
 pub struct Theme {
     pub resources: Resources,
     pub layout: Layout,
+    pub preferences: Preferences,
+}
+
+pub struct Preferences {
+    pub volume: f32,
+    pub rows: i32,
+    pub columns: i32,
+}
+
+impl Preferences {
+    pub fn new() -> Self {
+        Self {
+            volume: DEFAULT_VOLUME,
+            rows: NUM_ROWS,
+            columns: NUM_COLUMNS,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -127,6 +144,25 @@ impl Theme {
             self.grid_height(grid),
         )
     }
+    pub fn preferred_rows(&self) -> i32 {
+        self.preferences.rows
+    }
+    pub fn preferred_rows_mut(&mut self) -> &mut i32 {
+        &mut self.preferences.rows
+    }
+    pub fn preferred_columns(&self) -> i32 {
+        self.preferences.columns
+    }
+    pub fn preferred_columns_mut(&mut self) -> &mut i32 {
+        &mut self.preferences.columns
+    }
+    pub fn volume(&self) -> f32 {
+        self.preferences.volume
+    }
+    pub fn volume_mut(&mut self) -> &mut f32 {
+        &mut self.preferences.volume
+    }
+
     pub fn new_button(&self, text: &str, anchor: Anchor) -> Button {
         new_button(text, anchor, self)
     }

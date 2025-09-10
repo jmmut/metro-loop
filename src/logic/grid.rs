@@ -311,7 +311,7 @@ impl Grid {
     }
 }
 
-pub fn get_mut<T>(vec_vec: &mut Vec<Vec<T>>, row: i32, column: i32) -> &mut T {
+pub fn get_mut<T>(vec_vec: &mut [Vec<T>], row: i32, column: i32) -> &mut T {
     assert!(row >= 0);
     assert!(column >= 0);
     vec_vec
@@ -321,7 +321,7 @@ pub fn get_mut<T>(vec_vec: &mut Vec<Vec<T>>, row: i32, column: i32) -> &mut T {
         .unwrap()
 }
 
-pub fn get<T>(vec_vec: &Vec<Vec<T>>, row: i32, column: i32) -> &T {
+pub fn get<T>(vec_vec: &[Vec<T>], row: i32, column: i32) -> &T {
     assert!(row >= 0);
     assert!(column >= 0);
     vec_vec
@@ -529,12 +529,10 @@ impl Grid {
                     // future compatible: ignore unknown keys
                 }
             }
-            if root_y.is_none() {
-                Err(format!("missing {}", ROOT_ROW).into())
-            } else if root_x.is_none() {
-                Err(format!("missing {}", ROOT_COLUMN).into())
-            } else {
-                Ok(ivec2(root_x.unwrap(), root_y.unwrap()))
+            match (root_x, root_y) {
+                (Some(x), Some(y)) => Ok(ivec2(x, y)),
+                (_, None) => Err(format!("missing {}", ROOT_ROW).into()),
+                (None, _) => Err(format!("missing {}", ROOT_COLUMN).into()),
             }
         } else {
             Err("empty grid string".into())

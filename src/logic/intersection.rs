@@ -91,7 +91,7 @@ impl Intersections {
         self.inner.len() as i32
     }
     pub fn columns(&self) -> i32 {
-        self.inner.get(0).unwrap().len() as i32
+        self.inner.first().unwrap().len() as i32
     }
     pub fn get(&self, row: i32, column: i32) -> Intersection {
         *self

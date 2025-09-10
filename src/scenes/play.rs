@@ -120,7 +120,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             if let Some((i_row, i_column)) = hovered_cell.clone() {
                 let clicked = ivec2(i_column, i_row);
                 if clicked != state.grid.root && clicked != state.grid.root - ivec2(0, 1) {
-                    let fixed = get(&mut state.grid.fixed_cells, i_row, i_column);
+                    let fixed = get(&state.grid.fixed_cells, i_row, i_column);
                     if !fixed {
                         let cell = get_cell_mut(&mut state.grid, i_row, i_column);
                         *cell = !*cell;
@@ -329,7 +329,7 @@ pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
         }
         if visualize {
             clear_background(BACKGROUND_2);
-            render_grid(&mut solution, theme);
+            render_grid(&solution, theme);
             next_frame().await;
         }
     }

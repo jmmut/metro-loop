@@ -30,13 +30,13 @@ impl<H: Clone, V: Clone> Rails<H, V> {
         self.horizontal.len() as i32
     }
     pub fn horiz_columns(&self) -> i32 {
-        self.horizontal.get(0).unwrap().len() as i32
+        self.horizontal.first().unwrap().len() as i32
     }
     pub fn vert_rows(&self) -> i32 {
         self.vertical.len() as i32
     }
     pub fn vert_columns(&self) -> i32 {
-        self.vertical.get(0).unwrap().len() as i32
+        self.vertical.first().unwrap().len() as i32
     }
     pub fn get_horiz(&self, row: i32, column: i32) -> H {
         self.horizontal

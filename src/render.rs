@@ -45,7 +45,7 @@ pub fn render_satisfaction(
         for text_rect in text_rects {
             let icon_size = text_rect.rect().h;
             let anchor = Anchor::top_right_v(text_rect.rect().point());
-            (if text_rect.text.chars().next().unwrap() == '0' {
+            (if text_rect.text.starts_with('0') {
                 render_tick
             } else {
                 render_cross

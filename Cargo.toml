@@ -14,3 +14,10 @@ juquad = { git = "https://github.com/jmmut/juquad.git", tag = "0.12.4" }
 [profile.release]
 strip = true
 lto = true
+
+[lints.clippy]
+needless_borrow = "allow"
+collapsible_if = "allow"
+clone_on_copy = "allow"
+new_without_default = "allow"
+should_implement_trait = "allow"

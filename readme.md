@@ -22,4 +22,15 @@ If that fails, you might need some system packages. If you're on linux, see how 
 - [/] sound
   - [ ] better sounds
   - [ ] longer music
+  - [ ] better sound balance. Higher music, lower effects.
 - [ ] contrasting font for the title
+- [ ] make constraint icons scale smoothly
+- [ ] remember procedural map when going to main menu
+- [ ] campaign visualization
+
+## Bugs
+
+- when pressing "options", the button in the same position stays highlighted in phones
+
+
+

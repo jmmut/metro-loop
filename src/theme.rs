@@ -268,7 +268,13 @@ fn new_text_internal(
 pub fn new_text_group(anchor: Anchor, theme: &Theme) -> LabelGroup {
     LabelGroup::new_with_font(theme.font_size(), Some(theme.resources.font), anchor)
 }
-
+pub fn new_text_group_generic(anchor: Anchor, theme: &Theme, labels: LabelGroup) -> LabelGroup {
+    LabelGroup {
+        anchor,
+        font_size: labels.font_size * theme.font_size(),
+        ..labels
+    }
+}
 pub fn render_text(text_rect: &TextRect, style: &StateStyle) {
     draw_rect(text_rect.rect(), style.bg_color);
     text_rect.render_default(style)

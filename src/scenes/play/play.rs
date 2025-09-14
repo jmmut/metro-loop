@@ -130,18 +130,18 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             });
 
             clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
-            panel.render_static();
             let satisfaction = compute_satisfaction(&state.grid, &state.constraints);
             if satisfaction.success() {
                 theme.resources.level_history.solved()
             }
-            panel.add_satisfaction(&satisfaction, &theme, &mut state.show_solution);
             if satisfaction.success() {
                 if !state.success_sound_played {
                     state.success_sound_played = true;
                     theme.resources.sounds.play_correct();
                 }
             }
+            panel.add_satisfaction(&satisfaction, &theme, &mut state.show_solution);
+            panel.render_static(theme);
             // if let Some(previous) = &previous_satisfaction {
             //     if should_play_sound {
             //         should_play_sound = false;
@@ -174,7 +174,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         if panel.main_menu.interaction().is_clicked() || is_key_pressed(KeyCode::Escape) {
             return Ok(NextStage::MainMenu);
         }
-        panel.interact();
+        panel.interact(theme);
         if is_key_pressed(KeyCode::N) || panel.next_game.interaction().is_clicked() {
             let level = theme.resources.level_history.next().get_current();
             (state, panel) = reset(VISUALIZE, level, theme).await;

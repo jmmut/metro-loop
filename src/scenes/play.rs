@@ -1,15 +1,13 @@
+use juquad::widgets::Widget;
 use crate::level_history::generate_procedural;
 use crate::levels::Level;
 use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
-use crate::render::{render_cells, render_constraints, render_grid, render_satisfaction};
-use crate::theme::{new_button, new_text, render_button, render_text, Theme};
-use crate::{
-    new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
-    MAX_CELLS_COEF, PANEL_BACKGROUND, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
-};
+use crate::render::{render_cells, render_constraints, render_cross, render_grid, render_tick};
+use crate::theme::{new_button, new_text, new_text_group, render_button, render_text, render_tooltip, Theme};
+use crate::{new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF, PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, SHOW_FPS, STEP_GENERATION, STYLE, TEXT_STYLE, VISUALIZE};
 use juquad::draw::draw_rect;
-use juquad::widgets::anchor::Anchor;
+use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
 use juquad::widgets::text::TextRect;
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
@@ -39,8 +37,9 @@ pub struct Panel {
     level_title: TextRect,
     next_game: Button,
     main_menu: Button,
-    // show_solution: Option<Button>,
+    show_solution: Option<Button>,
 }
+
 
 pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
     let (mut sw, mut sh) = (screen_width(), screen_height());
@@ -50,7 +49,6 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
     render_target.texture.set_filter(FilterMode::Nearest);
 
     let mut refresh_render = true;
-    let mut show_solution_button = None;
 
     let mut right_clicked = None;
     loop {
@@ -146,10 +144,8 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             if satisfaction.success() {
                 theme.resources.level_history.solved()
             }
-            show_solution_button = render_satisfaction(
+            panel.add_satisfaction(
                 &satisfaction,
-                panel.filled_rect(),
-                panel.rect,
                 &theme,
                 &mut state.show_solution,
             );
@@ -188,18 +184,17 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         draw_texture(render_target.texture, 0., 0., WHITE);
 
-        if panel.main_menu.interact().is_clicked() || is_key_pressed(KeyCode::Escape) {
+        if panel.main_menu.interaction().is_clicked() || is_key_pressed(KeyCode::Escape) {
             return Ok(NextStage::MainMenu);
         }
-        panel.render_interactive();
-
-        if is_key_pressed(KeyCode::N) || panel.next_game.interact().is_clicked() {
+        panel.interact();
+        if is_key_pressed(KeyCode::N) || panel.next_game.interaction().is_clicked() {
             let level = theme.resources.level_history.next().get_current();
             (state, panel) = reset(VISUALIZE, level, theme).await;
             refresh_render = true;
         }
-        if let Some(show) = show_solution_button.as_mut() {
-            if show.interact().is_clicked() {
+        if let Some(show) = panel.show_solution.as_mut() {
+            if show.interaction().is_clicked() {
                 state.show_solution = !state.show_solution;
                 refresh_render = true;
             }
@@ -216,6 +211,8 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
                 &STYLE.pressed,
             );
         }
+        panel.render_interactive();
+
         next_frame().await
     }
 }
@@ -362,19 +359,107 @@ impl Panel {
             level_title,
             next_game,
             main_menu,
+            show_solution: None,
         }
+    }
+    pub fn add_satisfaction(
+        &mut self,
+        satisfaction: &Satisfaction,
+        theme: &Theme,
+        show_solution: &mut bool,
+    ) {
+        let solved = satisfaction.success();
+        let mut rect = if solved {
+            let anchor = Anchor::below(self.filled_rect(), Horizontal::Center, theme.button_pad());
+            let text = new_text(&"SOLVED!", anchor, 2.0, &theme);
+            render_text(&text, &TEXT_STYLE);
+            text.rect()
+        } else {
+            let texts_and_tooltips = [
+                (&format!("{} incorrect rails", satisfaction.failing_rails), "some tooltip 1"),
+                (&format!("{} cells to activate", satisfaction.cell_diff), "some tooltip 2"),
+                (&format!("{} unreachable rails", satisfaction.unreachable_rails), "some tooltip 3"),
+            ];
+            let (texts, tooltips) = split_tuple(texts_and_tooltips);
+
+            let anchor = Anchor::below(self.filled_rect(), Horizontal::Center, theme.button_pad());
+            let labels = new_text_group(anchor, theme);
+            let text_rects = labels.create(texts);
+
+            let mut rect = Rect::default();
+            let mouse_pos = Vec2::from(mouse_position());
+            let clicked = is_mouse_button_pressed(MouseButton::Left);
+
+            for (i, text_rect) in text_rects.into_iter().enumerate() {
+                let icon_size = text_rect.rect().h;
+                let anchor = Anchor::top_right_v(text_rect.rect().point());
+                (if text_rect.text.starts_with('0') {
+                    render_tick
+                } else {
+                    render_cross
+                })(anchor, icon_size, theme);
+                render_text(&text_rect, &TEXT_STYLE);
+                rect = text_rect.rect();
+                if clicked {
+                    println!("{:?}", text_rect.rect());
+                }
+                if text_rect.rect().contains(mouse_pos) {
+                    let anchor = Anchor::top_right_v(mouse_pos);
+                    let tooltip = new_text(tooltips[i], anchor, 1.0, theme);
+                    render_tooltip(&tooltip, &TEXT_STYLE);
+                }
+            }
+            rect
+        };
+        self.show_solution = if solved || SEE_SOLUTION_DURING_GAME {
+            rect.x = self.rect.x;
+            rect.w = self.rect.w;
+            let show_anchor = Anchor::below(rect, Horizontal::Center, theme.button_pad());
+            let show_text = if *show_solution {
+                "Hide solution"
+            } else {
+                "Show possible solution"
+            };
+            let show = new_button(show_text, show_anchor, &theme);
+            Some(show)
+        } else {
+            None
+        };
     }
     pub fn filled_rect(&self) -> Rect {
         let mut rect = self.rect;
         rect.h = self.next_game.rect().bottom() - rect.y;
         rect
     }
+    
+    pub fn interact(&mut self) {
+        self.main_menu.interact();
+        self.next_game.interact();
+        if let Some(show) = &mut self.show_solution {
+            show.interact();
+        }
+    }
     pub fn render_static(&self) {
         draw_rect(self.rect, PANEL_BACKGROUND);
-        render_text(&self.level_title, &STYLE.at_rest);
+        render_text(&self.level_title, &TEXT_STYLE);
     }
     pub fn render_interactive(&self) {
         render_button(&self.next_game);
         render_button(&self.main_menu);
+        
+        if let Some(show) = &self.show_solution {
+            render_button(&show);
+        }
     }
+}
+pub fn split_tuple<const N: usize, T: Copy, U: Copy>(array: [(T, U); N]) -> ([T; N], [U; N]) {
+    let mut ts: [T; N] = [array[0].0; N];
+    let mut us: [U; N] = [array[0].1; N];
+
+    for (i, (t, u)) in array.into_iter().enumerate() {
+        ts[i] = t;
+        us[i] = u;
+    }
+
+    (ts, us)
 }

@@ -1,7 +1,8 @@
+
 use crate::logic::constraints::{matches_constraint_and_reachable, Reverse, Satisfaction};
 use crate::logic::grid::get_cell;
 use crate::logic::intersection::{Crossing, Intersection};
-use crate::theme::{new_button, new_text, new_text_group, render_text, Theme};
+use crate::theme::{new_button, new_text, new_text_group, render_text, render_tooltip, Theme};
 use crate::*;
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
@@ -20,56 +21,7 @@ pub enum RenderRail {
     },
     None,
 }
-pub fn render_satisfaction(
-    satisfaction: &Satisfaction,
-    previous_rect: Rect,
-    panel: Rect,
-    theme: &Theme,
-    show_solution: &mut bool,
-) -> Option<Button> {
-    let solved = satisfaction.success();
-    let mut rect = if solved {
-        let anchor = Anchor::below(previous_rect, Horizontal::Center, theme.button_pad());
-        let text = new_text(&"SOLVED!", anchor, 2.0, &theme);
-        render_text(&text, &STYLE.at_rest);
-        text.rect()
-    } else {
-        let anchor = Anchor::below(previous_rect, Horizontal::Center, theme.button_pad());
-        let labels = new_text_group(anchor, theme);
-        let text_rects = labels.create([
-            &format!("{} incorrect rails", satisfaction.failing_rails),
-            &format!("{} cells to activate", satisfaction.cell_diff),
-            &format!("{} unreachable rails", satisfaction.unreachable_rails),
-        ]);
-        let mut rect = Rect::default();
-        for text_rect in text_rects {
-            let icon_size = text_rect.rect().h;
-            let anchor = Anchor::top_right_v(text_rect.rect().point());
-            (if text_rect.text.starts_with('0') {
-                render_tick
-            } else {
-                render_cross
-            })(anchor, icon_size, theme);
-            render_text(&text_rect, &STYLE.at_rest);
-            rect = text_rect.rect()
-        }
-        rect
-    };
-    if solved || SEE_SOLUTION_DURING_GAME {
-        rect.x = panel.x;
-        rect.w = panel.w;
-        let show_anchor = Anchor::below(rect, Horizontal::Center, theme.button_pad());
-        let show_text = if *show_solution {
-            "Hide solution"
-        } else {
-            "Show possible solution"
-        };
-        let show = new_button(show_text, show_anchor, &theme);
-        Some(show)
-    } else {
-        None
-    }
-}
+
 pub fn is_horizontal_center(horizontal: Horizontal) -> bool {
     horizontal.opposite() == horizontal
 }
@@ -542,7 +494,7 @@ pub fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, bor
     draw_triangle_lines(p_1, p_2, p_3, 1.0, border);
 }
 
-fn render_tick(anchor: Anchor, size: f32, theme: &Theme) {
+pub fn render_tick(anchor: Anchor, size: f32, theme: &Theme) {
     let rect = anchor.get_rect(vec2(size, size));
     draw_rect(rect, SUCCESS_DARK);
     let start = rect.point() + rect.size() * 0.25;
@@ -559,7 +511,7 @@ fn render_tick(anchor: Anchor, size: f32, theme: &Theme) {
     );
 }
 
-fn render_cross(anchor: Anchor, font_size: f32, theme: &Theme) {
+pub fn render_cross(anchor: Anchor, font_size: f32, theme: &Theme) {
     let rect = anchor.get_rect(vec2(font_size, font_size));
     draw_rect(rect, FAILING_DARK);
     let start = rect.point() + rect.size() * 0.25;

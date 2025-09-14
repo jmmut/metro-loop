@@ -1,5 +1,5 @@
 use crate::theme::{new_button, new_button_group_direction, render_button, render_text, Theme};
-use crate::{new_layout, AnyError, NextStage, BACKGROUND, PANEL_BACKGROUND, STYLE};
+use crate::{new_layout, AnyError, NextStage, BACKGROUND, PANEL_BACKGROUND, STYLE, TEXT_STYLE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button_group;
@@ -94,7 +94,7 @@ fn inc_dec<T: Add<Output = T> + Sub<Output = T>>(
     } else if decrease.interact().is_clicked() {
         value = value - change;
     }
-    render_text(&title, &STYLE.at_rest);
+    render_text(&title, &TEXT_STYLE);
     render_button(&increase);
     render_button(&decrease);
     (value, anchor_point + vec2(0.0, increase.rect().h))

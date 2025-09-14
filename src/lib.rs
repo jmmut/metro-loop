@@ -1,3 +1,5 @@
+
+
 pub mod logic {
     pub mod constraints;
     pub mod grid;
@@ -78,6 +80,7 @@ pub const STYLE: Style = Style {
         border_color: DARKGRAY,
     },
 };
+pub const TEXT_STYLE: StateStyle = STYLE.at_rest;
 
 pub const NUM_ROWS: i32 = 10;
 pub const NUM_COLUMNS: i32 = 11;

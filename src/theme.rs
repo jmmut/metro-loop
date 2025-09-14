@@ -1,7 +1,7 @@
 use crate::logic::grid::Grid;
 use crate::scenes::loading_screen::Resources;
 use crate::{NUM_COLUMNS, NUM_ROWS, STYLE};
-use juquad::draw::draw_rect;
+use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::{ButtonGroup, Direction, LabelGroup};
@@ -271,6 +271,11 @@ pub fn new_text_group(anchor: Anchor, theme: &Theme) -> LabelGroup {
 
 pub fn render_text(text_rect: &TextRect, style: &StateStyle) {
     draw_rect(text_rect.rect(), style.bg_color);
+    text_rect.render_default(style)
+}
+pub fn render_tooltip(text_rect: &TextRect, style: &StateStyle) {
+    draw_rect(text_rect.rect(), style.bg_color);
+    draw_rect_lines(text_rect.rect(), 2.0, style.border_color);
     text_rect.render_default(style)
 }
 

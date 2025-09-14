@@ -19,8 +19,12 @@ pub mod scenes {
     pub use options::options;
     pub mod loading_screen;
     pub use loading_screen::loading_screen;
-    pub mod play;
-    pub use play::play;
+    pub mod play {
+        pub mod play;
+        pub mod panel;
+        pub use play::*;
+    }
+    pub use play::play::play;
 }
 
 use crate::logic::constraints::{Constraints, RailCoord};

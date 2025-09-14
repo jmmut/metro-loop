@@ -1,13 +1,10 @@
-
-use crate::logic::constraints::{matches_constraint_and_reachable, Reverse, Satisfaction};
+use crate::logic::constraints::{matches_constraint_and_reachable, Reverse};
 use crate::logic::grid::get_cell;
 use crate::logic::intersection::{Crossing, Intersection};
-use crate::theme::{new_button, new_text, new_text_group, render_text, render_tooltip, Theme};
+use crate::theme::Theme;
 use crate::*;
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
-use juquad::widgets::button::Button;
-use juquad::widgets::Widget;
 use macroquad::math::f32;
 use macroquad::prelude::*;
 

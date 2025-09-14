@@ -1,28 +1,27 @@
-use juquad::widgets::Widget;
 use crate::level_history::generate_procedural;
 use crate::levels::Level;
 use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
 use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
-use crate::render::{render_cells, render_constraints, render_cross, render_grid, render_tick};
-use crate::theme::{new_button, new_text, new_text_group, render_button, render_text, render_tooltip, Theme};
-use crate::{new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF, PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, SHOW_FPS, STEP_GENERATION, STYLE, TEXT_STYLE, VISUALIZE};
-use juquad::draw::draw_rect;
-use juquad::widgets::anchor::{Anchor, Horizontal};
-use juquad::widgets::button::Button;
-use juquad::widgets::text::TextRect;
+use crate::render::{render_cells, render_constraints, render_grid};
+use crate::scenes::play::panel::Panel;
+use crate::theme::{new_text, render_button, render_text, Theme};
+use crate::{
+    new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
+    MAX_CELLS_COEF, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
+};
+use juquad::widgets::anchor::Anchor;
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
 use macroquad::input::{
     is_key_pressed, is_mouse_button_pressed, is_mouse_button_released, mouse_position, KeyCode,
     MouseButton,
 };
-use macroquad::math::{ivec2, vec2, Rect, Vec2};
+use macroquad::math::{ivec2, vec2, Vec2};
 use macroquad::miniquad::FilterMode;
 use macroquad::prelude::{
     clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width,
 };
 use macroquad::rand::rand;
-use crate::scenes::play::panel::Panel;
 
 pub struct State {
     solution: Grid,
@@ -136,11 +135,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             if satisfaction.success() {
                 theme.resources.level_history.solved()
             }
-            panel.add_satisfaction(
-                &satisfaction,
-                &theme,
-                &mut state.show_solution,
-            );
+            panel.add_satisfaction(&satisfaction, &theme, &mut state.show_solution);
             if satisfaction.success() {
                 if !state.success_sound_played {
                     state.success_sound_played = true;

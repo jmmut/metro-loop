@@ -1,14 +1,16 @@
-use juquad::widgets::Widget;
+use crate::logic::constraints::Satisfaction;
+use crate::render::{render_cross, render_tick};
+use crate::theme::{
+    new_button, new_text, new_text_group, render_button, render_text, render_tooltip, Theme,
+};
+use crate::{PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, TEXT_STYLE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
 use juquad::widgets::text::TextRect;
+use juquad::widgets::Widget;
 use macroquad::input::{is_mouse_button_pressed, mouse_position, MouseButton};
 use macroquad::math::{vec2, Rect, Vec2};
-use crate::logic::constraints::Satisfaction;
-use crate::render::{render_cross, render_tick};
-use crate::{PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, TEXT_STYLE};
-use crate::theme::{new_button, new_text, new_text_group, render_button, render_text, render_tooltip, Theme};
 
 pub struct Panel {
     pub rect: Rect,
@@ -17,7 +19,6 @@ pub struct Panel {
     pub main_menu: Button,
     pub show_solution: Option<Button>,
 }
-
 
 impl Panel {
     pub fn new(panel_rect: Rect, theme: &Theme) -> Self {
@@ -61,6 +62,7 @@ impl Panel {
             render_text(&text, &TEXT_STYLE);
             text.rect()
         } else {
+            #[rustfmt::skip]
             let texts_and_tooltips = [
                 (&format!("{} incorrect rails", satisfaction.failing_rails), "some tooltip 1"),
                 (&format!("{} cells to activate", satisfaction.cell_diff), "some tooltip 2"),
@@ -117,7 +119,7 @@ impl Panel {
         rect.h = self.next_game.rect().bottom() - rect.y;
         rect
     }
-    
+
     pub fn interact(&mut self) {
         self.main_menu.interact();
         self.next_game.interact();
@@ -132,7 +134,7 @@ impl Panel {
     pub fn render_interactive(&self) {
         render_button(&self.next_game);
         render_button(&self.main_menu);
-        
+
         if let Some(show) = &self.show_solution {
             render_button(&show);
         }

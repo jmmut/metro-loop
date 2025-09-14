@@ -1,5 +1,3 @@
-
-
 pub mod logic {
     pub mod constraints;
     pub mod grid;
@@ -20,8 +18,8 @@ pub mod scenes {
     pub mod loading_screen;
     pub use loading_screen::loading_screen;
     pub mod play {
-        pub mod play;
         pub mod panel;
+        pub mod play;
         pub use play::*;
     }
     pub use play::play::play;

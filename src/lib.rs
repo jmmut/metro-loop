@@ -63,6 +63,7 @@ pub const SUCCESS_DARK: Color = color_average(SUCCESS, BLACK);
 pub const TRIANGLE: Color = color_average_weight(GRAY, LIGHTGRAY, 0.8);
 pub const TRIANGLE_BORDER: Color = color_average_weight(BLACK, TRIANGLE, 0.25);
 pub const RAIL: Color = TRIANGLE;
+pub const RAIL_BORDER: Color = TRIANGLE_BORDER;
 pub const UNREACHABLE_RAIL: Color = FAILING;
 
 pub const ENABLED_CELL: Color = color_average_weight(TRIANGLE, TRIANGLE_BORDER, 0.5);

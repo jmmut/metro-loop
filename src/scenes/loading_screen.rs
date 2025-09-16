@@ -1,10 +1,7 @@
 use crate::level_history::LevelHistory;
 use crate::sound::Sounds;
 use crate::theme::{new_text_unloaded, render_text, Preferences, Theme};
-use crate::{
-    new_layout, AnyError, BACKGROUND, DEFAULT_VOLUME, DISABLED_CELL, ENABLED_CELL, RAIL, STYLE,
-    TRANSPARENT, TRIANGLE_BORDER,
-};
+use crate::{new_layout, AnyError, BACKGROUND, DEFAULT_VOLUME, DISABLED_CELL, ENABLED_CELL, FAILING, RAIL, RAIL_BORDER, STYLE, SUCCESS, TRANSPARENT, TRIANGLE_BORDER};
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::resource_loader::ResourceLoader;
 use juquad::widgets::anchor::Anchor;
@@ -173,19 +170,27 @@ pub async fn loading_screen(section: i32, level: i32) -> Result<Theme, AnyError>
             loading.level_history = Some(LevelHistory::new(section, level)?);
             progress += 1;
         } else {
-            let resources = loading.try_into()?;
+            let resources :Resources = loading.try_into()?;
             return Ok(Theme {
                 resources,
                 layout,
                 preferences,
             });
+
+            // uncomment to see loading screen infinitely
+            // resources.sounds.stop_background();
+            // progress = 0;
+            // loading = Loading {
+            //     sounds: LoadingSounds::NotLoaded,
+            //     font: None,
+            //     level_history: None,
+            // };
         }
         stage_progress += progress;
         // println!(
         //     "stage_progress: {}, progress: {}, total: {}",
         //     stage_progress, progress, total_progress
         // );
-        // resources = None; // to see the loading screen in loop
 
         let (sw, sh) = (screen_width(), screen_height());
         let grid_pad = layout.grid_pad();
@@ -203,18 +208,18 @@ pub async fn loading_screen(section: i32, level: i32) -> Result<Theme, AnyError>
             bar_rect.h + 2.0 * layout.cell_pad(),
         );
         draw_rect(outer_rect, RAIL);
-        draw_rect_lines(outer_rect, 2.0, TRIANGLE_BORDER);
+        draw_rect_lines(outer_rect, 2.0, RAIL_BORDER);
         // bar_rect.y += bar_rect.h;
-        draw_rect(bar_rect, DISABLED_CELL);
+        draw_rect(bar_rect, FAILING);
         bar_rect.w = stage_progress as f32 * rect.rect.w / total_progress as f32;
-        draw_rect(bar_rect, ENABLED_CELL);
+        draw_rect(bar_rect, SUCCESS);
         bar_rect.w = rect.rect.w;
-        draw_rect_lines(bar_rect, 2.0, TRIANGLE_BORDER);
+        draw_rect_lines(bar_rect, 2.0, RAIL_BORDER);
         render_text(
             &rect,
             &StateStyle {
                 bg_color: TRANSPARENT,
-                text_color: STYLE.pressed.text_color,
+                text_color: STYLE.at_rest.text_color,
                 border_color: DARKGRAY,
             },
         );

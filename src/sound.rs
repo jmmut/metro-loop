@@ -95,6 +95,10 @@ impl Sounds {
     fn play_params(sound: Sound, volume: f32, looped: bool) {
         play_sound(sound, PlaySoundParams { looped, volume });
     }
+    
+    pub fn stop_background(&self) {
+        Self::stop(self.available.music_background.sound)
+    }
     pub fn stop(sound: Sound) {
         stop_sound(sound)
     }

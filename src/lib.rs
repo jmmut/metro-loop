@@ -49,19 +49,23 @@ pub const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 pub const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
 pub const PANEL_BACKGROUND: Color = LIGHTGRAY;
 
-pub const FAILING: Color = ORANGE;
-pub const FAILING_TRANSPARENT: Color = color_average_weight(FAILING, TRANSPARENT, 0.2);
-pub const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
+pub const SUCCESS: Color = color_average_weight(PANEL_BACKGROUND, BLUE, 0.5);
 pub const FAILING_DARK: Color = color_average(FAILING, BLACK);
+// pub const FAILING: Color = color_average_weight(color_average_weight(BACKGROUND, SUCCESS, 0.3), ORANGE, 0.5);
+pub const FAILING: Color =color_average_weight(GRAY, ORANGE, 0.5);
+pub const FAILING_TRANSPARENT: Color = color_average_weight(FAILING, TRANSPARENT, 0.2);
+// pub const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
 pub const FAILING_TRANSPARENT_DARK: Color = color_average_weight(FAILING_DARK, TRANSPARENT, 0.2);
 pub const SUCCESS_DARK: Color = color_average(SUCCESS, BLACK);
 
-pub const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue
-pub const TRIANGLE_BORDER: Color = color_average_weight(BLACK, BLUE, 0.25);
+// pub const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue
+// pub const TRIANGLE: Color = color_average_weight(SUCCESS, FAILING, 0.2);
+pub const TRIANGLE: Color = color_average_weight(GRAY, LIGHTGRAY, 0.8);
+pub const TRIANGLE_BORDER: Color = color_average_weight(BLACK, TRIANGLE, 0.25);
 pub const RAIL: Color = TRIANGLE;
 pub const UNREACHABLE_RAIL: Color = FAILING;
 
-pub const ENABLED_CELL: Color = BLUE;
+pub const ENABLED_CELL: Color = color_average_weight(TRIANGLE, TRIANGLE_BORDER, 0.5);
 pub const DISABLED_CELL: Color = DARKGRAY;
 pub const HOVERED_CELL: Color = color_average(ENABLED_CELL, DISABLED_CELL);
 

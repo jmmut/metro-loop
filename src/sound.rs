@@ -39,8 +39,8 @@ impl Sounds {
 
         Self {
             available: AvailableSounds {
-                _sound_incorrect: SoundConfig::new(sounds[0], 0.05),
-                sound_correct: SoundConfig::new(sounds[1], 0.05),
+                _sound_incorrect: SoundConfig::new(sounds[0], 0.2),
+                sound_correct: SoundConfig::new(sounds[1], 0.2),
                 music_background: SoundConfig::new(sounds[2], 1.0),
                 music_background_intro: SoundConfig::new(sounds[3], 1.0),
             },

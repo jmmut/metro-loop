@@ -17,16 +17,17 @@ If that fails, you might need some system packages. If you're on linux, see how 
   - [ ] a checkbox for enabling disabling sound?
 - [/] Select difficulty (should have easy/medium/hard?)
 - [ ] diagonal constraint
-- [ ] rail constraint
+- [ ] rail user constraint
 - [ ] constraint animations
 - [/] sound
   - [ ] better sounds
   - [ ] longer music
   - [ ] better sound balance. Higher music, lower effects.
-- [ ] contrasting font for the title
+- [ ] contrasting font for the title?
 - [ ] make constraint icons scale smoothly
 - [ ] remember procedural map when going to main menu
 - [ ] campaign visualization
+- [ ] add button for resetting level
 
 ## Bugs
 

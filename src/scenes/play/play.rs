@@ -1,13 +1,16 @@
 use crate::level_history::generate_procedural;
 use crate::levels::Level;
 use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
-use crate::logic::grid::{count_neighbours, get, get_cell, get_cell_mut, get_mut, in_range, Grid};
+use crate::logic::grid::{
+    count_neighbours, get, get_cell, get_cell_mut, get_mut, in_expanded_range, in_range,
+    is_system_fixed_v, Grid,
+};
 use crate::render::{render_cells, render_constraints, render_grid};
 use crate::scenes::play::panel::Panel;
-use crate::theme::{new_text, render_button, render_text, Theme};
+use crate::theme::{new_text, render_button, render_text, render_tooltip, Theme};
 use crate::{
     new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
-    MAX_CELLS_COEF, SHOW_FPS, STEP_GENERATION, STYLE, VISUALIZE,
+    MAX_CELLS_COEF, SHOW_FPS, STEP_GENERATION, STYLE, TEXT_STYLE, TOOLTIP_DELAY, VISUALIZE,
 };
 use juquad::widgets::anchor::Anchor;
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
@@ -17,6 +20,7 @@ use macroquad::input::{
     MouseButton,
 };
 use macroquad::math::{ivec2, vec2, Vec2};
+use macroquad::miniquad::date::now;
 use macroquad::miniquad::FilterMode;
 use macroquad::prelude::{
     clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width,
@@ -30,6 +34,15 @@ pub struct State {
     show_solution: bool,
     previous_satisfaction: Option<Satisfaction>,
     success_sound_played: bool,
+    ui: UiState,
+}
+pub type ShowingSinceSeconds = f64;
+pub struct UiState {
+    tooltip_showing: Option<(Tooltips, ShowingSinceSeconds)>,
+}
+pub enum Tooltips {
+    FixedCell,
+    UserFixedCell,
 }
 
 pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
@@ -41,8 +54,9 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
 
     let mut refresh_render = true;
 
-    let mut right_clicked = None;
+    let mut right_click_pressed = None;
     loop {
+        let now = now();
         let (new_sw, new_sh) = (screen_width(), screen_height());
         if new_sw != sw || new_sh != sh {
             refresh_render = true;
@@ -68,53 +82,68 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             / (vec2(theme.cell_width(), theme.cell_height()) + theme.cell_pad());
         let i_row = grid_indexes.y as i32;
         let i_column = grid_indexes.x as i32;
-        let hovered_cell = if in_range(&state.grid, i_row, i_column) {
+        let hovered_cell = if in_expanded_range(&state.grid, i_row, i_column) {
             Some((i_row, i_column))
         } else {
             None
         };
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
-        if is_mouse_button_pressed(MouseButton::Right) && !state.show_solution {
-            right_clicked = hovered_cell.clone();
+        if is_mouse_button_pressed(MouseButton::Right) {
+            if !state.show_solution {
+                right_click_pressed = hovered_cell.clone();
+            }
+            state.ui.tooltip_showing = None;
         }
 
         if is_mouse_button_released(MouseButton::Right) && !state.show_solution {
-            if let Some((hovered_row, hovered_column)) = hovered_cell.clone() {
-                let clicked = ivec2(hovered_column, hovered_row);
-                if clicked != state.grid.root && clicked != state.grid.root - ivec2(0, 1) {
-                    if let Some((right_clicked_row, right_clicked_column)) = right_clicked {
-                        let diff_row = right_clicked_row - clicked.y;
-                        let diff_column = right_clicked_column - clicked.x;
-                        let diff = diff_row.abs() + diff_column.abs();
-                        if diff == 1 {
-                            let rail_row = right_clicked_row.max(clicked.y);
-                            let rail_column = right_clicked_column.max(clicked.x);
-                            let fixed = if diff_row.abs() == 1 {
-                                state.grid.fixed_rails.get_horiz_mut(rail_row, rail_column)
-                            } else {
-                                state.grid.fixed_rails.get_vert_mut(rail_row, rail_column)
-                            };
-                            *fixed = !*fixed;
-                            refresh_render = true;
-                        } else if diff == 0 {
-                            let cell = get_mut(&mut state.grid.fixed_cells, i_row, i_column);
-                            *cell = !*cell;
-                            refresh_render = true;
-                        } // TODO: diff = 2, diagonal constraints
-                    }
+            if let (
+                Some((released_row, released_column)),
+                Some((right_clicked_row, right_clicked_column)),
+            ) = (hovered_cell.clone(), right_click_pressed)
+            {
+                let released = ivec2(released_column, released_row);
+                let pressed = ivec2(right_clicked_column, right_clicked_row);
+                if is_system_fixed_v(released, &state.grid) && pressed == released {
+                    state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
+                } else {
+                    let diff_row = right_clicked_row - released_row;
+                    let diff_column = right_clicked_column - released_column;
+                    let diff = diff_row.abs() + diff_column.abs();
+                    if diff == 1 {
+                        let rail_row = right_clicked_row.max(released_row);
+                        let rail_column = right_clicked_column.max(released_column);
+                        let fixed = if diff_row.abs() == 1 {
+                            state.grid.fixed_rails.get_horiz_mut(rail_row, rail_column)
+                        } else {
+                            state.grid.fixed_rails.get_vert_mut(rail_row, rail_column)
+                        };
+                        *fixed = !*fixed;
+                        refresh_render = true;
+                    } else if diff == 0 {
+                        let cell = get_mut(&mut state.grid.fixed_cells, i_row, i_column);
+                        *cell = !*cell;
+                        refresh_render = true;
+                    } // TODO: diff = 2, diagonal constraints
                 }
             }
         }
-        if is_mouse_button_pressed(MouseButton::Left) && !state.show_solution {
-            if let Some((i_row, i_column)) = hovered_cell.clone() {
-                let clicked = ivec2(i_column, i_row);
-                if clicked != state.grid.root && clicked != state.grid.root - ivec2(0, 1) {
-                    let fixed = get(&state.grid.fixed_cells, i_row, i_column);
-                    if !fixed {
-                        let cell = get_cell_mut(&mut state.grid, i_row, i_column);
-                        *cell = !*cell;
-                        state.grid.recalculate_rails();
-                        refresh_render = true;
+        if is_mouse_button_pressed(MouseButton::Left) {
+            state.ui.tooltip_showing = None;
+            if !state.show_solution {
+                if let Some((i_row, i_column)) = hovered_cell.clone() {
+                    let clicked = ivec2(i_column, i_row);
+                    if is_system_fixed_v(clicked, &state.grid) {
+                        state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
+                    } else {
+                        let fixed = get(&state.grid.fixed_cells, i_row, i_column);
+                        if *fixed {
+                            state.ui.tooltip_showing = Some((Tooltips::UserFixedCell, now));
+                        } else {
+                            let cell = get_cell_mut(&mut state.grid, i_row, i_column);
+                            *cell = !*cell;
+                            state.grid.recalculate_rails();
+                            refresh_render = true;
+                        }
                     }
                 }
             }
@@ -200,7 +229,26 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         panel.render_interactive();
 
+        if let Some((tooltip, since)) = &state.ui.tooltip_showing {
+            if since + TOOLTIP_DELAY < now {
+                state.ui.tooltip_showing = None;
+            } else {
+                tooltip.render(pos, &theme);
+            }
+        }
         next_frame().await
+    }
+}
+
+impl Tooltips {
+    pub fn render(&self, pos: Vec2, theme: &Theme) {
+        let anchor = Anchor::bottom_left_v(Vec2::from(pos));
+        let text = match self {
+            Tooltips::FixedCell => "Can't change locked cells",
+            Tooltips::UserFixedCell => "Can't change locked cells, use right click to unlock",
+        };
+        let text_rect = new_text(text, anchor, 1.0, &theme);
+        render_tooltip(&text_rect, &TEXT_STYLE);
     }
 }
 
@@ -232,6 +280,9 @@ async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> (Sta
         show_solution,
         previous_satisfaction,
         success_sound_played,
+        ui: UiState {
+            tooltip_showing: None,
+        },
     };
     let panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
     (state, panel)

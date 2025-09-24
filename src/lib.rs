@@ -43,6 +43,7 @@ pub const STEP_GENERATION: bool = false;
 pub const SHOW_FPS: bool = false;
 
 pub const DEFAULT_VOLUME: f32 = 0.6;
+pub const TOOLTIP_DELAY: f64 = 2.5;
 
 pub const TRANSPARENT: Color = Color::new(0.0, 0.0, 0.0, 0.0);
 pub const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);

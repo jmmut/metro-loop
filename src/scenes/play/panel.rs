@@ -2,7 +2,7 @@ use crate::logic::constraints::Satisfaction;
 use crate::render::{render_cross, render_tick};
 use crate::theme::{
     labels_from_theme, new_button, new_text, new_text_group_generic, render_button, render_text,
-    render_tooltip, Theme,
+    Theme,
 };
 use crate::{PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, TEXT_STYLE};
 use juquad::draw::draw_rect;
@@ -231,7 +231,7 @@ impl SatisfactionPanel {
                 for tooltip in tooltips {
                     match tooltip {
                         Tooltip::Text(_) => {}
-                        Tooltip::Renderable(tooltip) => {
+                        Tooltip::Renderable(_tooltip) => {
                             // render_tooltip(&tooltip, &TEXT_STYLE);
                         }
                     }

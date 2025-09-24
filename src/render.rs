@@ -1,5 +1,5 @@
 use crate::logic::constraints::{matches_constraint_and_reachable, Reverse};
-use crate::logic::grid::get_cell;
+use crate::logic::grid::{get_cell, is_system_fixed};
 use crate::logic::intersection::{Crossing, Intersection};
 use crate::theme::Theme;
 use crate::*;
@@ -61,6 +61,11 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
     for i_row in 0..grid.rows() {
         for i_column in 0..grid.columns() {
             let current_cell = *get(&grid.fixed_cells, i_row, i_column);
+            let color = if is_system_fixed(grid, i_row, i_column) {
+                TRIANGLE_BORDER
+            } else {
+                TRIANGLE
+            };
             if current_cell {
                 let mut intersection = top_left_rail_intersection(i_row, i_column, theme);
                 intersection += vec2(theme.cell_width(), theme.cell_height()) * 0.5;
@@ -71,7 +76,7 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
                         theme.cell_pad(),
                         theme.cell_pad(),
                     ),
-                    TRIANGLE_BORDER,
+                    color,
                 );
             }
         }

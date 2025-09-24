@@ -348,6 +348,17 @@ pub fn count_neighbours(grid: &Grid, row: i32, column: i32) -> i32 {
 pub fn in_range(grid: &Grid, row: i32, column: i32) -> bool {
     row > 0 && row < grid.rows() - 1 && column > 0 && column < grid.columns() - 1
 }
+pub fn in_expanded_range(grid: &Grid, row: i32, column: i32) -> bool {
+    row >= 0 && row < grid.rows() && column >= 0 && column < grid.columns()
+}
+pub fn is_system_fixed_v(clicked: IVec2, grid: &Grid) -> bool {
+    clicked == grid.root
+        || clicked == grid.root - ivec2(0, 1)
+        || !in_range(grid, clicked.y, clicked.x)
+}
+pub fn is_system_fixed(grid: &Grid, row: i32, column: i32) -> bool {
+    is_system_fixed_v(ivec2(column, row), grid)
+}
 
 pub struct GridAndRails<'a> {
     grid: &'a Grid,

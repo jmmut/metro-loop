@@ -42,7 +42,7 @@ pub const FONT_SIZE_CHANGING: bool = false;
 pub const STEP_GENERATION: bool = false;
 pub const SHOW_FPS: bool = false;
 
-pub const DEFAULT_VOLUME: f32 = 0.7;
+pub const DEFAULT_VOLUME: f32 = 0.6;
 
 pub const TRANSPARENT: Color = Color::new(0.0, 0.0, 0.0, 0.0);
 pub const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
@@ -52,7 +52,7 @@ pub const PANEL_BACKGROUND: Color = LIGHTGRAY;
 pub const SUCCESS: Color = color_average_weight(PANEL_BACKGROUND, BLUE, 0.5);
 pub const FAILING_DARK: Color = color_average(FAILING, BLACK);
 // pub const FAILING: Color = color_average_weight(color_average_weight(BACKGROUND, SUCCESS, 0.3), ORANGE, 0.5);
-pub const FAILING: Color =color_average_weight(GRAY, ORANGE, 0.5);
+pub const FAILING: Color = color_average_weight(GRAY, ORANGE, 0.5);
 pub const FAILING_TRANSPARENT: Color = color_average_weight(FAILING, TRANSPARENT, 0.2);
 // pub const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
 pub const FAILING_TRANSPARENT_DARK: Color = color_average_weight(FAILING_DARK, TRANSPARENT, 0.2);

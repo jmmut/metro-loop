@@ -1,7 +1,10 @@
 use crate::level_history::LevelHistory;
 use crate::sound::Sounds;
 use crate::theme::{new_text_unloaded, render_text, Preferences, Theme};
-use crate::{new_layout, AnyError, BACKGROUND, DEFAULT_VOLUME, DISABLED_CELL, ENABLED_CELL, FAILING, RAIL, RAIL_BORDER, STYLE, SUCCESS, TRANSPARENT, TRIANGLE_BORDER};
+use crate::{
+    new_layout, AnyError, BACKGROUND, DEFAULT_VOLUME, DISABLED_CELL, FAILING, RAIL, RAIL_BORDER,
+    STYLE, SUCCESS, TRANSPARENT,
+};
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::resource_loader::ResourceLoader;
 use juquad::widgets::anchor::Anchor;
@@ -170,7 +173,7 @@ pub async fn loading_screen(section: i32, level: i32) -> Result<Theme, AnyError>
             loading.level_history = Some(LevelHistory::new(section, level)?);
             progress += 1;
         } else {
-            let resources :Resources = loading.try_into()?;
+            let resources: Resources = loading.try_into()?;
             return Ok(Theme {
                 resources,
                 layout,

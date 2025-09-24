@@ -16,17 +16,19 @@ If that fails, you might need some system packages. If you're on linux, see how 
   - [ ] should add a slider for the volume?
   - [ ] a checkbox for enabling disabling sound?
 - [/] Select difficulty (should have easy/medium/hard?)
+- [ ] rendering details
+  - [ ] constraint animations
+  - [ ] make constraint icons scale smoothly
+  - [ ] triangles should not have direction when inside constraints on unconnected rails  
 - [ ] diagonal constraint
-- [ ] rail user constraint
-- [ ] constraint animations
+- [ ] rail user constraint (clickable corners)
 - [/] sound
   - [ ] better sounds
   - [ ] longer music
   - [ ] better sound balance. Higher music, lower effects.
 - [ ] contrasting font for the title?
-- [ ] make constraint icons scale smoothly
 - [ ] remember procedural map when going to main menu
-- [ ] campaign visualization
+- [ ] campaign visualization screen
 - [ ] add button for resetting level
 
 ## Bugs

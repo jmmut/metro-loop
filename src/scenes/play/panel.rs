@@ -232,7 +232,7 @@ impl SatisfactionPanel {
                     match tooltip {
                         Tooltip::Text(_) => {}
                         Tooltip::Renderable(tooltip) => {
-                            render_tooltip(&tooltip, &TEXT_STYLE);
+                            // render_tooltip(&tooltip, &TEXT_STYLE);
                         }
                     }
                 }

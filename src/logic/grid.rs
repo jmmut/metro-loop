@@ -349,7 +349,10 @@ pub fn in_range(grid: &Grid, row: i32, column: i32) -> bool {
     row > 0 && row < grid.rows() - 1 && column > 0 && column < grid.columns() - 1
 }
 pub fn in_expanded_range(grid: &Grid, row: i32, column: i32) -> bool {
-    row >= 0 && row < grid.rows() && column >= 0 && column < grid.columns()
+    in_expanded_range_inner(row, column, grid.rows(), grid.columns())
+}
+pub fn in_expanded_range_inner(row: i32, column: i32, rows: i32, columns: i32) -> bool {
+    row >= 0 && row < rows && column >= 0 && column < columns
 }
 pub fn is_system_fixed_v(clicked: IVec2, grid: &Grid) -> bool {
     clicked == grid.root

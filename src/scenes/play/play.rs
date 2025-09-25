@@ -2,7 +2,7 @@ use crate::level_history::generate_procedural;
 use crate::levels::Level;
 use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
 use crate::logic::grid::{
-    count_neighbours, get, get_cell, get_cell_mut, get_mut, in_expanded_range, in_range,
+    count_neighbours, get, get_cell, get_cell_mut, get_mut, in_expanded_range_inner, in_range,
     is_system_fixed_v, Grid,
 };
 use crate::render::{render_cells, render_constraints, render_grid};
@@ -78,15 +78,8 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
 
         let pos = Vec2::from(mouse_position());
-        let grid_indexes = (pos - theme.grid_pad() + theme.cell_pad() * 0.5)
-            / (vec2(theme.cell_width(), theme.cell_height()) + theme.cell_pad());
-        let i_row = grid_indexes.y as i32;
-        let i_column = grid_indexes.x as i32;
-        let hovered_cell = if in_expanded_range(&state.grid, i_row, i_column) {
-            Some((i_row, i_column))
-        } else {
-            None
-        };
+        let hovered_cell = pixel_to_coord(pos, &state.grid, &theme);
+
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
         if is_mouse_button_pressed(MouseButton::Right) {
             if !state.show_solution {
@@ -120,7 +113,8 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
                         *fixed = !*fixed;
                         refresh_render = true;
                     } else if diff == 0 {
-                        let cell = get_mut(&mut state.grid.fixed_cells, i_row, i_column);
+                        let cell =
+                            get_mut(&mut state.grid.fixed_cells, released_row, released_column);
                         *cell = !*cell;
                         refresh_render = true;
                     } // TODO: diff = 2, diagonal constraints
@@ -369,4 +363,60 @@ pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
         }
     }
     solution
+}
+
+fn pixel_to_coord(pixel_pos: Vec2, grid: &Grid, theme: &Theme) -> Option<(i32, i32)> {
+    pixel_to_coord_inner(
+        pixel_pos,
+        grid.rows(),
+        grid.columns(),
+        theme.grid_pad(),
+        theme.cell_pad(),
+        theme.cell_width(),
+        theme.cell_height(),
+    )
+}
+fn pixel_to_coord_inner(
+    pixel_pos: Vec2,
+    rows: i32,
+    columns: i32,
+    grid_pad: f32,
+    cell_pad: f32,
+    cell_width: f32,
+    cell_height: f32,
+) -> Option<(i32, i32)> {
+    let grid_indexes =
+        (pixel_pos - grid_pad + cell_pad * 0.5) / (vec2(cell_width, cell_height) + cell_pad);
+    let i_row = grid_indexes.y as i32;
+    let i_column = grid_indexes.x as i32;
+    if in_expanded_range_inner(i_row, i_column, rows, columns) {
+        Some((i_row, i_column))
+    } else {
+        None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_pixel_to_row_column_out_top_left() {
+        let pixel = vec2(1.0, 5.0);
+        let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
+        assert_eq!(cell_coords, None);
+    }
+    #[test]
+    fn test_pixel_to_row_column() {
+        let pixel = vec2(25.0, 12.0);
+        let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
+        assert_eq!(cell_coords, Some((0, 1)));
+    }
+    #[test]
+    fn test_pixel_to_row_column_in_cell_border() {
+        let pixel = vec2(28.0, 9.0);
+        let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
+        assert_eq!(cell_coords, Some((0, 1)));
+    }
 }

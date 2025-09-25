@@ -26,25 +26,16 @@ pub fn is_horizontal_center(horizontal: Horizontal) -> bool {
 pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>, theme: &Theme) {
     for i_row in 0..grid.rows() {
         for i_column in 0..grid.columns() {
-            let current_cell = *get_cell(grid, i_row, i_column);
 
-            let color = if current_cell {
-                ENABLED_CELL
+            let color = if *hovered_cell == Some((i_row, i_column)) {
+                HOVERED_CELL
             } else {
-                DISABLED_CELL
-            };
-            let color = if let Some(hovered) = hovered_cell.clone() {
-                let hovered_v = ivec2(hovered.1, hovered.0);
-                if (i_row, i_column) == hovered
-                    && hovered_v != grid.root
-                    && hovered_v != grid.root - ivec2(0, 1)
-                {
-                    HOVERED_CELL
+                let current_cell = *get_cell(grid, i_row, i_column);
+                if current_cell {
+                    ENABLED_CELL
                 } else {
-                    color
+                    DISABLED_CELL
                 }
-            } else {
-                color
             };
             let cell_pos = cell_top_left(i_row, i_column, theme);
             draw_rectangle(

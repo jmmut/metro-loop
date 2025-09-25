@@ -387,8 +387,8 @@ fn pixel_to_coord_inner(
 ) -> Option<(i32, i32)> {
     let grid_indexes =
         (pixel_pos - grid_pad + cell_pad * 0.5) / (vec2(cell_width, cell_height) + cell_pad);
-    let i_row = grid_indexes.y as i32;
-    let i_column = grid_indexes.x as i32;
+    let i_row = grid_indexes.y.floor() as i32;
+    let i_column = grid_indexes.x.floor() as i32;
     if in_expanded_range_inner(i_row, i_column, rows, columns) {
         Some((i_row, i_column))
     } else {

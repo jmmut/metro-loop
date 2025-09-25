@@ -19,7 +19,7 @@ use macroquad::input::{
     is_key_pressed, is_mouse_button_pressed, is_mouse_button_released, mouse_position, KeyCode,
     MouseButton,
 };
-use macroquad::math::{ivec2, vec2, Vec2};
+use macroquad::math::{ivec2, vec2, IVec2, Vec2};
 use macroquad::miniquad::date::now;
 use macroquad::miniquad::FilterMode;
 use macroquad::prelude::{
@@ -68,14 +68,12 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
         }
         if is_key_pressed(KeyCode::P) {
-            println!(
-                "{}",
-                Level {
-                    initial_grid: state.grid.clone(),
-                    constraints: state.constraints.clone(),
-                    solution: state.solution.clone(),
-                }
-            );
+            let level = Level {
+                initial_grid: state.grid.clone(),
+                constraints: state.constraints.clone(),
+                solution: state.solution.clone(),
+            };
+            println!("{}", level);
         }
 
         let pos = Vec2::from(mouse_position());
@@ -89,41 +87,22 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             }
         }
 
-        if is_mouse_button_released(MouseButton::Right) && state.show_solution {
-            if let Some(_) = hovered_cell.clone() {
-                state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
-            }
-        }
-        if is_mouse_button_released(MouseButton::Right) && !state.show_solution {
+        if is_mouse_button_released(MouseButton::Right) {
             if let (
                 Some((released_row, released_column)),
                 Some((right_clicked_row, right_clicked_column)),
             ) = (hovered_cell.clone(), right_click_pressed)
             {
-                let released = ivec2(released_column, released_row);
-                let pressed = ivec2(right_clicked_column, right_clicked_row);
-                if is_system_fixed_v(released, &state.grid) && pressed == released {
-                    state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
+                if state.show_solution {
+                    state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
                 } else {
-                    let diff_row = right_clicked_row - released_row;
-                    let diff_column = right_clicked_column - released_column;
-                    let diff = diff_row.abs() + diff_column.abs();
-                    if diff == 1 {
-                        let rail_row = right_clicked_row.max(released_row);
-                        let rail_column = right_clicked_column.max(released_column);
-                        let fixed = if diff_row.abs() == 1 {
-                            state.grid.fixed_rails.get_horiz_mut(rail_row, rail_column)
-                        } else {
-                            state.grid.fixed_rails.get_vert_mut(rail_row, rail_column)
-                        };
-                        *fixed = !*fixed;
-                        refresh_render = true;
-                    } else if diff == 0 {
-                        let cell =
-                            get_mut(&mut state.grid.fixed_cells, released_row, released_column);
-                        *cell = !*cell;
-                        refresh_render = true;
-                    } // TODO: diff = 2, diagonal constraints
+                    let released = ivec2(released_column, released_row);
+                    let pressed = ivec2(right_clicked_column, right_clicked_row);
+                    if is_system_fixed_v(released, &state.grid) && pressed == released {
+                        state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
+                    } else {
+                        add_user_constraint(pressed, released, &mut state, &mut refresh_render);
+                    }
                 }
             }
         }
@@ -219,15 +198,9 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             render_button(&show);
         }
         if SHOW_FPS {
-            render_text(
-                &new_text(
-                    &format!("FPS: {}", get_fps()),
-                    Anchor::top_left(0.0, 0.0),
-                    1.0,
-                    &theme,
-                ),
-                &STYLE.pressed,
-            );
+            let text = format!("FPS: {}", get_fps());
+            let text = new_text(&text, Anchor::top_left(0.0, 0.0), 1.0, &theme);
+            render_text(&text, &STYLE.pressed);
         }
         panel.render_interactive();
 
@@ -240,6 +213,31 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         next_frame().await
     }
+}
+
+fn add_user_constraint(
+    pressed: IVec2,
+    released: IVec2,
+    state: &mut State,
+    refresh_render: &mut bool,
+) {
+    let diff_vec = (pressed - released).abs();
+    let diff = diff_vec.x + diff_vec.y;
+    if diff == 1 {
+        let rail = pressed.max(released);
+        let fixed = if diff_vec.y == 1 {
+            state.grid.fixed_rails.get_horiz_mut(rail.y, rail.x)
+        } else {
+            state.grid.fixed_rails.get_vert_mut(rail.y, rail.x)
+        };
+        *fixed = !*fixed;
+        *refresh_render = true;
+    } else if diff == 0 {
+        let cell = get_mut(&mut state.grid.fixed_cells, released.y, released.x);
+        *cell = !*cell;
+        *refresh_render = true;
+    }
+    // TODO: diff = 2, diagonal constraints
 }
 
 impl Tooltips {

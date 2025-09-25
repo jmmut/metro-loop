@@ -43,6 +43,7 @@ pub struct UiState {
 pub enum Tooltips {
     FixedCell,
     UserFixedCell,
+    EditSolution,
 }
 
 pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
@@ -82,12 +83,17 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
 
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
         if is_mouse_button_pressed(MouseButton::Right) {
+            state.ui.tooltip_showing = None;
             if !state.show_solution {
                 right_click_pressed = hovered_cell.clone();
             }
-            state.ui.tooltip_showing = None;
         }
 
+        if is_mouse_button_released(MouseButton::Right) && state.show_solution {
+            if let Some(_) = hovered_cell.clone() {
+                state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
+            }
+        }
         if is_mouse_button_released(MouseButton::Right) && !state.show_solution {
             if let (
                 Some((released_row, released_column)),
@@ -123,8 +129,10 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         if is_mouse_button_pressed(MouseButton::Left) {
             state.ui.tooltip_showing = None;
-            if !state.show_solution {
-                if let Some((i_row, i_column)) = hovered_cell.clone() {
+            if let Some((i_row, i_column)) = hovered_cell.clone() {
+                if state.show_solution {
+                    state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
+                } else {
                     let clicked = ivec2(i_column, i_row);
                     if is_system_fixed_v(clicked, &state.grid) {
                         state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
@@ -240,6 +248,7 @@ impl Tooltips {
         let text = match self {
             Tooltips::FixedCell => "Can't change locked cells",
             Tooltips::UserFixedCell => "Can't change locked cells, use right click to unlock",
+            Tooltips::EditSolution => "Can't change cells from solution, click 'Hide solution'",
         };
         let text_rect = new_text(text, anchor, 1.0, &theme);
         render_tooltip(&text_rect, &TEXT_STYLE);

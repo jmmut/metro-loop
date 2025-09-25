@@ -15,6 +15,20 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . x . x .
+    > >  
+. x^% *v.
+    < <  
+. x x x .
+         
+. x x x .
+         
+. . . . .
+"#,
+                r#". . . . .
+         
+. x x x .
+         
+. x . x .
     >    
 . x % x .
          
@@ -28,11 +42,39 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
          
 . x x x .
          
+. *^. x .
+  > >    
+. x^% x .
+         
+. x x x . 
+         
+. x x x .
+         
+. . . . .
+"#,
+                r#". . . . .
+         
+. x x x .
+         
 . x . x .
     >    
 . x % x .
          
-. x ? *. 
+. x * *. 
+      <  
+. x x x .
+         
+. . . . .
+"#,
+                r#". . . . .
+         
+. x x x .
+         
+. x . x .
+    >    
+. x % x .
+         
+. x ? O. 
       >  
 . x x x .
          

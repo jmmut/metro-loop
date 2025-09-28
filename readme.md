@@ -15,8 +15,8 @@ If that fails, you might need some system packages. If you're on linux, see how 
 ### Major
 
 - [/] options screen
-  - [ ] should add a slider for the volume?
-  - [ ] a checkbox for enabling disabling sound?
+  - [x] should add a slider for the volume?
+  - [-] a checkbox for enabling disabling sound?
 - [ ] campaign visualization screen
 - [ ] add button for resetting level
 - [ ] diagonal constraint

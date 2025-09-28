@@ -7,6 +7,7 @@ pub mod logic {
 pub mod level_history;
 pub mod levels;
 pub mod render;
+pub mod slider;
 pub mod sound;
 pub mod theme;
 

@@ -136,7 +136,7 @@ fn inc_dec<T: Add<Output = T> + Sub<Output = T>>(
 
     let anchor = Anchor::top_left_v(anchor_point + half_pad);
     let labels = new_button_group_direction(anchor, theme, button_group::Direction::Right);
-    let [mut increase, mut decrease] = labels.create(["increase", "decrease"]);
+    let [mut decrease, mut increase] = labels.create(["-", "+"]);
 
     if increase.interact().is_clicked() {
         value = value + change;

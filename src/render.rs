@@ -52,7 +52,7 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
         for i_column in 0..grid.columns() {
             let current_cell = *get(&grid.fixed_cells, i_row, i_column);
             let color = if is_system_fixed(grid, i_row, i_column) {
-                TRIANGLE_BORDER
+                BACKGROUND
             } else {
                 TRIANGLE
             };
@@ -250,24 +250,21 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
             (FAILING, FAILING_DARK)
         };
 
-        let (row, column, direction, constraint_render) = match *constraint {
-            RailCoord::Horizontal {
-                row,
-                column,
-                direction,
-            } => match direction {
-                Horizontal::Left => (row, column, vec2(-1.0, 0.0), Constraint::Station),
-                Horizontal::Center => (row, column, vec2(1.0, 0.0), Constraint::Blockade),
-                Horizontal::Right => (row, column, vec2(1.0, 0.0), Constraint::Station),
+        let (row, column) = match *constraint {
+            RailCoord::Horizontal { row, column, .. } => (row, column),
+            RailCoord::Vertical { row, column, .. } => (row, column),
+        };
+
+        let (direction, constraint_render) = match *constraint {
+            RailCoord::Horizontal { direction, .. } => match direction {
+                Horizontal::Left => (vec2(-1.0, 0.0), Constraint::Station),
+                Horizontal::Center => (vec2(1.0, 0.0), Constraint::Blockade),
+                Horizontal::Right => (vec2(1.0, 0.0), Constraint::Station),
             },
-            RailCoord::Vertical {
-                row,
-                column,
-                direction,
-            } => match direction {
-                Vertical::Top => (row, column, vec2(0.0, -1.0), Constraint::Station),
-                Vertical::Center => (row, column, vec2(0.0, 1.0), Constraint::Blockade),
-                Vertical::Bottom => (row, column, vec2(0.0, 1.0), Constraint::Station),
+            RailCoord::Vertical { direction, .. } => match direction {
+                Vertical::Top => (vec2(0.0, -1.0), Constraint::Station),
+                Vertical::Center => (vec2(0.0, 1.0), Constraint::Blockade),
+                Vertical::Bottom => (vec2(0.0, 1.0), Constraint::Station),
             },
         };
 
@@ -291,10 +288,10 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
 
                 // let daltonic_distinction = if success { color } else { color_border };
 
-                draw_triangle(outer_left, left, outer_tip, color);
-                draw_triangle(left, tip, outer_tip, color);
-                draw_triangle(right, outer_tip, tip, color);
-                draw_triangle(right, outer_right, outer_tip, color);
+                draw_triangles(
+                    &[outer_left, left, outer_tip, tip, outer_right, right],
+                    color,
+                );
 
                 draw_lines(
                     &[tip, left, outer_left, outer_tip, outer_right, right, tip],
@@ -403,8 +400,7 @@ fn draw_blockade(
     //     (color_border, color)
     // };
     // if success {
-    draw_triangle(a, c, b, color);
-    draw_triangle(b, c, d, color);
+    draw_triangles(&[a, c, b, d], color);
     // draw_triangle(a, c, b, blockade_color);
     // draw_triangle(b, c, d, blockade_color);
     // }
@@ -524,5 +520,16 @@ pub fn draw_lines(points: &[Vec2], color: Color) {
     assert!(points.len() >= 2);
     for i in 1..points.len() {
         draw_line_v(points[i - 1], points[i], color);
+    }
+}
+pub fn draw_triangles(vertices: &[Vec2], color: Color) {
+    assert!(vertices.len() >= 3);
+    for i in 2..vertices.len() {
+        let (prev_prev, prev) = if i % 2 == 0 {
+            (i - 2, i - 1)
+        } else {
+            (i - 1, i - 2)
+        };
+        draw_triangle(vertices[prev_prev], vertices[prev], vertices[i], color);
     }
 }

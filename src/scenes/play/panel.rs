@@ -150,10 +150,15 @@ impl SatisfactionPanel {
             let text = new_text(&"SOLVED!", anchor, 2.0, &theme);
             Self::Solved { text }
         } else {
+            let cell_message = if satisfaction.cell_diff >= 0 {
+                format!("{} cells to activate", satisfaction.cell_diff)
+            } else {
+                format!("{} cells to deactivate", -satisfaction.cell_diff)
+            };
             #[rustfmt::skip]
             let texts_and_tooltips = [
                 ((&format!("{} incorrect rails", satisfaction.failing_rails), satisfaction.failing_rails == 0), "some tooltip 1"),
-                ((&format!("{} cells to activate", satisfaction.cell_diff), satisfaction.cell_diff == 0), "some tooltip 2"),
+                ((&cell_message, satisfaction.cell_diff == 0), "some tooltip 2"),
                 ((&format!("{} unreachable rails", satisfaction.unreachable_rails), satisfaction.unreachable_rails == 0), "some tooltip 3"),
             ];
             let (texts_success, tooltips) = split_tuple(texts_and_tooltips);

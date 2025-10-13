@@ -135,7 +135,7 @@ pub fn count_loops(grid: &Grid) -> i32 {
 fn compute_rail_failures(grid: &Grid, rail_constraints: &Vec<RailCoord>) -> i32 {
     let mut failures = 0;
     for constraint in rail_constraints {
-        if !matches_constraint(grid, constraint) {
+        if !matches_constraint_and_reachable(grid, constraint).0 {
             failures += 1;
         }
     }

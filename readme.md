@@ -29,7 +29,7 @@ If that fails, you might need some system packages. If you're on linux, see how 
 - [ ] rendering details
   - [ ] constraint animations
   - [ ] make constraint icons scale smoothly
-  - [ ] triangles should not have direction when inside constraints on unconnected rails
+  - [-] triangles should not have direction when inside constraints on unconnected rails. (decided to keep same icon for incorrect rails)
   - [ ] sin(color lightness) on hover satisfaction failures
   - [ ] textures for + and -
 - [/] sound

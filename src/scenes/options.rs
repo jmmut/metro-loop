@@ -104,9 +104,9 @@ fn interact_volume(
         value < 0.001
     }
     let text = if stopped(current) {
-        format!("Audio volume: {:.2}", new)
-    } else {
         "Audio volume: stopped".to_string()
+    } else {
+        format!("Audio volume: {:.2}", new)
     };
     if stopped(current) != stopped(new) {
         if stopped(new) {

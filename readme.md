@@ -17,7 +17,8 @@ If that fails, you might need some system packages. If you're on linux, see how 
 - [/] options screen
   - [x] should add a slider for the volume?
   - [-] a checkbox for enabling disabling sound?
-- [ ] campaign visualization screen
+- [ ] campaign visualization screen.
+  - [ ] button for previous level? redundant?
 - [ ] add button for resetting level
 - [ ] diagonal constraint
 - [ ] rail user constraint (clickable corners)
@@ -30,6 +31,7 @@ If that fails, you might need some system packages. If you're on linux, see how 
   - [ ] make constraint icons scale smoothly
   - [ ] triangles should not have direction when inside constraints on unconnected rails
   - [ ] sin(color lightness) on hover satisfaction failures
+  - [ ] textures for + and -
 - [/] sound
   - [ ] better sounds
   - [ ] longer music

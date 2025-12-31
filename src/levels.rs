@@ -453,7 +453,7 @@ impl Display for Level {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::logic::constraints::{compute_satisfaction, Satisfaction};
+    use crate::logic::constraints::{compute_satisfaction, Goal, Satisfaction};
 
     const RAW_LEVEL: &str = r#".-.-.-.-.-.
 -----------
@@ -498,10 +498,9 @@ mod tests {
         assert_eq!(
             compute_satisfaction(&level.initial_grid, &level.constraints),
             Satisfaction {
-                failing_rails: 8,
-                cell_diff: 0,
-                unconnected_loops: 1,
-                unreachable_rails: 0,
+                stations: Goal::new(2, 10),
+                cell_count: Goal::new(2, 2),
+                reachable: Goal::new(6, 6),
             }
         );
     }

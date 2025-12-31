@@ -81,7 +81,7 @@ impl LevelHistory {
 pub async fn generate_procedural(visualize: bool, theme: &Theme) -> Level {
     let mut solution = generate_grid(visualize, theme).await;
     solution.recalculate_rails();
-    while count_unreachable_rails(&solution) > 0 {
+    while !count_unreachable_rails(&solution).success() {
         solution = generate_grid(visualize, theme).await;
         solution.recalculate_rails();
     }

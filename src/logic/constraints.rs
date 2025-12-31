@@ -22,18 +22,31 @@ pub struct Constraints {
     pub cell_count: i32,
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub struct Goal {
+    pub actual: i32,
+    pub expected: i32,
+}
+impl Goal {
+    pub fn new(actual: i32, expected: i32) -> Self {
+        Self { actual, expected }
+    }
+    pub fn success(&self) -> bool {
+        self.actual == self.expected
+    }
+    pub fn format(&self, description: &str) -> String {
+        format!("{}: {} out of {}", description, self.actual, self.expected)
+    }
+}
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub struct Satisfaction {
-    pub failing_rails: i32,
-    pub cell_diff: i32,
-    pub unconnected_loops: i32,
-    pub unreachable_rails: i32,
+    pub stations: Goal,
+    pub cell_count: Goal,
+    pub reachable: Goal,
 }
 impl Satisfaction {
     pub fn success(&self) -> bool {
-        self.failing_rails == 0 && self.cell_diff == 0
-            // && self.unconnected_loops == 0
-        && self.unreachable_rails == 0
+        self.stations.success() && self.cell_count.success() && self.reachable.success()
     }
 }
 
@@ -91,21 +104,25 @@ fn count_cells(grid: &Grid) -> i32 {
 }
 
 pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfaction {
-    let failing_rails = compute_rail_failures(grid, &constraints.rails);
-    let cell_diff = constraints.cell_count - count_cells(grid);
+    let stations = compute_rail_failures(grid, &constraints.rails);
+    let cell_count = Goal {
+        actual: count_cells(grid),
+        expected: constraints.cell_count,
+    };
     // let unconnected_loops = (count_loops(grid) - 1).abs();
-    let unconnected_loops = 1;
-    let unreachable_rails = count_unreachable_rails(grid);
+    let reachable = count_unreachable_rails(grid);
     Satisfaction {
-        failing_rails,
-        cell_diff,
-        unconnected_loops,
-        unreachable_rails,
+        stations,
+        cell_count,
+        reachable,
     }
 }
 
-pub fn count_unreachable_rails(grid: &Grid) -> i32 {
-    grid.total_rails - grid.reachable_rails_count
+pub fn count_unreachable_rails(grid: &Grid) -> Goal {
+    Goal {
+        actual: grid.reachable_rails_count,
+        expected: grid.total_rails,
+    }
 }
 pub fn count_loops(grid: &Grid) -> i32 {
     let active = count_cells(grid);
@@ -132,14 +149,17 @@ pub fn count_loops(grid: &Grid) -> i32 {
     active - adjacents
 }
 
-fn compute_rail_failures(grid: &Grid, rail_constraints: &Vec<RailCoord>) -> i32 {
+fn compute_rail_failures(grid: &Grid, rail_constraints: &Vec<RailCoord>) -> Goal {
     let mut failures = 0;
     for constraint in rail_constraints {
         if !matches_constraint_and_reachable(grid, constraint).0 {
             failures += 1;
         }
     }
-    failures
+    Goal {
+        actual: rail_constraints.len() as i32 - failures,
+        expected: rail_constraints.len() as i32,
+    }
 }
 
 pub fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {

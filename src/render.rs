@@ -236,8 +236,6 @@ fn calculate_and_draw_triangle(
 }
 
 pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme) {
-    let triangle_half_width = 4.0 * theme.cell_pad();
-    let small_triangle_half_width = 2.0 * theme.cell_pad();
     enum Constraint {
         Station,
         Blockade,
@@ -270,52 +268,28 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
 
         let corner = top_left_rail_intersection(row, column, theme);
         let reverse = direction.x + direction.y < 0.0;
-        let start =
-            corner - reverse as i32 as f32 * direction * (theme.cell_width() + theme.cell_pad());
-        let end = start + direction * (theme.cell_width() + theme.cell_pad());
-        let mid = (start + end) * 0.5;
-        let mut diff = (end - start).normalize();
-        let to_left = vec2(diff.y, -diff.x);
+        let length = direction * (theme.cell_width() + theme.cell_pad());
+        let start = corner - reverse as i32 as f32 * length;
 
         match constraint_render {
             Constraint::Station => {
-                let left = mid + to_left * small_triangle_half_width;
-                let right = mid - to_left * small_triangle_half_width;
-                let outer_left = mid + to_left * triangle_half_width;
-                let outer_right = mid - to_left * triangle_half_width;
-                let tip = mid + diff * small_triangle_half_width;
-                let outer_tip = mid + diff * triangle_half_width;
-
-                // let daltonic_distinction = if success { color } else { color_border };
-
-                draw_triangles(
-                    &[outer_left, left, outer_tip, tip, outer_right, right],
+                draw_station(
+                    theme,
+                    success,
+                    reversed_rail,
                     color,
-                );
-
-                draw_lines(
-                    &[tip, left, outer_left, outer_tip, outer_right, right, tip],
                     color_border,
+                    length,
+                    start,
                 );
-                if !success {
-                    if reversed_rail != Reverse::None {
-                        diff *= -1.0;
-                        calculate_and_draw_triangle(
-                            theme,
-                            color_border,
-                            start,
-                            end,
-                            diff,
-                            to_left,
-                            color,
-                        );
-                    }
-                }
             }
             Constraint::Blockade => {
+                let end = start + length;
+                let mid = (start + end) * 0.5;
+                let diff = (end - start).normalize();
+                let to_left = vec2(diff.y, -diff.x);
                 draw_blockade(
                     theme,
-                    small_triangle_half_width,
                     success,
                     color,
                     color_border,
@@ -340,7 +314,6 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                     direction: Horizontal::Center,
                 };
                 render_user_rail_constraint(
-                    small_triangle_half_width,
                     row,
                     column,
                     direction,
@@ -362,7 +335,6 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                     direction: Vertical::Center,
                 };
                 render_user_rail_constraint(
-                    small_triangle_half_width,
                     row,
                     column,
                     direction,
@@ -375,9 +347,49 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
     }
 }
 
+fn draw_station(
+    theme: &Theme,
+    success: bool,
+    reversed_rail: Reverse,
+    color: Color,
+    color_border: Color,
+    length: Vec2,
+    start: Vec2,
+) {
+    let small_triangle_half_width = theme.small_triangle_half_width();
+    let triangle_half_width = theme.triangle_half_width();
+    let end = start + length;
+    let mid = (start + end) * 0.5;
+    let mut diff = (end - start).normalize();
+    let to_left = vec2(diff.y, -diff.x);
+    let left = mid + to_left * small_triangle_half_width;
+    let right = mid - to_left * small_triangle_half_width;
+    let outer_left = mid + to_left * triangle_half_width;
+    let outer_right = mid - to_left * triangle_half_width;
+    let tip = mid + diff * small_triangle_half_width;
+    let outer_tip = mid + diff * triangle_half_width;
+
+    // let daltonic_distinction = if success { color } else { color_border };
+
+    draw_triangles(
+        &[outer_left, left, outer_tip, tip, outer_right, right],
+        color,
+    );
+
+    draw_lines(
+        &[tip, left, outer_left, outer_tip, outer_right, right, tip],
+        color_border,
+    );
+    if !success {
+        if reversed_rail != Reverse::None {
+            diff *= -1.0;
+            calculate_and_draw_triangle(theme, color_border, start, end, diff, to_left, color);
+        }
+    }
+}
+
 fn draw_blockade(
     theme: &Theme,
-    small_triangle_half_width: f32,
     success: bool,
     color: Color,
     color_border: Color,
@@ -388,6 +400,7 @@ fn draw_blockade(
     end: Vec2,
     reverse: bool,
 ) {
+    let small_triangle_half_width = theme.small_triangle_half_width();
     let forward = direction * small_triangle_half_width * 1.25;
     let leftward = to_left * small_triangle_half_width * 1.25;
     let a = mid + forward + leftward;
@@ -438,7 +451,6 @@ fn draw_blockade(
 }
 
 fn render_user_rail_constraint(
-    small_triangle_half_width: f32,
     row: i32,
     column: i32,
     direction: Vec2,
@@ -454,7 +466,6 @@ fn render_user_rail_constraint(
     let (success, reverse) = matches_constraint_and_reachable(grid, &constraint);
     draw_blockade(
         theme,
-        small_triangle_half_width,
         success,
         RAIL,
         TRIANGLE_BORDER,

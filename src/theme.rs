@@ -173,6 +173,13 @@ impl Theme {
     pub fn new_text_size(&self, text: &str, anchor: Anchor, size_coef: f32) -> TextRect {
         new_text(text, anchor, size_coef, self)
     }
+
+    pub fn small_triangle_half_width(&self) -> f32 {
+        2.0 * self.cell_pad()
+    }
+    pub fn triangle_half_width(&self) -> f32 {
+        4.0 * self.cell_pad()
+    }
 }
 
 pub fn new_button(text: &str, anchor: Anchor, theme: &Theme) -> Button {

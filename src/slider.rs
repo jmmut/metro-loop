@@ -89,7 +89,7 @@ impl Widget for Slider {
         self.rect
     }
 
-    fn rect_mut(&mut self) -> &mut Rect {
-        &mut self.rect
+    fn set_rect(&mut self, new_rect: Rect) {
+        *self = Self::new(self.min, self.max, self.current, new_rect);
     }
 }

@@ -255,7 +255,7 @@ impl Widget for SatisfactionPanel {
         }
     }
 
-    fn rect_mut(&mut self) -> &mut Rect {
+    fn set_rect(&mut self, _rect: Rect) {
         unimplemented!()
     }
 }

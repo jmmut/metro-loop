@@ -18,21 +18,24 @@ pub enum RailCoord {
         direction: Vertical,
     },
 }
-// impl RailCoord {
-//     pub fn vec2(&self) -> Vec2 {
-//         
-//             RailCoord::Horizontal { direction, .. } => match direction {
-//                 Horizontal::Left => vec2(-1.0, 0.0),
-//                 Horizontal::Center => vec2(1.0, 0.0),
-//                 Horizontal::Right => vec2(1.0, 0.0),
-//             },
-//             RailCoord::Vertical { direction, .. } => match direction {
-//                 Vertical::Top => vec2(0.0, -1.0),
-//                 Vertical::Center => vec2(0.0, 1.0),
-//                 Vertical::Bottom => vec2(0.0, 1.0),
-//             },
-//     }
-// }
+impl RailCoord {
+    pub fn vec2(&self) -> Vec2 {
+        match self {
+            RailCoord::Horizontal { direction, .. } => match direction {
+                Horizontal::Left => vec2(-1.0, 0.0),
+                Horizontal::Center => vec2(1.0, 0.0),
+                Horizontal::Right => vec2(1.0, 0.0),
+            },
+            RailCoord::Vertical { direction, .. } => match direction {
+                Vertical::Top => vec2(0.0, -1.0),
+                Vertical::Center => vec2(0.0, 1.0),
+                Vertical::Bottom => vec2(0.0, 1.0),
+            },
+        }
+    }
+}
+
+
 #[derive(Clone, Debug)]
 pub struct Constraints {
     pub rails: Vec<RailCoord>,

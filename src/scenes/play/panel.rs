@@ -1,9 +1,6 @@
 use crate::logic::constraints::Satisfaction;
 use crate::render::{render_cross, render_tick};
-use crate::theme::{
-    labels_from_theme, new_button, new_text, new_text_group_generic, render_button, render_text,
-    Theme,
-};
+use crate::theme::{labels_from_theme, new_button, new_text, new_text_group_generic, render_button, render_text, render_tooltip, Theme};
 use crate::{PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, TEXT_STYLE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
@@ -125,9 +122,9 @@ enum SatisfactionPanel {
     Unsolved {
         // satisfaction: Satisfaction,
         // previous_rect: Rect,
-        // texts: Vec<TextRect>,
-        // successes: Vec<bool>,
-        // tooltips: Vec<Tooltip>,
+        texts: Vec<TextRect>,
+        successes: Vec<bool>,
+        tooltips: Vec<Tooltip>,
     },
     Unknown,
 }
@@ -177,36 +174,36 @@ impl SatisfactionPanel {
             let text_rects = labels.create(texts);
 
             Self::Unsolved {
-                // texts: text_rects.into(),
-                // successes: successes.into(),
-                // tooltips: tooltips
-                //     .into_iter()
-                //     .map(|t| Tooltip::Text(t.to_string()))
-                //     .collect(),
+                texts: text_rects.into(),
+                successes: successes.into(),
+                tooltips: tooltips
+                    .into_iter()
+                    .map(|t| Tooltip::Text(t.to_string()))
+                    .collect(),
             }
         }
     }
     pub fn interact(&mut self, theme: &Theme) {
         match self {
             Self::Unsolved {
-                // texts, tooltips,
+                texts, tooltips,
                 ..
             } => {
-                // let mouse_pos = Vec2::from(mouse_position());
-                // for (i, text) in texts.iter().enumerate() {
-                //     if text.rect().contains(mouse_pos) {
-                //         let anchor = Anchor::bottom_right_v(mouse_pos);
-                //         let tooltip = new_text(tooltips[i].text(), anchor, 1.0, theme);
-                //         tooltips[i] = Tooltip::Renderable(tooltip);
-                //     } else {
-                //         match &tooltips[i] {
-                //             Tooltip::Text(_) => {}
-                //             Tooltip::Renderable(text_rect) => {
-                //                 tooltips[i] = Tooltip::Text(text_rect.text.to_string());
-                //             }
-                //         }
-                //     }
-                // }
+                let mouse_pos = Vec2::from(mouse_position());
+                for (i, text) in texts.iter().enumerate() {
+                    if text.rect().contains(mouse_pos) {
+                        let anchor = Anchor::bottom_right_v(mouse_pos);
+                        let tooltip = new_text(tooltips[i].text(), anchor, 1.0, theme);
+                        tooltips[i] = Tooltip::Renderable(tooltip);
+                    } else {
+                        match &tooltips[i] {
+                            Tooltip::Text(_) => {}
+                            Tooltip::Renderable(text_rect) => {
+                                tooltips[i] = Tooltip::Text(text_rect.text.to_string());
+                            }
+                        }
+                    }
+                }
             }
             _ => {}
         }
@@ -215,37 +212,37 @@ impl SatisfactionPanel {
         match self {
             Self::Solved { text } => render_text(&text, &TEXT_STYLE),
             Self::Unsolved {
-                // texts, successes, 
+                texts, successes, 
                 ..
             } => {
-                // for (i, text_rect) in texts.iter().enumerate() {
-                //     let icon_size = text_rect.rect().h;
-                //     let anchor = Anchor::top_right_v(text_rect.rect().point());
-                //     (if successes[i] {
-                //         render_tick
-                //     } else {
-                //         render_cross
-                //     })(anchor, icon_size, theme);
-                //     render_text(&text_rect, &TEXT_STYLE);
-                // }
+                for (i, text_rect) in texts.iter().enumerate() {
+                    let icon_size = text_rect.rect().h;
+                    let anchor = Anchor::top_right_v(text_rect.rect().point());
+                    (if successes[i] {
+                        render_tick
+                    } else {
+                        render_cross
+                    })(anchor, icon_size, theme);
+                    render_text(&text_rect, &TEXT_STYLE);
+                }
             }
             Self::Unknown => {}
         }
     }
     pub fn render_interactive(&self) {
         match self {
-            Self::Solved { text } => {}
+            Self::Solved { .. } => {}
             Self::Unsolved {
-                // tooltips
+                tooltips,
                 .. } => {
-                // for tooltip in tooltips {
-                //     match tooltip {
-                //         Tooltip::Text(_) => {}
-                //         Tooltip::Renderable(_tooltip) => {
-                //             render_tooltip(&tooltip, &TEXT_STYLE);
-                        // }
-                    // }
-                // }
+                for tooltip in tooltips {
+                    match tooltip {
+                        Tooltip::Text(_) => {}
+                        Tooltip::Renderable(tooltip) => {
+                            render_tooltip(&tooltip, &TEXT_STYLE);
+                        }
+                    }
+                }
             }
             Self::Unknown => {}
         }
@@ -257,13 +254,13 @@ impl Widget for SatisfactionPanel {
         match self {
             SatisfactionPanel::Solved { text } => text.rect(),
             SatisfactionPanel::Unsolved {
-                // texts,
-                .. } => Rect::default(),
-                // texts
-                // .first()
-                // .unwrap()
-                // .rect()
-                // .combine_with(texts.last().unwrap().rect()),
+                texts,
+                .. } => //Rect::default(),
+                texts
+                .first()
+                .unwrap()
+                .rect()
+                .combine_with(texts.last().unwrap().rect()),
             SatisfactionPanel::Unknown => panic!("logic error: should be unreachable"),
         }
     }

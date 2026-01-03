@@ -262,6 +262,15 @@ impl Levels {
         }
         Ok(Levels { sections })
     }
+    pub fn get_level(&self, section: usize, level: usize) -> &Level {
+        self
+            .sections
+            .get(section)
+            .unwrap()
+            .levels
+            .get(level)
+            .unwrap()
+    }
 }
 impl Level {
     pub fn from_str(s: &str) -> Result<Level, AnyError> {

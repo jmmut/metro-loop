@@ -14,7 +14,7 @@ async fn main() -> Result<(), AnyError> {
 
     let args = parse_args()?;
     let mut theme = scenes::loading_screen(args.sound_enabled).await?;
-    let mut game_track = GameTrack::new(args.section, args.level)?;
+    let mut game_track = GameTrack::new(args.section, args.level, &theme.resources.levels)?;
     let mut next_stage = NextStage::MainMenu;
     loop {
         next_stage = match next_stage {

@@ -29,10 +29,8 @@ use macroquad::prelude::{
 };
 use macroquad::rand::rand;
 
-pub struct State {
-    solution: Grid,
-    grid: Grid,
-    constraints: Constraints,
+pub struct State<'a> {
+    game_track: &'a mut GameTrack,
     show_solution: bool,
     previous_satisfaction: Option<Satisfaction>,
     success_sound_played: bool,
@@ -50,8 +48,7 @@ pub enum Tooltips {
 
 pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextStage, AnyError> {
     let (mut sw, mut sh) = (screen_width(), screen_height());
-    let current_level = game_track.get_current(&theme.resources.levels);
-    let (mut state, mut panel) = reset(current_level, theme, game_track).await;
+    let (mut state, mut panel) = setup(theme, game_track);
 
     let mut render_target_scale = 1.0;
     let mut slider_value = render_target_scale;
@@ -72,21 +69,21 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             refresh_render = true;
             sw = new_sw;
             sh = new_sh;
-            theme.layout = new_layout(sw, sh).resize_grid(state.grid.rows(), state.grid.columns());
-            panel = Panel::new(theme.button_panel_rect(&state.grid), theme, game_track);
+            theme.layout = new_layout(sw, sh).resize_grid(state.in_progress().rows(), state.in_progress().columns());
+            panel = Panel::new(theme.button_panel_rect(state.in_progress()), theme, state.game_track);
             render_target = reset_render_target(sw, sh, render_target_scale);
         }
         if is_key_pressed(KeyCode::P) {
             let level = Level {
-                initial_grid: state.grid.clone(),
-                constraints: state.constraints.clone(),
-                solution: state.solution.clone(),
+                initial_grid: state.in_progress().clone(),
+                constraints: state.constraints().clone(),
+                solution: state.solution().clone(),
             };
             println!("{}", level);
         }
 
         let pos = Vec2::from(mouse_position());
-        let hovered_cell = pixel_to_coord(pos, &state.grid, &theme);
+        let hovered_cell = pixel_to_coord(pos, state.in_progress(), &theme);
 
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
         if is_mouse_button_pressed(MouseButton::Right) {
@@ -107,7 +104,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                 } else {
                     let released = ivec2(released_column, released_row);
                     let pressed = ivec2(right_clicked_column, right_clicked_row);
-                    if is_system_fixed_v(released, &state.grid) && pressed == released {
+                    if is_system_fixed_v(released, state.in_progress()) && pressed == released {
                         state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
                     } else {
                         add_user_constraint(pressed, released, &mut state, &mut refresh_render);
@@ -122,16 +119,16 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                     state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
                 } else {
                     let clicked = ivec2(i_column, i_row);
-                    if is_system_fixed_v(clicked, &state.grid) {
+                    if is_system_fixed_v(clicked, state.in_progress()) {
                         state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
                     } else {
-                        let fixed = get(&state.grid.fixed_cells, i_row, i_column);
+                        let fixed = get(&state.in_progress().fixed_cells, i_row, i_column);
                         if *fixed {
                             state.ui.tooltip_showing = Some((Tooltips::UserFixedCell, now));
                         } else {
-                            let cell = get_cell_mut(&mut state.grid, i_row, i_column);
+                            let cell = get_cell_mut(&mut state.game_track.in_progress, i_row, i_column);
                             *cell = !*cell;
-                            state.grid.recalculate_rails();
+                            state.game_track.in_progress.recalculate_rails();
                             refresh_render = true;
                         }
                     }
@@ -141,9 +138,9 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
 
         clear_background(BACKGROUND);
         if state.show_solution {
-            render_cells(&state.solution, &hovered_cell, theme);
+            render_cells(state.solution(), &hovered_cell, theme);
         } else {
-            render_cells(&state.grid, &hovered_cell, theme);
+            render_cells(state.in_progress(), &hovered_cell, theme);
         }
         if refresh_render || !CACHE_TEXTURE {
             if let Some(render_target) = render_target {
@@ -160,9 +157,9 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                 });
                 clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
             }
-            let satisfaction = compute_satisfaction(&state.grid, &state.constraints);
+            let satisfaction = compute_satisfaction(&state.game_track.in_progress, state.constraints());
             if satisfaction.success() {
-                game_track.solved()
+                state.game_track.solved()
             }
             if satisfaction.success() {
                 if !state.success_sound_played {
@@ -185,11 +182,11 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             state.previous_satisfaction = Some(satisfaction);
 
             if state.show_solution {
-                render_grid(&state.solution, theme);
-                render_constraints(&state.constraints, &state.solution, theme);
+                render_grid(&state.solution(), theme);
+                render_constraints(&state.constraints(), &state.solution(), theme);
             } else {
-                render_grid(&state.grid, theme);
-                render_constraints(&state.constraints, &state.grid, theme);
+                render_grid(&state.in_progress(), theme);
+                render_constraints(&state.constraints(), &state.in_progress(), theme);
             }
         }
 
@@ -203,8 +200,8 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         }
         panel.interact(theme);
         if is_key_pressed(KeyCode::N) || panel.next_game.interaction().is_clicked() {
-            let level = game_track.next(theme).await.get_current(&theme.resources.levels);
-            (state, panel) = reset(level, theme, game_track).await;
+            state.game_track.next(theme).await;
+            (state, panel) = reset(theme, state).await;
             refresh_render = true;
         }
         if let Some(show) = panel.show_solution.as_mut() {
@@ -215,7 +212,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         }
         if panel.restart_game.interaction().is_clicked() {
             refresh_render = true;
-            (state, panel) = reset(game_track.get_current(&theme.resources.levels), theme, game_track).await;
+            (state, panel) = reset(theme, state).await;
         }
         if SHOW_FPS {
             let text = format!("FPS: {}", get_fps());
@@ -293,14 +290,14 @@ fn add_user_constraint(
     if diff == 1 {
         let rail = pressed.max(released);
         let fixed = if diff_vec.y == 1 {
-            state.grid.fixed_rails.get_horiz_mut(rail.y, rail.x)
+            state.in_progress_mut().fixed_rails.get_horiz_mut(rail.y, rail.x)
         } else {
-            state.grid.fixed_rails.get_vert_mut(rail.y, rail.x)
+            state.in_progress_mut().fixed_rails.get_vert_mut(rail.y, rail.x)
         };
         *fixed = !*fixed;
         *refresh_render = true;
     } else if diff == 0 {
-        let cell = get_mut(&mut state.grid.fixed_cells, released.y, released.x);
+        let cell = get_mut(&mut  state.in_progress_mut().fixed_cells, released.y, released.x);
         *cell = !*cell;
         *refresh_render = true;
     }
@@ -320,20 +317,22 @@ impl Tooltips {
     }
 }
 
-async fn reset(level: Level, theme: &mut Theme, game_track: &GameTrack) -> (State, Panel) {
-    let Level {
-        initial_grid: grid,
-        constraints,
-        solution,
-    } = level;
-    theme.layout.resize_grid_mut(grid.rows(), grid.columns());
+async fn reset<'a>(theme: &mut Theme, state: State<'a>) -> (State<'a>, Panel) {
+    let State {
+        game_track,
+        ..
+    } = state;
+    game_track.in_progress = game_track.get_current().initial_grid.clone();
+    setup(theme, game_track)
+}
+
+fn setup<'a>(theme: &mut Theme, game_track: &'a mut GameTrack) -> (State<'a>, Panel) {
+    theme.layout.resize_grid_mut(game_track.in_progress.rows(), game_track.in_progress.columns());
     let show_solution = DEFAULT_SHOW_SOLUTION;
     let previous_satisfaction = None;
     let success_sound_played = false;
     let state = State {
-        solution,
-        grid,
-        constraints,
+        game_track,
         show_solution,
         previous_satisfaction,
         success_sound_played,
@@ -341,9 +340,10 @@ async fn reset(level: Level, theme: &mut Theme, game_track: &GameTrack) -> (Stat
             tooltip_showing: None,
         },
     };
-    let panel = Panel::new(theme.button_panel_rect(&state.grid), theme, game_track);
+    let panel = Panel::new(theme.button_panel_rect(&state.game_track.in_progress), theme, &state.game_track);
     (state, panel)
 }
+
 fn reset_render_target(sw: f32, sh: f32, render_target_scale: f32) -> Option<RenderTarget> {
     if CACHE_TEXTURE {
         let render_target = macroquad::prelude::render_target(
@@ -471,6 +471,20 @@ fn pixel_to_coord_inner(
     }
 }
 
+impl State<'_> {
+    pub fn solution(&self) -> &Grid {
+        &self.game_track.get_current().solution
+    }
+    pub fn in_progress(&self) -> &Grid {
+        &self.game_track.in_progress
+    }
+    pub fn in_progress_mut(&mut self) -> &mut Grid {
+        &mut self.game_track.in_progress
+    }
+    pub fn constraints(&self) -> &Constraints {
+        &self.game_track.get_current().constraints
+    }
+}
 #[cfg(test)]
 mod tests {
 

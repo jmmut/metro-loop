@@ -15,41 +15,36 @@ pub struct LevelHistory {
 pub struct GameTrack {
     pub solved: Vec<Vec<bool>>,
     pub current: CurrentGame,
-    // pub in_progress: Grid,
+    pub in_progress: Grid,
+    pub cached_level: Level,
 }
 
 #[derive(Debug)]
 pub enum CurrentGame {
     Campaign { section: i32, level: i32 },
-    Procedural(Level),
+    Procedural,
 }
 
 impl GameTrack {
-    pub fn new(section: i32, level: i32) -> Result<Self, AnyError> {
-        let levels = Levels::get()?;
+    pub fn new(section: i32, level: i32, levels: &Levels) -> Result<Self, AnyError> {
         let mut solved = Vec::new();
         for section in &levels.sections {
             let solved_in_section = vec![false; section.levels.len()];
             solved.push(solved_in_section);
         }
+        let current = CurrentGame::Campaign { section, level };
+
+        let cached_level = levels.get_level(section as usize, level as usize).clone();
+        let in_progress = cached_level.initial_grid.clone();
         Ok(Self {
-            current: CurrentGame::Campaign { section, level },
+            current,
             solved,
+            in_progress,
+            cached_level,
         })
     }
-    pub fn get_current(&self, levels: &Levels) -> Level {
-        match &self.current {
-            CurrentGame::Campaign { section, level } => 
-                levels
-                .sections
-                .get(*section as usize)
-                .unwrap()
-                .levels
-                .get(*level as usize)
-                .unwrap()
-                .clone(),
-            CurrentGame::Procedural(level) => level.clone(),
-        }
+    pub fn get_current(&self) -> &Level {
+        &self.cached_level
     }
     pub async fn next(&mut self, theme: &Theme) -> &Self {
         match &mut self.current {
@@ -62,14 +57,21 @@ impl GameTrack {
                                 section: i_section as i32,
                                 level: i_level as i32,
                             };
+                            self.cached_level = theme.resources.levels.get_level(i_section, i_level).clone();
+                            self.in_progress = self.cached_level.initial_grid.clone();
                             return self;
                         }
                     }
                     level = 0;
                 }
-                self.current = CurrentGame::Procedural(generate_procedural(VISUALIZE, theme).await);
+                self.cached_level = generate_procedural(VISUALIZE, theme).await;
+                self.in_progress = self.cached_level.initial_grid.clone();
+                self.current = CurrentGame::Procedural;
             }
-            CurrentGame::Procedural(level) => *level = generate_procedural(VISUALIZE, theme).await,
+            CurrentGame::Procedural => {
+                self.cached_level = generate_procedural(VISUALIZE, theme).await;
+                self.in_progress = self.cached_level.initial_grid.clone();
+            },
         }
         self
     }
@@ -78,7 +80,7 @@ impl GameTrack {
             CurrentGame::Campaign { section, level } => {
                 self.solved[section as usize][level as usize] = true;
             }
-            CurrentGame::Procedural(_) => {}
+            CurrentGame::Procedural => {}
         }
     }
 }
@@ -105,7 +107,7 @@ impl CurrentGame {
     pub fn is_procedural(&self) -> bool {
         match self {
             CurrentGame::Campaign { .. } => false,
-            CurrentGame::Procedural(_) => true,
+            CurrentGame::Procedural => true,
         }
     }
 }
@@ -116,7 +118,7 @@ impl Display for CurrentGame {
             CurrentGame::Campaign { section, level } => {
                 write!(f, "Level: {}-{}", section, level)
             }
-            CurrentGame::Procedural(_) => {
+            CurrentGame::Procedural => {
                 write!(f, "Level: Random")
             }
         }

@@ -1,6 +1,9 @@
 use crate::logic::constraints::Satisfaction;
 use crate::render::{render_cross, render_tick};
-use crate::theme::{labels_from_theme, new_button, new_text, new_text_group_generic, render_button, render_text, render_tooltip, Theme};
+use crate::theme::{
+    labels_from_theme, new_button, new_text, new_text_group_generic, render_button, render_text,
+    render_tooltip, Theme,
+};
 use crate::{PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, TEXT_STYLE};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
@@ -186,8 +189,7 @@ impl SatisfactionPanel {
     pub fn interact(&mut self, theme: &Theme) {
         match self {
             Self::Unsolved {
-                texts, tooltips,
-                ..
+                texts, tooltips, ..
             } => {
                 let mouse_pos = Vec2::from(mouse_position());
                 for (i, text) in texts.iter().enumerate() {
@@ -212,8 +214,7 @@ impl SatisfactionPanel {
         match self {
             Self::Solved { text } => render_text(&text, &TEXT_STYLE),
             Self::Unsolved {
-                texts, successes, 
-                ..
+                texts, successes, ..
             } => {
                 for (i, text_rect) in texts.iter().enumerate() {
                     let icon_size = text_rect.rect().h;
@@ -232,9 +233,7 @@ impl SatisfactionPanel {
     pub fn render_interactive(&self) {
         match self {
             Self::Solved { .. } => {}
-            Self::Unsolved {
-                tooltips,
-                .. } => {
+            Self::Unsolved { tooltips, .. } => {
                 for tooltip in tooltips {
                     match tooltip {
                         Tooltip::Text(_) => {}
@@ -253,14 +252,15 @@ impl Widget for SatisfactionPanel {
     fn rect(&self) -> Rect {
         match self {
             SatisfactionPanel::Solved { text } => text.rect(),
-            SatisfactionPanel::Unsolved {
-                texts,
-                .. } => //Rect::default(),
+            SatisfactionPanel::Unsolved { texts, .. } =>
+            //Rect::default(),
+            {
                 texts
-                .first()
-                .unwrap()
-                .rect()
-                .combine_with(texts.last().unwrap().rect()),
+                    .first()
+                    .unwrap()
+                    .rect()
+                    .combine_with(texts.last().unwrap().rect())
+            }
             SatisfactionPanel::Unknown => panic!("logic error: should be unreachable"),
         }
     }

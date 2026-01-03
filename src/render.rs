@@ -313,14 +313,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                     column,
                     direction: Horizontal::Center,
                 };
-                render_user_rail_constraint(
-                    row,
-                    column,
-                    direction,
-                    constraint,
-                    grid,
-                    theme,
-                );
+                render_user_rail_constraint(row, column, direction, constraint, grid, theme);
             }
         }
     }
@@ -334,14 +327,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                     column,
                     direction: Vertical::Center,
                 };
-                render_user_rail_constraint(
-                    row,
-                    column,
-                    direction,
-                    constraint,
-                    grid,
-                    theme,
-                );
+                render_user_rail_constraint(row, column, direction, constraint, grid, theme);
             }
         }
     }

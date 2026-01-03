@@ -35,7 +35,6 @@ impl RailCoord {
     }
 }
 
-
 #[derive(Clone, Debug)]
 pub struct Constraints {
     pub rails: Vec<RailCoord>,

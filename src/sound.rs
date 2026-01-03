@@ -3,7 +3,7 @@ use macroquad::audio::{play_sound, set_sound_volume, stop_sound, PlaySoundParams
 
 #[derive(Debug)]
 pub struct Sounds {
-    available: AvailableSounds,
+    available: Option<AvailableSounds>,
     pub volume: f32,
 }
 
@@ -29,54 +29,71 @@ impl SoundConfig {
 impl Sounds {
     pub fn new(sounds: Vec<Sound>) -> Self {
         let n = size_of::<AvailableSounds>() / size_of::<SoundConfig>();
-        assert_eq!(
-            sounds.len(),
-            n,
-            "{} sounds were passed, but expected {}",
-            sounds.len(),
-            n
-        );
+        if sounds.len() == 0 {
+            Self {
+                available: None,
+                volume: 0.0,
+            }
+        } else {
+            assert_eq!(
+                sounds.len(),
+                n,
+                "{} sounds were passed, but expected {}",
+                sounds.len(),
+                n
+            );
 
-        Self {
-            available: AvailableSounds {
-                _sound_incorrect: SoundConfig::new(sounds[0], 0.2),
-                sound_correct: SoundConfig::new(sounds[1], 0.1),
-                music_background: SoundConfig::new(sounds[2], 1.0),
-                music_background_intro: SoundConfig::new(sounds[3], 1.0),
-            },
-            volume: DEFAULT_VOLUME,
+            Self {
+                available: Some(AvailableSounds {
+                    _sound_incorrect: SoundConfig::new(sounds[0], 0.2),
+                    sound_correct: SoundConfig::new(sounds[1], 0.1),
+                    music_background: SoundConfig::new(sounds[2], 1.0),
+                    music_background_intro: SoundConfig::new(sounds[3], 1.0),
+                }),
+                volume: DEFAULT_VOLUME,
+            }
         }
     }
     pub fn list(&self) -> Vec<Sound> {
-        self.list_volumes()
+        self.list_sound_configs()
             .into_iter()
             .map(|sound_config| sound_config.sound)
             .collect()
     }
-    fn list_volumes(&self) -> Vec<SoundConfig> {
-        vec![
-            self.available.sound_correct,
-            self.available._sound_incorrect,
-            self.available.music_background,
-            self.available.music_background_intro,
-        ]
+    fn list_sound_configs(&self) -> Vec<SoundConfig> {
+        if let Some(available) = &self.available {
+            vec![
+                available.sound_correct,
+                available._sound_incorrect,
+                available.music_background,
+                available.music_background_intro,
+            ]
+        } else {
+            Vec::new()
+        }
     }
 
     pub fn set_volume(&mut self, volume: f32) {
         self.volume = volume;
-        for SoundConfig { sound, volume_coef } in self.list_volumes() {
+        for SoundConfig { sound, volume_coef } in self.list_sound_configs() {
             set_sound_volume(sound, self.volume * volume_coef);
         }
     }
 
     pub fn play_correct(&self) {
-        self.play_config(self.available.sound_correct)
+        if let Some(available) = &self.available {
+            self.play_config(available.sound_correct)
+        }
     }
     pub fn play_background(&self) {
-        self.play_config_looped(self.available.music_background)
+        if let Some(available) = &self.available {
+            self.play_config_looped(available.music_background)
+        }
     }
     pub fn play_background_intro(&self) {
-        self.play_config_looped(self.available.music_background_intro)
+        if let Some(available) = &self.available {
+            self.play_config_looped(available.music_background_intro)
+        }
     }
 
     fn play_config(&self, sound_config: SoundConfig) {
@@ -97,7 +114,9 @@ impl Sounds {
     }
 
     pub fn stop_background(&self) {
-        Self::stop(self.available.music_background.sound)
+        if let Some(available) = &self.available {
+            Self::stop(available.music_background.sound)
+        }
     }
     pub fn stop(sound: Sound) {
         stop_sound(sound)

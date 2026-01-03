@@ -12,7 +12,7 @@ async fn main() -> Result<(), AnyError> {
     srand(seed);
 
     let args = parse_args()?;
-    let mut theme = scenes::loading_screen(args.section, args.level).await?;
+    let mut theme = scenes::loading_screen(args.section, args.level, args.sound_enabled).await?;
     let mut next_stage = NextStage::MainMenu;
     loop {
         next_stage = match next_stage {
@@ -35,24 +35,88 @@ fn window_conf() -> Conf {
     }
 }
 
+#[derive(Eq, PartialEq, Debug)]
 pub struct Args {
     section: i32,
     level: i32,
+    sound_enabled: bool,
 }
 
 fn parse_args() -> Result<Args, AnyError> {
     let raw_args = std::env::args().collect::<Vec<_>>();
-    let section = parse_as(&raw_args, 1, STARTING_SECTION, "i32")?;
-    let level = parse_as(&raw_args, 2, STARTING_LEVEL, "i32")?;
-    Ok(Args { section, level })
+    parse_args_pure(&raw_args)
 }
 
-fn parse_as(raw_args: &[String], i: usize, default: i32, type_name: &str) -> Result<i32, AnyError> {
+fn parse_args_pure<S: AsRef<str>>(raw_args: &Vec<S>) -> Result<Args, AnyError> {
+    let (positional, flags) = split_positional(raw_args);
+    let section = parse_as(&positional, 1, STARTING_SECTION, "i32")?;
+    let level = parse_as(&positional, 2, STARTING_LEVEL, "i32")?;
+    let sound_enabled = flags.iter().find(|e| e.as_ref() == "--no-sound").is_none();
+
+    Ok(Args {
+        section,
+        level,
+        sound_enabled,
+    })
+}
+
+fn split_positional<S: AsRef<str>>(raw_args: &Vec<S>) -> (Vec<&S>, Vec<&S>) {
+    let mut positional = Vec::new();
+    let mut flags = Vec::new();
+    for arg in raw_args {
+        if arg.as_ref().starts_with("--") {
+            flags.push(arg);
+        } else {
+            positional.push(arg);
+        }
+    }
+    (positional, flags)
+}
+
+fn parse_as<S: AsRef<str>>(
+    raw_args: &[S],
+    i: usize,
+    default: i32,
+    type_name: &str,
+) -> Result<i32, AnyError> {
     if let Some(level_arg) = raw_args.get(i) {
+        let level_arg = level_arg.as_ref();
         level_arg
             .parse()
             .map_err(|e| format!("error parsing '{}' as {}: {}", level_arg, type_name, e).into())
     } else {
         Ok(default)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_args() {
+        let input = vec!["metro-loop", "3", "4"];
+        let parsed = parse_args_pure(&input).unwrap();
+        assert_eq!(
+            parsed,
+            Args {
+                section: 3,
+                level: 4,
+                sound_enabled: true
+            }
+        )
+    }
+    #[test]
+    fn test_args_no_sound() {
+        let input = vec!["metro-loop", "3", "--no-sound", "4"];
+        let parsed = parse_args_pure(&input).unwrap();
+        assert_eq!(
+            parsed,
+            Args {
+                section: 3,
+                level: 4,
+                sound_enabled: false
+            }
+        )
     }
 }

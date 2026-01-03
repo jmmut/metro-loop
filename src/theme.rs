@@ -280,6 +280,7 @@ pub fn new_text_group_generic(anchor: Anchor, theme: &Theme, labels: LabelGroup)
     LabelGroup {
         anchor,
         font_size: labels.font_size * theme.font_size(),
+        margin: theme.cell_pad(),
         ..labels
     }
 }

@@ -9,7 +9,7 @@ default-run = "metro-loop"
 [dependencies]
 macroquad = { version = "=0.3.24", default-features = false }
 #quad-snd = "=0.2.8"
-juquad = { git = "https://github.com/jmmut/juquad.git", tag = "0.13.1" }
+juquad = { git = "https://github.com/jmmut/juquad.git", tag = "0.13.2" }
 #juquad = { path = "../juquad/" }
 
 [profile.release]

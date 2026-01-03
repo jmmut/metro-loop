@@ -283,7 +283,7 @@ impl SatisfactionPanel {
                     icon_rect.center() - width,
                 );
                 let anchor = Anchor::top_right_v(cross_tick_rects[1].point());
-                let icon_rect = anchor.get_rect(icon_size).offset(-width * 0.5);
+                let icon_rect = anchor.get_rect(icon_size).offset(-width * 0.375);
                 let icon_rect = add_contour(icon_rect, -Vec2::splat(theme.cell_pad()));
                 // draw_rect(icon_rect, PANEL_BACKGROUND); // this should be TRIANGLE, but bg contrast makes it look too dark
                 draw_rect(icon_rect, TRIANGLE);

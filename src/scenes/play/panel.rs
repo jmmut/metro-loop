@@ -1,3 +1,4 @@
+use crate::level_history::GameTrack;
 use crate::logic::constraints::{Reverse, Satisfaction};
 use crate::render::{draw_station, render_cross, render_tick};
 use crate::theme::{
@@ -17,7 +18,6 @@ use juquad::widgets::text::TextRect;
 use juquad::widgets::Widget;
 use macroquad::input::mouse_position;
 use macroquad::math::{vec2, Rect, Vec2};
-use crate::level_history::GameTrack;
 
 pub struct Panel {
     pub rect: Rect,

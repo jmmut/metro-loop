@@ -69,8 +69,13 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             refresh_render = true;
             sw = new_sw;
             sh = new_sh;
-            theme.layout = new_layout(sw, sh).resize_grid(state.in_progress().rows(), state.in_progress().columns());
-            panel = Panel::new(theme.button_panel_rect(state.in_progress()), theme, state.game_track);
+            theme.layout = new_layout(sw, sh)
+                .resize_grid(state.in_progress().rows(), state.in_progress().columns());
+            panel = Panel::new(
+                theme.button_panel_rect(state.in_progress()),
+                theme,
+                state.game_track,
+            );
             render_target = reset_render_target(sw, sh, render_target_scale);
         }
         if is_key_pressed(KeyCode::P) {
@@ -126,7 +131,8 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                         if *fixed {
                             state.ui.tooltip_showing = Some((Tooltips::UserFixedCell, now));
                         } else {
-                            let cell = get_cell_mut(&mut state.game_track.in_progress, i_row, i_column);
+                            let cell =
+                                get_cell_mut(&mut state.game_track.in_progress, i_row, i_column);
                             *cell = !*cell;
                             state.game_track.in_progress.recalculate_rails();
                             refresh_render = true;
@@ -157,7 +163,8 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                 });
                 clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
             }
-            let satisfaction = compute_satisfaction(&state.game_track.in_progress, state.constraints());
+            let satisfaction =
+                compute_satisfaction(&state.game_track.in_progress, state.constraints());
             if satisfaction.success() {
                 state.game_track.solved()
             }
@@ -290,14 +297,24 @@ fn add_user_constraint(
     if diff == 1 {
         let rail = pressed.max(released);
         let fixed = if diff_vec.y == 1 {
-            state.in_progress_mut().fixed_rails.get_horiz_mut(rail.y, rail.x)
+            state
+                .in_progress_mut()
+                .fixed_rails
+                .get_horiz_mut(rail.y, rail.x)
         } else {
-            state.in_progress_mut().fixed_rails.get_vert_mut(rail.y, rail.x)
+            state
+                .in_progress_mut()
+                .fixed_rails
+                .get_vert_mut(rail.y, rail.x)
         };
         *fixed = !*fixed;
         *refresh_render = true;
     } else if diff == 0 {
-        let cell = get_mut(&mut  state.in_progress_mut().fixed_cells, released.y, released.x);
+        let cell = get_mut(
+            &mut state.in_progress_mut().fixed_cells,
+            released.y,
+            released.x,
+        );
         *cell = !*cell;
         *refresh_render = true;
     }
@@ -318,16 +335,16 @@ impl Tooltips {
 }
 
 async fn reset<'a>(theme: &mut Theme, state: State<'a>) -> (State<'a>, Panel) {
-    let State {
-        game_track,
-        ..
-    } = state;
+    let State { game_track, .. } = state;
     game_track.in_progress = game_track.get_current().initial_grid.clone();
     setup(theme, game_track)
 }
 
 fn setup<'a>(theme: &mut Theme, game_track: &'a mut GameTrack) -> (State<'a>, Panel) {
-    theme.layout.resize_grid_mut(game_track.in_progress.rows(), game_track.in_progress.columns());
+    theme.layout.resize_grid_mut(
+        game_track.in_progress.rows(),
+        game_track.in_progress.columns(),
+    );
     let show_solution = DEFAULT_SHOW_SOLUTION;
     let previous_satisfaction = None;
     let success_sound_played = false;
@@ -340,7 +357,11 @@ fn setup<'a>(theme: &mut Theme, game_track: &'a mut GameTrack) -> (State<'a>, Pa
             tooltip_showing: None,
         },
     };
-    let panel = Panel::new(theme.button_panel_rect(&state.game_track.in_progress), theme, &state.game_track);
+    let panel = Panel::new(
+        theme.button_panel_rect(&state.game_track.in_progress),
+        theme,
+        &state.game_track,
+    );
     (state, panel)
 }
 

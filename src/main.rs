@@ -1,11 +1,11 @@
 use macroquad::miniquad::date::now;
 use macroquad::prelude::{next_frame, Conf};
 use macroquad::rand::srand;
+use metro_loop::level_history::GameTrack;
 use metro_loop::{
     scenes, AnyError, NextStage, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH,
     STARTING_LEVEL, STARTING_SECTION,
 };
-use metro_loop::level_history::GameTrack;
 
 #[macroquad::main(window_conf)]
 async fn main() -> Result<(), AnyError> {

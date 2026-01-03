@@ -274,6 +274,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                 let mid = (start + end) * 0.5;
                 let diff = (end - start).normalize();
                 let to_left = vec2(diff.y, -diff.x);
+                let enabled = *get(&grid.cells, row, column);
                 draw_blockade(
                     theme,
                     success,
@@ -285,6 +286,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                     start,
                     end,
                     reversed_rail.is_reverse(),
+                    enabled,
                 );
             }
         }
@@ -371,13 +373,20 @@ fn draw_blockade(
     start: Vec2,
     end: Vec2,
     reverse: bool,
+    enabled: bool,
 ) {
-    let small_triangle_half_width = theme.small_triangle_half_width();
-    let forward = direction * small_triangle_half_width * 1.25;
-    let leftward = to_left * small_triangle_half_width * 1.25;
+    let length = (end - start).length();
+    let small_triangle_half_width = length * theme.small_triangle_half_width();
+    let forward = direction * small_triangle_half_width * 1.0;
+    let forward_long = direction * small_triangle_half_width * 2.0;
+    let leftward = to_left * small_triangle_half_width * 1.0;
+    let al = mid + forward_long + leftward;
     let a = mid + forward + leftward;
+    let bl = mid + forward_long - leftward;
     let b = mid + forward - leftward;
+    let cl = mid - forward_long + leftward;
     let c = mid - forward + leftward;
+    let dl = mid - forward_long - leftward;
     let d = mid - forward - leftward;
     // let (blockade_color, blockade_color_border) = if success {
     //     (color, color_border)
@@ -385,30 +394,30 @@ fn draw_blockade(
     //     (color_border, color)
     // };
     // if success {
-    draw_triangles(&[a, c, b, d], color);
+    if success {
+        let center_color = if enabled { ENABLED_CELL } else { DISABLED_CELL };
+        draw_triangles(&[a, b, c, d], center_color);
+    }
+    draw_triangles(&[al, a, bl, b], color);
+    draw_lines(&[al, a, b, bl, al], color_border);
+    draw_triangles(&[cl, c, dl, d], color);
+    draw_lines(&[cl, c, d, dl, cl], color_border);
+
     // draw_triangle(a, c, b, blockade_color);
     // draw_triangle(b, c, d, blockade_color);
     // }
     // draw_lines(&[a, b, d, c, a], color_border);
     // draw_lines(&[d, c], blockade_color_border);
     // draw_lines(&[a, b], blockade_color_border);
-    draw_lines(&[d, c], color_border);
-    draw_lines(&[a, b], color_border);
+    // draw_lines(&[d, c], color_border);
+    // draw_lines(&[a, b], color_border);
 
     if !success {
         if reverse {
             direction *= -1.0;
         }
         // calculate_and_draw_triangle(theme, color, start, end, direction, to_left, color_border);
-        calculate_and_draw_triangle(
-            theme,
-            color_border,
-            start,
-            end,
-            direction,
-            to_left,
-            color_border,
-        );
+        calculate_and_draw_triangle(theme, color, start, end, direction, to_left, color_border);
         // calculate_and_draw_triangle(theme, RAIL, start, end, direction, to_left, TRIANGLE_BORDER);
 
         //     let forward = diff * thickness * 0.5;
@@ -447,6 +456,7 @@ fn render_user_rail_constraint(
         start,
         end,
         reverse.is_reverse(),
+        *get(&grid.cells, row, column),
     );
 }
 

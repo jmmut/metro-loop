@@ -51,13 +51,16 @@ impl GameTrack {
             CurrentGame::Campaign { section, mut level } => {
                 level += 1;
                 for i_section in (*section as usize)..theme.resources.levels.sections.len() {
-                    for i_level in level as usize..theme.resources.levels.sections[i_section].levels.len() {
+                    for i_level in
+                        level as usize..theme.resources.levels.sections[i_section].levels.len()
+                    {
                         if !self.solved[i_section][i_level] {
                             self.current = CurrentGame::Campaign {
                                 section: i_section as i32,
                                 level: i_level as i32,
                             };
-                            self.cached_level = theme.resources.levels.get_level(i_section, i_level).clone();
+                            self.cached_level =
+                                theme.resources.levels.get_level(i_section, i_level).clone();
                             self.in_progress = self.cached_level.initial_grid.clone();
                             return self;
                         }
@@ -71,7 +74,7 @@ impl GameTrack {
             CurrentGame::Procedural => {
                 self.cached_level = generate_procedural(VISUALIZE, theme).await;
                 self.in_progress = self.cached_level.initial_grid.clone();
-            },
+            }
         }
         self
     }

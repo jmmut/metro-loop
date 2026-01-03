@@ -1,4 +1,5 @@
 use crate::level_history::LevelHistory;
+use crate::levels::Levels;
 use crate::sound::Sounds;
 use crate::theme::{new_text_unloaded, render_text, Preferences, Theme};
 use crate::{
@@ -19,7 +20,6 @@ use macroquad::prelude::{
 use macroquad::text::Font;
 use std::fmt::{Debug, Formatter};
 use std::future::Future;
-use crate::levels::Levels;
 
 pub struct Resources {
     pub sounds: Sounds,
@@ -172,9 +172,7 @@ const BACKGROUND_INTRO: &[u8] = include_bytes!("../../assets/sound/background_in
 const SATISFIED: &[u8] = include_bytes!("../../assets/sound/satisfied.wav");
 const BACKGROUND_SONG: &[u8] = include_bytes!("../../assets/sound/background.ogg");
 
-pub async fn loading_screen(
-    sound_enabled: bool,
-) -> Result<Theme, AnyError> {
+pub async fn loading_screen(sound_enabled: bool) -> Result<Theme, AnyError> {
     let loading_sounds = if sound_enabled {
         let sound_loader_1 =
             ResourceLoader::<_, Sound, _, _, _>::new(load_sound_from_bytes, vec![BACKGROUND_INTRO]);

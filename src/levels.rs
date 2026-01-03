@@ -263,8 +263,7 @@ impl Levels {
         Ok(Levels { sections })
     }
     pub fn get_level(&self, section: usize, level: usize) -> &Level {
-        self
-            .sections
+        self.sections
             .get(section)
             .unwrap()
             .levels

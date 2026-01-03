@@ -1,6 +1,6 @@
 use crate::logic::grid::{get_cell, Grid};
 use crate::CLUE_PERCENTAGE;
-use juquad::widgets::anchor::{Horizontal, Vertical};
+use juquad::widgets::anchor::{Horizontal, Sense, Vertical};
 use macroquad::math::vec2;
 use macroquad::prelude::Vec2;
 use macroquad::rand::rand;
@@ -18,7 +18,17 @@ pub enum RailCoord {
         direction: Vertical,
     },
 }
+pub enum Constraint {
+    Station(Sense),
+    Blockade,
+}
 impl RailCoord {
+    pub fn row_column(&self) -> (i32, i32) {
+        match self {
+            RailCoord::Horizontal { row, column, .. } => (*row, *column),
+            RailCoord::Vertical { row, column, .. } => (*row, *column),
+        }
+    }
     pub fn vec2(&self) -> Vec2 {
         match self {
             RailCoord::Horizontal { direction, .. } => match direction {
@@ -30,6 +40,20 @@ impl RailCoord {
                 Vertical::Top => vec2(0.0, -1.0),
                 Vertical::Center => vec2(0.0, 1.0),
                 Vertical::Bottom => vec2(0.0, 1.0),
+            },
+        }
+    }
+    pub fn type_(&self) -> Constraint {
+        match self {
+            RailCoord::Horizontal { direction, .. } => match direction {
+                Horizontal::Left => Constraint::Station(Sense::Backwards),
+                Horizontal::Center => Constraint::Blockade,
+                Horizontal::Right => Constraint::Station(Sense::Forwards),
+            },
+            RailCoord::Vertical { direction, .. } => match direction {
+                Vertical::Top => Constraint::Station(Sense::Backwards),
+                Vertical::Center => Constraint::Blockade,
+                Vertical::Bottom => Constraint::Station(Sense::Forwards),
             },
         }
     }

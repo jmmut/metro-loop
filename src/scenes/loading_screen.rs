@@ -30,8 +30,8 @@ pub struct Resources {
 trait ResourceLoaderTrait {
     fn get_progress(&self) -> Progress;
 }
-impl<In, Func: Fn(In) -> Fut, Fut: Future<Output = Result<Sound, FileError>>>
-    ResourceLoaderTrait for ResourceLoader<In, Sound, FileError, Func, Fut>
+impl<In, Func: Fn(In) -> Fut, Fut: Future<Output = Result<Sound, FileError>>> ResourceLoaderTrait
+    for ResourceLoader<In, Sound, FileError, Func, Fut>
 {
     fn get_progress(&self) -> Progress {
         ResourceLoader::get_progress(self)

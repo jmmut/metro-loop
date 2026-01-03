@@ -1,10 +1,10 @@
-use crate::logic::constraints::{matches_constraint_and_reachable, Reverse};
+use crate::logic::constraints::{matches_constraint_and_reachable, Constraint, Reverse};
 use crate::logic::grid::{get_cell, is_system_fixed};
 use crate::logic::intersection::{Crossing, Intersection};
 use crate::theme::Theme;
 use crate::*;
 use juquad::draw::draw_rect;
-use juquad::widgets::anchor::{Anchor, Horizontal};
+use juquad::widgets::anchor::{Anchor, Horizontal, Sense};
 use macroquad::math::f32;
 use macroquad::prelude::*;
 
@@ -236,10 +236,6 @@ fn calculate_and_draw_triangle(
 }
 
 pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme) {
-    enum Constraint {
-        Station,
-        Blockade,
-    }
     for constraint in &constraints.rails {
         let (success, reversed_rail) = matches_constraint_and_reachable(grid, constraint);
         let (color, color_border) = if success {
@@ -248,23 +244,9 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
             (FAILING, FAILING_DARK)
         };
 
-        let (row, column) = match *constraint {
-            RailCoord::Horizontal { row, column, .. } => (row, column),
-            RailCoord::Vertical { row, column, .. } => (row, column),
-        };
-
-        let (direction, constraint_render) = match *constraint {
-            RailCoord::Horizontal { direction, .. } => match direction {
-                Horizontal::Left => (vec2(-1.0, 0.0), Constraint::Station),
-                Horizontal::Center => (vec2(1.0, 0.0), Constraint::Blockade),
-                Horizontal::Right => (vec2(1.0, 0.0), Constraint::Station),
-            },
-            RailCoord::Vertical { direction, .. } => match direction {
-                Vertical::Top => (vec2(0.0, -1.0), Constraint::Station),
-                Vertical::Center => (vec2(0.0, 1.0), Constraint::Blockade),
-                Vertical::Bottom => (vec2(0.0, 1.0), Constraint::Station),
-            },
-        };
+        let (row, column) = constraint.row_column();
+        let direction = constraint.vec2();
+        let constraint_render = constraint.type_();
 
         let corner = top_left_rail_intersection(row, column, theme);
         let reverse = direction.x + direction.y < 0.0;
@@ -272,7 +254,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
         let start = corner - reverse as i32 as f32 * length;
 
         match constraint_render {
-            Constraint::Station => {
+            Constraint::Station(sense) => {
                 draw_station(
                     theme,
                     success,
@@ -333,7 +315,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
     }
 }
 
-fn draw_station(
+pub fn draw_station(
     theme: &Theme,
     success: bool,
     reversed_rail: Reverse,
@@ -479,7 +461,7 @@ pub fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, bor
     draw_triangle_lines(p_1, p_2, p_3, 1.0, border);
 }
 
-pub fn render_tick(anchor: Anchor, size: f32, theme: &Theme) {
+pub fn render_tick(anchor: Anchor, size: f32, theme: &Theme) -> Rect {
     let rect = anchor.get_rect(vec2(size, size));
     draw_rect(rect, SUCCESS_DARK);
     let start = rect.point() + rect.size() * 0.25;
@@ -494,15 +476,17 @@ pub fn render_tick(anchor: Anchor, size: f32, theme: &Theme) {
         theme.cell_pad(),
         SUCCESS,
     );
+    rect
 }
 
-pub fn render_cross(anchor: Anchor, font_size: f32, theme: &Theme) {
+pub fn render_cross(anchor: Anchor, font_size: f32, theme: &Theme) -> Rect {
     let rect = anchor.get_rect(vec2(font_size, font_size));
     draw_rect(rect, FAILING_DARK);
     let start = rect.point() + rect.size() * 0.25;
     let end = rect.point() + rect.size() * 0.75;
     draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), FAILING);
     draw_line(start.x, end.y, end.x, start.y, theme.cell_pad(), FAILING);
+    rect
 }
 
 pub fn draw_line_v(start: Vec2, end: Vec2, color: Color) {

@@ -1,11 +1,15 @@
-use crate::logic::constraints::Satisfaction;
-use crate::render::{render_cross, render_tick};
+use crate::logic::constraints::{Reverse, Satisfaction};
+use crate::render::{draw_station, render_cross, render_tick};
 use crate::theme::{
     labels_from_theme, new_button, new_text, new_text_group_generic, render_button, render_text,
     render_tooltip, Theme,
 };
-use crate::{PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, TEXT_STYLE};
-use juquad::draw::draw_rect;
+use crate::{
+    ENABLED_CELL, PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, SUCCESS, SUCCESS_DARK, TEXT_STYLE,
+    TRIANGLE, TRIANGLE_BORDER,
+};
+use juquad::draw::{draw_rect, draw_rect_lines};
+use juquad::lazy::add_contour;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::LabelGroup;
@@ -216,16 +220,39 @@ impl SatisfactionPanel {
             Self::Unsolved {
                 texts, successes, ..
             } => {
+                let mut cross_tick_rects = Vec::new();
                 for (i, text_rect) in texts.iter().enumerate() {
                     let icon_size = text_rect.rect().h;
                     let anchor = Anchor::top_right_v(text_rect.rect().point());
-                    (if successes[i] {
+                    cross_tick_rects.push((if successes[i] {
                         render_tick
                     } else {
                         render_cross
-                    })(anchor, icon_size, theme);
+                    })(anchor, icon_size, theme));
                     render_text(&text_rect, &TEXT_STYLE);
                 }
+                assert_eq!(cross_tick_rects.len(), 3);
+                let icon_size = cross_tick_rects[0].size();
+                let anchor = Anchor::top_right_v(cross_tick_rects[0].point());
+                let icon_rect = anchor.get_rect(icon_size);
+                let width = vec2(icon_rect.w, 0.0);
+                draw_station(
+                    theme,
+                    true,
+                    Reverse::Regular,
+                    SUCCESS,
+                    SUCCESS_DARK,
+                    width,
+                    icon_rect.center() - width,
+                );
+                let anchor = Anchor::top_right_v(cross_tick_rects[1].point());
+                let icon_rect = anchor.get_rect(icon_size).offset(-width * 0.5);
+                draw_rect(icon_rect, PANEL_BACKGROUND); // this should be TRIANGLE, but bg contrast makes it look too dark
+                draw_rect_lines(icon_rect, 2.0, TRIANGLE_BORDER);
+                let cell_rect = add_contour(icon_rect, -Vec2::splat(theme.cell_pad()));
+                draw_rect(cell_rect, TRIANGLE); // this should be ENABLED_CELL, but bg contrast makes it look too dark
+                draw_rect_lines(cell_rect, 2.0, TRIANGLE_BORDER);
+                let anchor = Anchor::top_right_v(cross_tick_rects[2].point());
             }
             Self::Unknown => {}
         }

@@ -241,7 +241,7 @@ fn calculate_and_draw_triangle(
 
 pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme) {
     for constraint in &constraints.rails {
-        let (success, reversed_rail) = matches_constraint_and_reachable(grid, constraint);
+        let (success, reversed_rail, reachable) = matches_constraint_and_reachable(grid, constraint);
         let (color, color_border) = if success {
             (SUCCESS, SUCCESS_DARK)
         } else {
@@ -267,6 +267,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                     color_border,
                     length,
                     start,
+                    reachable,
                 );
             }
             Constraint::Blockade => {
@@ -287,6 +288,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
                     end,
                     reversed_rail.is_reverse(),
                     enabled,
+                    reachable,
                 );
             }
         }
@@ -329,6 +331,7 @@ pub fn draw_station(
     color_border: Color,
     length: Vec2,
     start: Vec2,
+    reachable: bool,
 ) {
     let small_triangle_half_width = length.length() * theme.small_triangle_half_width();
     let triangle_half_width = length.length() * theme.triangle_half_width();
@@ -354,7 +357,7 @@ pub fn draw_station(
         &[tip, left, outer_left, outer_tip, outer_right, right, tip],
         color_border,
     );
-    if !success {
+    if !success && reachable {
         if reversed_rail != Reverse::None {
             diff *= -1.0;
             calculate_and_draw_triangle(theme, color_border, start, end, diff, to_left, color);
@@ -374,12 +377,14 @@ fn draw_blockade(
     end: Vec2,
     reverse: bool,
     enabled: bool,
+    reachable: bool,
 ) {
     let length = (end - start).length();
     let small_triangle_half_width = length * theme.small_triangle_half_width();
     let forward = direction * small_triangle_half_width * 1.0;
     let forward_long = direction * small_triangle_half_width * 2.0;
-    let leftward = to_left * small_triangle_half_width * 1.0;
+    // let leftward = to_left * (theme.cell_pad() * 0.5 + 1.0);
+    let leftward = to_left * small_triangle_half_width * 0.5;
     let al = mid + forward_long + leftward;
     let a = mid + forward + leftward;
     let bl = mid + forward_long - leftward;
@@ -412,7 +417,7 @@ fn draw_blockade(
     // draw_lines(&[d, c], color_border);
     // draw_lines(&[a, b], color_border);
 
-    if !success {
+    if !success && reachable {
         if reverse {
             direction *= -1.0;
         }
@@ -444,7 +449,7 @@ fn render_user_rail_constraint(
     let mid = (start + end) * 0.5;
     let diff = (end - start).normalize();
     let to_left = vec2(diff.y, -diff.x);
-    let (success, reverse) = matches_constraint_and_reachable(grid, &constraint);
+    let (success, reverse, reachable) = matches_constraint_and_reachable(grid, &constraint);
     draw_blockade(
         theme,
         success,
@@ -457,6 +462,7 @@ fn render_user_rail_constraint(
         end,
         reverse.is_reverse(),
         *get(&grid.cells, row, column),
+        reachable,
     );
 }
 

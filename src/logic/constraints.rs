@@ -249,7 +249,7 @@ impl From<Vertical> for Reverse {
         }
     }
 }
-pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> (bool, Reverse) {
+pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> (bool, Reverse, bool) {
     match *constraint {
         RailCoord::Horizontal {
             row,
@@ -257,11 +257,12 @@ pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> 
             direction,
         } => {
             let rail = grid.rails.get_horiz(row, column);
+            let reachable = grid.reachable_rails.get_horiz(row, column);
             (
                 rail == direction
-                    && (direction == Horizontal::Center
-                        || grid.reachable_rails.get_horiz(row, column)),
+                    && (direction == Horizontal::Center || reachable),
                 rail.into(),
+                reachable,
             )
         }
         RailCoord::Vertical {
@@ -270,11 +271,12 @@ pub fn matches_constraint_and_reachable(grid: &Grid, constraint: &RailCoord) -> 
             direction,
         } => {
             let rail = grid.rails.get_vert(row, column);
+            let reachable = grid.reachable_rails.get_vert(row, column);
             (
                 rail == direction
-                    && (direction == Vertical::Center
-                        || grid.reachable_rails.get_vert(row, column)),
+                    && (direction == Vertical::Center || reachable),
                 rail.into(),
+                reachable,
             )
         }
     }

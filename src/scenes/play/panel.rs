@@ -281,6 +281,7 @@ impl SatisfactionPanel {
                     SUCCESS_DARK,
                     width,
                     icon_rect.center() - width,
+                    false,
                 );
                 let anchor = Anchor::top_right_v(cross_tick_rects[1].point());
                 let icon_rect = anchor.get_rect(icon_size).offset(-width * 0.375);

@@ -1,6 +1,6 @@
 use crate::level_history::GameTrack;
 use crate::logic::constraints::{Reverse, Satisfaction};
-use crate::render::{draw_station, render_cross, render_tick};
+use crate::render::{draw_rail, draw_station, render_cross, render_tick};
 use crate::theme::{
     labels_from_theme, new_button, new_text, new_text_group_generic, render_button, render_text,
     render_tooltip, Theme,
@@ -269,7 +269,8 @@ impl SatisfactionPanel {
                 }
                 assert_eq!(cross_tick_rects.len(), 3);
                 let icon_size = cross_tick_rects[0].size();
-                let anchor = Anchor::top_right_v(cross_tick_rects[0].point());
+                let margin_x = vec2(icon_size.x * 0.375, 0.0);
+                let anchor = Anchor::top_right_v(cross_tick_rects[0].point() - margin_x);
                 let icon_rect = anchor.get_rect(icon_size);
                 let icon_rect = add_contour(icon_rect, Vec2::splat(theme.cell_pad()));
                 let width = vec2(icon_rect.w, 0.0);
@@ -280,20 +281,24 @@ impl SatisfactionPanel {
                     SUCCESS,
                     SUCCESS_DARK,
                     width,
-                    icon_rect.center() - width,
+                    icon_rect.center() - width * 0.5,
                     false,
                 );
-                let anchor = Anchor::top_right_v(cross_tick_rects[1].point());
-                let icon_rect = anchor.get_rect(icon_size).offset(-width * 0.375);
-                let icon_rect = add_contour(icon_rect, -Vec2::splat(theme.cell_pad()));
-                // draw_rect(icon_rect, PANEL_BACKGROUND); // this should be TRIANGLE, but bg contrast makes it look too dark
+
+                let anchor = Anchor::top_right_v(cross_tick_rects[1].point() - margin_x);
+                let icon_rect = anchor.get_rect(icon_size);
+                // let icon_rect = add_contour(icon_rect, -Vec2::splat(theme.cell_pad()));
                 draw_rect(icon_rect, TRIANGLE);
                 draw_rect_lines(icon_rect, 2.0, TRIANGLE_BORDER);
                 let cell_rect = add_contour(icon_rect, -Vec2::splat(theme.cell_pad()));
-                // draw_rect(cell_rect, TRIANGLE); // this should be ENABLED_CELL, but bg contrast makes it look too dark
                 draw_rect(cell_rect, ENABLED_CELL);
                 draw_rect_lines(cell_rect, 2.0, TRIANGLE_BORDER);
-                let anchor = Anchor::top_right_v(cross_tick_rects[2].point());
+
+                let anchor = Anchor::top_right_v(cross_tick_rects[2].point() - margin_x);
+                let icon_rect = anchor.get_rect(icon_size);
+                let length = vec2(icon_rect.w, 0.0);
+                let end = icon_rect.center() + length * 0.5;
+                draw_rail(end - length, end, theme, true);
             }
             Self::Unknown => {}
         }

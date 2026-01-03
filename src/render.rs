@@ -189,35 +189,39 @@ pub fn render_rail(render_rail: RenderRail, theme: &Theme) {
             end,
             coord,
         } => {
-            let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
             let start = coord + start;
             let end = coord + end;
             let start = top_left_rail_intersection(start.y, start.x, theme);
             let end = top_left_rail_intersection(end.y, end.x, theme);
-            draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
-            let direction = (end - start).normalize();
-            let border_start = start + direction * theme.cell_pad() * 0.5;
-            let leftwards = vec2(direction.y, -direction.x);
-            let left_border_start = border_start + leftwards * (theme.cell_pad() * 0.5 + 0.5);
-            let right_border_start = border_start - leftwards * (theme.cell_pad() * 0.5 + 0.5);
-            let border_end = end - direction * theme.cell_pad() * 0.5;
-            let left_border_end = border_end + leftwards * (theme.cell_pad() * 0.5 + 0.5);
-            let right_border_end = border_end - leftwards * (theme.cell_pad() * 0.5 + 0.5);
-            draw_line_v(left_border_start, left_border_end, TRIANGLE_BORDER);
-            draw_line_v(right_border_start, right_border_end, TRIANGLE_BORDER);
-
-            if reachable {
-                calculate_and_draw_triangle(
-                    theme,
-                    color,
-                    start,
-                    end,
-                    direction,
-                    leftwards,
-                    TRIANGLE_BORDER,
-                );
-            }
+            draw_rail(start, end, theme, reachable);
         }
+    }
+}
+
+pub fn draw_rail(start: Vec2, end: Vec2, theme: &Theme, reachable: bool) {
+    let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
+    draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
+    let direction = (end - start).normalize();
+    let border_start = start + direction * theme.cell_pad() * 0.5;
+    let leftwards = vec2(direction.y, -direction.x);
+    let left_border_start = border_start + leftwards * (theme.cell_pad() * 0.5 + 0.5);
+    let right_border_start = border_start - leftwards * (theme.cell_pad() * 0.5 + 0.5);
+    let border_end = end - direction * theme.cell_pad() * 0.5;
+    let left_border_end = border_end + leftwards * (theme.cell_pad() * 0.5 + 0.5);
+    let right_border_end = border_end - leftwards * (theme.cell_pad() * 0.5 + 0.5);
+    draw_line_v(left_border_start, left_border_end, TRIANGLE_BORDER);
+    draw_line_v(right_border_start, right_border_end, TRIANGLE_BORDER);
+
+    if reachable {
+        calculate_and_draw_triangle(
+            theme,
+            color,
+            start,
+            end,
+            direction,
+            leftwards,
+            TRIANGLE_BORDER,
+        );
     }
 }
 
@@ -241,7 +245,8 @@ fn calculate_and_draw_triangle(
 
 pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme) {
     for constraint in &constraints.rails {
-        let (success, reversed_rail, reachable) = matches_constraint_and_reachable(grid, constraint);
+        let (success, reversed_rail, reachable) =
+            matches_constraint_and_reachable(grid, constraint);
         let (color, color_border) = if success {
             (SUCCESS, SUCCESS_DARK)
         } else {

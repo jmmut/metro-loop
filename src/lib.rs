@@ -42,6 +42,7 @@ pub const VISUALIZE: bool = false;
 pub const FONT_SIZE_CHANGING: bool = false;
 pub const STEP_GENERATION: bool = false;
 pub const SHOW_FPS: bool = false;
+pub const CACHE_TEXTURE: bool = false;
 
 pub const DEFAULT_VOLUME: f32 = 0.6;
 // pub const DEFAULT_VOLUME: f32 = 0.0;
@@ -50,9 +51,10 @@ pub const TOOLTIP_DELAY: f64 = 2.5;
 pub const TRANSPARENT: Color = Color::new(0.0, 0.0, 0.0, 0.0);
 pub const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
 pub const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
-pub const PANEL_BACKGROUND: Color = LIGHTGRAY;
+pub const PANEL_BACKGROUND: Color = DISABLED_CELL;
+// pub const PANEL_BACKGROUND: Color = LIGHTGRAY;
 
-pub const SUCCESS: Color = color_average_weight(PANEL_BACKGROUND, BLUE, 0.5);
+pub const SUCCESS: Color = color_average_weight(LIGHTGRAY, BLUE, 0.5);
 pub const FAILING_DARK: Color = color_average(FAILING, BLACK);
 // pub const FAILING: Color = color_average_weight(color_average_weight(BACKGROUND, SUCCESS, 0.3), ORANGE, 0.5);
 pub const FAILING: Color = color_average_weight(GRAY, ORANGE, 0.5);
@@ -60,6 +62,8 @@ pub const FAILING_TRANSPARENT: Color = color_average_weight(FAILING, TRANSPARENT
 // pub const SUCCESS: Color = Color::new(0.10, 0.75, 0.19, 1.00); // less saturated GREEN
 pub const FAILING_TRANSPARENT_DARK: Color = color_average_weight(FAILING_DARK, TRANSPARENT, 0.2);
 pub const SUCCESS_DARK: Color = color_average(SUCCESS, BLACK);
+pub const SUCCESS_TRANSPARENT: Color = color_average_weight(SUCCESS, TRANSPARENT, 0.2);
+pub const SUCCESS_LIGHT: Color = color_average_weight(SUCCESS, WHITE, 0.8);
 
 // pub const TRIANGLE: Color = Color::new(0.40, 0.7, 0.9, 1.00); // darker sky blue
 // pub const TRIANGLE: Color = color_average_weight(SUCCESS, FAILING, 0.2);
@@ -69,28 +73,35 @@ pub const RAIL: Color = TRIANGLE;
 pub const RAIL_BORDER: Color = TRIANGLE_BORDER;
 pub const UNREACHABLE_RAIL: Color = FAILING;
 
-pub const ENABLED_CELL: Color = color_average_weight(TRIANGLE, TRIANGLE_BORDER, 0.5);
+pub const ENABLED_CELL: Color = color_average_weight(TRIANGLE, GRAY, 0.5);
 pub const DISABLED_CELL: Color = DARKGRAY;
 pub const HOVERED_CELL: Color = color_average(ENABLED_CELL, DISABLED_CELL);
 
+pub const LIGHTLIGHTGRAY: Color = color_average(LIGHTGRAY, WHITE);
+
 pub const STYLE: Style = Style {
     at_rest: StateStyle {
-        bg_color: color_average(LIGHTGRAY, WHITE),
-        text_color: BLACK,
-        border_color: DARKGRAY,
+        bg_color: color_average_weight(BLACK, DARKGRAY, 0.8),
+        text_color: LIGHTLIGHTGRAY,
+        border_color: LIGHTGRAY,
     },
     hovered: StateStyle {
-        bg_color: WHITE,
-        text_color: BLACK,
-        border_color: LIGHTGRAY,
+        bg_color: LIGHTLIGHTGRAY,
+        text_color: TRIANGLE_BORDER,
+        border_color: TRIANGLE,
     },
     pressed: StateStyle {
         bg_color: GRAY,
-        text_color: WHITE,
-        border_color: DARKGRAY,
+        text_color: TRIANGLE_BORDER,
+        border_color: TRIANGLE,
     },
 };
-pub const TEXT_STYLE: StateStyle = STYLE.at_rest;
+
+pub const TEXT_STYLE: StateStyle = StateStyle {
+        bg_color: color_average_weight(BLACK, DARKGRAY, 0.7),
+        text_color: LIGHTLIGHTGRAY,
+        border_color: GRAY,
+};
 
 pub const NUM_ROWS: i32 = 10;
 pub const NUM_COLUMNS: i32 = 11;
@@ -107,7 +118,7 @@ pub const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 pub type AnyError = Box<dyn std::error::Error>;
 
 pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
-    const FONT_SIZE: f32 = 15.0;
+    const FONT_SIZE: f32 = 16.0;
     const CELL_WIDTH: f32 = 50.0;
     const CELL_HEIGHT: f32 = 50.0;
     const GRID_PAD: f32 = 30.0;

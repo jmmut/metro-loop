@@ -55,7 +55,7 @@ pub async fn main_menu(theme: &mut Theme) -> Result<NextStage, AnyError> {
                 ..labels_from_theme(theme)
             },
         );
-        let mut buttons: Buttons = labels.create(["Campaign", "Options", "Quit"]).into();
+        let mut buttons: Buttons = labels.create(["CAMPAIGN", "OPTIONS", "QUIT"]).into();
 
         if buttons.campaign.interact().is_clicked() {
             return Ok(NextStage::Campaign);

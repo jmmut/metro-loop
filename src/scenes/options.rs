@@ -40,7 +40,7 @@ pub async fn options(theme: &mut Theme) -> Result<NextStage, AnyError> {
         point += vec2(0.0, theme.button_pad());
 
         let anchor_point = vec2(panel.center().x, panel.bottom() - theme.button_pad());
-        let mut back = new_button("Back", Anchor::bottom_center_v(anchor_point), theme);
+        let mut back = new_button("MENU", Anchor::bottom_center_v(anchor_point), theme);
         if is_key_pressed(KeyCode::Escape) || back.interact().is_clicked() {
             return Ok(NextStage::MainMenu);
         }

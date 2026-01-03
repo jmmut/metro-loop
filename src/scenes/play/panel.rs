@@ -40,13 +40,13 @@ impl Panel {
         let level_title = new_text(&level_name, anchor_left, 1.0, theme);
 
         let anchor_right = Anchor::top_left_v(anchor_point + half_pad);
-        let next_game = new_button("Next Game", anchor_right, &theme);
+        let next_game = new_button("NEXT", anchor_right, &theme);
 
         let anchor_bottom = Anchor::bottom_center_v(vec2(
             panel_rect.x + panel_rect.w * 0.5,
             panel_rect.bottom() - theme.button_pad(),
         ));
-        let main_menu = new_button("Main menu", anchor_bottom, theme);
+        let main_menu = new_button("MENU", anchor_bottom, theme);
 
         Self {
             rect: panel_rect,
@@ -71,9 +71,9 @@ impl Panel {
             rect.w = self.rect.w;
             let show_anchor = Anchor::below(rect, Horizontal::Center, theme.button_pad());
             let show_text = if *show_solution {
-                "Hide solution"
+                "HIDE SOLUTION"
             } else {
-                "Show possible solution"
+                "GIVE UP"
             };
             let show = new_button(show_text, show_anchor, &theme);
             Some(show)
@@ -162,9 +162,9 @@ impl SatisfactionPanel {
         } else {
             #[rustfmt::skip]
             let texts_and_tooltips = [
-                ((&satisfaction.stations.format("satisfied stations"), satisfaction.stations.success()), "some tooltip 1"),
-                ((&satisfaction.cell_count.format("active cells"), satisfaction.cell_count.success()), "some tooltip 2"),
-                ((&satisfaction.reachable.format("reachable rails"), satisfaction.reachable.success()), "some tooltip 3"),
+                ((&satisfaction.stations.format(), satisfaction.stations.success()), "satisfied stations"),
+                ((&satisfaction.cell_count.format(), satisfaction.cell_count.success()), "active cells"),
+                ((&satisfaction.reachable.format(), satisfaction.reachable.success()), "reachable rails"),
             ];
             let (texts_success, tooltips) = split_tuple(texts_and_tooltips);
             let (texts, successes) = split_tuple(texts_success);
@@ -247,10 +247,12 @@ impl SatisfactionPanel {
                 );
                 let anchor = Anchor::top_right_v(cross_tick_rects[1].point());
                 let icon_rect = anchor.get_rect(icon_size).offset(-width * 0.5);
-                draw_rect(icon_rect, PANEL_BACKGROUND); // this should be TRIANGLE, but bg contrast makes it look too dark
+                // draw_rect(icon_rect, PANEL_BACKGROUND); // this should be TRIANGLE, but bg contrast makes it look too dark
+                draw_rect(icon_rect, TRIANGLE);
                 draw_rect_lines(icon_rect, 2.0, TRIANGLE_BORDER);
                 let cell_rect = add_contour(icon_rect, -Vec2::splat(theme.cell_pad()));
-                draw_rect(cell_rect, TRIANGLE); // this should be ENABLED_CELL, but bg contrast makes it look too dark
+                // draw_rect(cell_rect, TRIANGLE); // this should be ENABLED_CELL, but bg contrast makes it look too dark
+                draw_rect(cell_rect, ENABLED_CELL);
                 draw_rect_lines(cell_rect, 2.0, TRIANGLE_BORDER);
                 let anchor = Anchor::top_right_v(cross_tick_rects[2].point());
             }

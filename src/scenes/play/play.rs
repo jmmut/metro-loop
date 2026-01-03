@@ -8,11 +8,9 @@ use crate::logic::grid::{
 use crate::render::{render_cells, render_constraints, render_grid};
 use crate::scenes::play::panel::Panel;
 use crate::theme::{new_text, render_button, render_text, render_tooltip, Theme};
-use crate::{
-    new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, DEFAULT_SHOW_SOLUTION,
-    MAX_CELLS_COEF, SHOW_FPS, STEP_GENERATION, STYLE, TEXT_STYLE, TOOLTIP_DELAY, VISUALIZE,
-};
-use juquad::widgets::anchor::Anchor;
+use crate::{new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, CACHE_TEXTURE, DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF, SHOW_FPS, STEP_GENERATION, STYLE, TEXT_STYLE, TOOLTIP_DELAY, VISUALIZE};
+use juquad::lazy::{set_positions, Interactable, Renderable, WidgetTrait};
+use juquad::widgets::anchor::{Anchor, Horizontal};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
 use macroquad::input::{
@@ -22,9 +20,7 @@ use macroquad::input::{
 use macroquad::math::{ivec2, vec2, IVec2, Vec2};
 use macroquad::miniquad::date::now;
 use macroquad::miniquad::FilterMode;
-use macroquad::prelude::{
-    clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width,
-};
+use macroquad::prelude::{clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width, RenderTarget};
 use macroquad::rand::rand;
 
 pub struct State {
@@ -49,23 +45,30 @@ pub enum Tooltips {
 pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
     let (mut sw, mut sh) = (screen_width(), screen_height());
     let current_level = theme.resources.level_history.get_current();
-    let (mut state, mut panel) = reset(VISUALIZE, current_level, theme).await;
-    let mut render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
-    render_target.texture.set_filter(FilterMode::Nearest);
-
+    let (mut state, mut panel) = reset(current_level, theme).await;
+    
+    let mut render_target_scale = 1.0;
+    let mut slider_value = render_target_scale;
+    let mut render_target = reset_render_target(sw, sh, render_target_scale);
     let mut refresh_render = true;
-
+    let mut resize = false;
+    
     let mut right_click_pressed = None;
     loop {
+        render_target_scale = slider_value;
         let now = now();
         let (new_sw, new_sh) = (screen_width(), screen_height());
         if new_sw != sw || new_sh != sh {
+            resize = true;
+        }
+        if resize {
+            resize = false;
             refresh_render = true;
             sw = new_sw;
             sh = new_sh;
             theme.layout = new_layout(sw, sh).resize_grid(state.grid.rows(), state.grid.columns());
             panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
-            render_target = macroquad::prelude::render_target(sw as u32, sh as u32);
+            render_target = reset_render_target(sw, sh, render_target_scale);
         }
         if is_key_pressed(KeyCode::P) {
             let level = Level {
@@ -130,16 +133,27 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             }
         }
 
-        if refresh_render {
-            refresh_render = false;
-            set_camera(&Camera2D {
-                target: vec2(sw * 0.5, sh * 0.5),
-                zoom: vec2(1.0 / sw * 2.0, 1.0 / sh * 2.0),
-                render_target: Some(render_target.clone()),
-                ..Default::default()
-            });
-
-            clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
+        clear_background(BACKGROUND);
+        if state.show_solution {
+            render_cells(&state.solution, &hovered_cell, theme);
+        } else {
+            render_cells(&state.grid, &hovered_cell, theme);
+        }
+        if refresh_render || !CACHE_TEXTURE {
+            if let Some(render_target) = render_target {
+                refresh_render = false;
+                set_camera(&Camera2D {
+                    //     target: vec2(sw * 0.5, sh * 0.5),
+                    target: vec2(sw, sh) * Vec2::splat(0.5 * render_target_scale),
+                    zoom: vec2(
+                        1.0 / (sw) / render_target_scale as f32 * 2.0,
+                        1.0 / (sh) / render_target_scale as f32 * 2.0,
+                    ),
+                    render_target: Some(render_target),
+                    ..Default::default()
+                });
+                clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
+            }
             let satisfaction = compute_satisfaction(&state.grid, &state.constraints);
             if satisfaction.success() {
                 theme.resources.level_history.solved()
@@ -171,15 +185,12 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
                 render_grid(&state.grid, theme);
                 render_constraints(&state.constraints, &state.grid, theme);
             }
+        }
+    
+        if let Some(render_target) = render_target {
             set_default_camera();
+            draw_texture(render_target.texture, 0., 0., WHITE);
         }
-        clear_background(BACKGROUND);
-        if state.show_solution {
-            render_cells(&state.solution, &hovered_cell, theme);
-        } else {
-            render_cells(&state.grid, &hovered_cell, theme);
-        }
-        draw_texture(render_target.texture, 0., 0., WHITE);
 
         if panel.main_menu.interaction().is_clicked() || is_key_pressed(KeyCode::Escape) {
             return Ok(NextStage::MainMenu);
@@ -187,7 +198,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         panel.interact(theme);
         if is_key_pressed(KeyCode::N) || panel.next_game.interaction().is_clicked() {
             let level = theme.resources.level_history.next().get_current();
-            (state, panel) = reset(VISUALIZE, level, theme).await;
+            (state, panel) = reset(level, theme).await;
             refresh_render = true;
         }
         if let Some(show) = panel.show_solution.as_mut() {
@@ -195,15 +206,44 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
                 state.show_solution = !state.show_solution;
                 refresh_render = true;
             }
-            render_button(&show);
+            // render_button(&show);
         }
         if SHOW_FPS {
             let text = format!("FPS: {}", get_fps());
             let text = new_text(&text, Anchor::top_left(0.0, 0.0), 1.0, &theme);
-            render_text(&text, &STYLE.pressed);
+            render_text(&text, &TEXT_STYLE);
         }
         panel.render_interactive();
 
+        let mut slider = juquad::lazy::slider::Slider::new(
+            juquad::lazy::Style {
+                coloring: STYLE.clone(),
+                ..Default::default()
+            },
+            0.1,
+            5.0,
+            slider_value,
+        );
+        set_positions(
+            &mut slider,
+            Anchor::above(panel.main_menu.rect(), Horizontal::Center, theme.cell_pad()),
+        );
+        slider.interact();
+        if slider_value != slider.custom.current {
+            refresh_render = true;
+            resize = true;
+        }
+        slider_value = slider.custom.current;
+        slider.render();
+        render_text(
+            &new_text(
+                &format!("slider value: {}", slider_value),
+                Anchor::above(slider.rect(), Horizontal::Center, theme.cell_pad()),
+                1.0,
+                theme,
+            ),
+            &TEXT_STYLE,
+        );
         if let Some((tooltip, since)) = &state.ui.tooltip_showing {
             if since + TOOLTIP_DELAY < now {
                 state.ui.tooltip_showing = None;
@@ -253,7 +293,7 @@ impl Tooltips {
     }
 }
 
-async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> (State, Panel) {
+async fn reset(level: Option<Level>, theme: &mut Theme) -> (State, Panel) {
     let (grid, constraints, solution) = if let Some(Level {
         initial_grid,
         constraints,
@@ -266,7 +306,7 @@ async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> (Sta
             initial_grid,
             constraints,
             solution,
-        } = generate_procedural(visualize, theme).await;
+        } = generate_procedural(VISUALIZE, theme).await;
 
         (initial_grid, constraints, solution)
     };
@@ -286,7 +326,17 @@ async fn reset(visualize: bool, level: Option<Level>, theme: &mut Theme) -> (Sta
         },
     };
     let panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
+    
     (state, panel)
+}
+fn reset_render_target(sw: f32, sh: f32, render_target_scale: f32) -> Option<RenderTarget> {
+    if CACHE_TEXTURE {
+        let render_target = macroquad::prelude::render_target((sw * render_target_scale) as u32, (sh * render_target_scale) as u32);
+        render_target.texture.set_filter(FilterMode::Nearest);
+        Some(render_target)
+    } else {
+        None
+    }
 }
 
 pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {

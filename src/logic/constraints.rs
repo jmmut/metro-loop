@@ -77,8 +77,8 @@ impl Goal {
     pub fn success(&self) -> bool {
         self.actual == self.expected
     }
-    pub fn format(&self, description: &str) -> String {
-        format!("{}: {} out of {}", description, self.actual, self.expected)
+    pub fn format(&self) -> String {
+        format!("{} out of {}", self.actual, self.expected)
     }
 }
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]

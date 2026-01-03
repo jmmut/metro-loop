@@ -227,7 +227,7 @@ pub async fn loading_screen(
                 stage_progress = sound_progress.loaded;
             }
         } else if loading.font.is_none() {
-            let font_bytes = include_bytes!("../../assets/fonts/Saira-Regular.ttf");
+            let font_bytes = include_bytes!("../../assets/fonts/TitilliumWeb-SemiBold.ttf");
             let font = load_ttf_font_from_bytes(font_bytes).unwrap();
             loading.font = Some(font);
             progress += 1;

@@ -19,11 +19,12 @@ use macroquad::prelude::{
 use macroquad::text::Font;
 use std::fmt::{Debug, Formatter};
 use std::future::Future;
+use crate::levels::Levels;
 
 pub struct Resources {
     pub sounds: Sounds,
     pub font: Font,
-    pub level_history: LevelHistory,
+    pub levels: Levels,
     // textures
 }
 
@@ -46,11 +47,11 @@ impl<SoundLoader> TryFrom<Loading<SoundLoader>> for Resources {
             Loading {
                 sounds: LoadingSounds::Loaded(sounds),
                 font: Some(font),
-                level_history: Some(level_history),
+                levels: Some(levels),
             } => Ok(Resources {
                 sounds,
                 font,
-                level_history,
+                levels,
             }),
             _ => Err(format!(
                 "logic error: tried to convert to Resources from an incomplete Loading: {:?}",
@@ -72,7 +73,7 @@ impl Drop for Resources {
 struct Loading<SoundLoader> {
     pub sounds: LoadingSounds<SoundLoader>,
     pub font: Option<Font>,
-    pub level_history: Option<LevelHistory>,
+    pub levels: Option<Levels>,
 }
 impl<S> Debug for Loading<S> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -172,8 +173,6 @@ const SATISFIED: &[u8] = include_bytes!("../../assets/sound/satisfied.wav");
 const BACKGROUND_SONG: &[u8] = include_bytes!("../../assets/sound/background.ogg");
 
 pub async fn loading_screen(
-    section: i32,
-    level: i32,
     sound_enabled: bool,
 ) -> Result<Theme, AnyError> {
     let loading_sounds = if sound_enabled {
@@ -201,7 +200,7 @@ pub async fn loading_screen(
     let mut loading = Loading {
         sounds: loading_sounds,
         font: None,
-        level_history: None,
+        levels: None,
     };
     let mut progress = 0;
     loop {
@@ -231,8 +230,8 @@ pub async fn loading_screen(
             let font = load_ttf_font_from_bytes(font_bytes).unwrap();
             loading.font = Some(font);
             progress += 1;
-        } else if loading.level_history.is_none() {
-            loading.level_history = Some(LevelHistory::new(section, level)?);
+        } else if loading.levels.is_none() {
+            loading.levels = Some(Levels::get()?);
             progress += 1;
         } else {
             let resources: Resources = loading.try_into()?;

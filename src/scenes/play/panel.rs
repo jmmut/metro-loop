@@ -17,6 +17,7 @@ use juquad::widgets::text::TextRect;
 use juquad::widgets::Widget;
 use macroquad::input::mouse_position;
 use macroquad::math::{vec2, Rect, Vec2};
+use crate::level_history::GameTrack;
 
 pub struct Panel {
     pub rect: Rect,
@@ -29,14 +30,14 @@ pub struct Panel {
 }
 
 impl Panel {
-    pub fn new(panel_rect: Rect, theme: &Theme) -> Self {
+    pub fn new(panel_rect: Rect, theme: &Theme, game_track: &GameTrack) -> Self {
         let anchor_point = vec2(
             panel_rect.x + panel_rect.w * 0.5,
             panel_rect.y + theme.button_pad(),
         );
         let half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
 
-        let level_name = theme.resources.level_history.current.to_string();
+        let level_name = game_track.current.to_string();
         let anchor_name = Anchor::top_center_v(anchor_point);
         let level_title = new_text(&level_name, anchor_name, 1.0, theme);
         let below_title = vec2(

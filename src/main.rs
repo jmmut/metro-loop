@@ -5,6 +5,7 @@ use metro_loop::{
     scenes, AnyError, NextStage, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH,
     STARTING_LEVEL, STARTING_SECTION,
 };
+use metro_loop::level_history::GameTrack;
 
 #[macroquad::main(window_conf)]
 async fn main() -> Result<(), AnyError> {
@@ -12,13 +13,13 @@ async fn main() -> Result<(), AnyError> {
     srand(seed);
 
     let args = parse_args()?;
-    let mut theme = scenes::loading_screen(args.section, args.level, args.sound_enabled).await?;
-    // let mut game_track =
+    let mut theme = scenes::loading_screen(args.sound_enabled).await?;
+    let mut game_track = GameTrack::new(args.section, args.level)?;
     let mut next_stage = NextStage::MainMenu;
     loop {
         next_stage = match next_stage {
             NextStage::MainMenu => scenes::main_menu(&mut theme).await?,
-            NextStage::Campaign => scenes::play(&mut theme).await?,
+            NextStage::Campaign => scenes::play(&mut theme, &mut game_track).await?,
             NextStage::Options => scenes::options(&mut theme).await?,
             NextStage::Quit => return Ok(()),
         };

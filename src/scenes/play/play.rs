@@ -1,4 +1,4 @@
-use crate::level_history::generate_procedural;
+use crate::level_history::{generate_procedural, GameTrack};
 use crate::levels::Level;
 use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
 use crate::logic::grid::{
@@ -48,10 +48,10 @@ pub enum Tooltips {
     EditSolution,
 }
 
-pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
+pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextStage, AnyError> {
     let (mut sw, mut sh) = (screen_width(), screen_height());
-    let current_level = theme.resources.level_history.get_current();
-    let (mut state, mut panel) = reset(current_level, theme).await;
+    let current_level = game_track.get_current(&theme.resources.levels);
+    let (mut state, mut panel) = reset(current_level, theme, game_track).await;
 
     let mut render_target_scale = 1.0;
     let mut slider_value = render_target_scale;
@@ -73,7 +73,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             sw = new_sw;
             sh = new_sh;
             theme.layout = new_layout(sw, sh).resize_grid(state.grid.rows(), state.grid.columns());
-            panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
+            panel = Panel::new(theme.button_panel_rect(&state.grid), theme, game_track);
             render_target = reset_render_target(sw, sh, render_target_scale);
         }
         if is_key_pressed(KeyCode::P) {
@@ -162,7 +162,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
             }
             let satisfaction = compute_satisfaction(&state.grid, &state.constraints);
             if satisfaction.success() {
-                theme.resources.level_history.solved()
+                game_track.solved()
             }
             if satisfaction.success() {
                 if !state.success_sound_played {
@@ -203,8 +203,8 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         panel.interact(theme);
         if is_key_pressed(KeyCode::N) || panel.next_game.interaction().is_clicked() {
-            let level = theme.resources.level_history.next().await.get_current();
-            (state, panel) = reset(level, theme).await;
+            let level = game_track.next(theme).await.get_current(&theme.resources.levels);
+            (state, panel) = reset(level, theme, game_track).await;
             refresh_render = true;
         }
         if let Some(show) = panel.show_solution.as_mut() {
@@ -215,7 +215,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         if panel.restart_game.interaction().is_clicked() {
             refresh_render = true;
-            (state, panel) = reset(theme.resources.level_history.get_current(), theme).await;
+            (state, panel) = reset(game_track.get_current(&theme.resources.levels), theme, game_track).await;
         }
         if SHOW_FPS {
             let text = format!("FPS: {}", get_fps());
@@ -320,28 +320,12 @@ impl Tooltips {
     }
 }
 
-async fn reset(level: Option<Level>, theme: &mut Theme) -> (State, Panel) {
-    let (grid, constraints, solution) = if let Some(Level {
-        initial_grid,
+async fn reset(level: Level, theme: &mut Theme, game_track: &GameTrack) -> (State, Panel) {
+    let Level {
+        initial_grid: grid,
         constraints,
         solution,
-    }) = level
-    {
-        (initial_grid, constraints, solution)
-    } else {
-        let Level {
-            initial_grid,
-            constraints,
-            solution,
-        } = generate_procedural(VISUALIZE, theme).await;
-
-        (initial_grid, constraints, solution)
-    };
-    // let Level {
-    //     initial_grid: grid,
-    //     constraints,
-    //     solution,
-    // } = level;
+    } = level;
     theme.layout.resize_grid_mut(grid.rows(), grid.columns());
     let show_solution = DEFAULT_SHOW_SOLUTION;
     let previous_satisfaction = None;
@@ -357,7 +341,7 @@ async fn reset(level: Option<Level>, theme: &mut Theme) -> (State, Panel) {
             tooltip_showing: None,
         },
     };
-    let panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
+    let panel = Panel::new(theme.button_panel_rect(&state.grid), theme, game_track);
     (state, panel)
 }
 fn reset_render_target(sw: f32, sh: f32, render_target_scale: f32) -> Option<RenderTarget> {

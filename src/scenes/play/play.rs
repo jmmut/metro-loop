@@ -8,7 +8,11 @@ use crate::logic::grid::{
 use crate::render::{render_cells, render_constraints, render_grid};
 use crate::scenes::play::panel::Panel;
 use crate::theme::{new_text, render_button, render_text, render_tooltip, Theme};
-use crate::{new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, CACHE_TEXTURE, DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF, SHOW_FPS, STEP_GENERATION, STYLE, TEXT_STYLE, TOOLTIP_DELAY, VISUALIZE};
+use crate::{
+    new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, CACHE_TEXTURE,
+    DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF, SHOW_FPS, SHOW_SLIDER, STEP_GENERATION, STYLE,
+    TEXT_STYLE, TOOLTIP_DELAY, VISUALIZE,
+};
 use juquad::lazy::{set_positions, Interactable, Renderable, WidgetTrait};
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
@@ -20,7 +24,9 @@ use macroquad::input::{
 use macroquad::math::{ivec2, vec2, IVec2, Vec2};
 use macroquad::miniquad::date::now;
 use macroquad::miniquad::FilterMode;
-use macroquad::prelude::{clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width, RenderTarget};
+use macroquad::prelude::{
+    clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width, RenderTarget,
+};
 use macroquad::rand::rand;
 
 pub struct State {
@@ -46,13 +52,13 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
     let (mut sw, mut sh) = (screen_width(), screen_height());
     let current_level = theme.resources.level_history.get_current();
     let (mut state, mut panel) = reset(current_level, theme).await;
-    
+
     let mut render_target_scale = 1.0;
     let mut slider_value = render_target_scale;
     let mut render_target = reset_render_target(sw, sh, render_target_scale);
     let mut refresh_render = true;
     let mut resize = false;
-    
+
     let mut right_click_pressed = None;
     loop {
         render_target_scale = slider_value;
@@ -186,7 +192,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
                 render_constraints(&state.constraints, &state.grid, theme);
             }
         }
-    
+
         if let Some(render_target) = render_target {
             set_default_camera();
             draw_texture(render_target.texture, 0., 0., WHITE);
@@ -197,7 +203,7 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         panel.interact(theme);
         if is_key_pressed(KeyCode::N) || panel.next_game.interaction().is_clicked() {
-            let level = theme.resources.level_history.next().get_current();
+            let level = theme.resources.level_history.next().await.get_current();
             (state, panel) = reset(level, theme).await;
             refresh_render = true;
         }
@@ -206,7 +212,10 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
                 state.show_solution = !state.show_solution;
                 refresh_render = true;
             }
-            // render_button(&show);
+        }
+        if panel.restart_game.interaction().is_clicked() {
+            refresh_render = true;
+            (state, panel) = reset(theme.resources.level_history.get_current(), theme).await;
         }
         if SHOW_FPS {
             let text = format!("FPS: {}", get_fps());
@@ -215,35 +224,15 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         panel.render_interactive();
 
-        let mut slider = juquad::lazy::slider::Slider::new(
-            juquad::lazy::Style {
-                coloring: STYLE.clone(),
-                ..Default::default()
-            },
-            0.1,
-            5.0,
-            slider_value,
-        );
-        set_positions(
-            &mut slider,
-            Anchor::above(panel.main_menu.rect(), Horizontal::Center, theme.cell_pad()),
-        );
-        slider.interact();
-        if slider_value != slider.custom.current {
-            refresh_render = true;
-            resize = true;
-        }
-        slider_value = slider.custom.current;
-        slider.render();
-        render_text(
-            &new_text(
-                &format!("slider value: {}", slider_value),
-                Anchor::above(slider.rect(), Horizontal::Center, theme.cell_pad()),
-                1.0,
+        if SHOW_SLIDER {
+            use_debug_slider(
                 theme,
-            ),
-            &TEXT_STYLE,
-        );
+                &panel,
+                &mut slider_value,
+                &mut refresh_render,
+                &mut resize,
+            );
+        }
         if let Some((tooltip, since)) = &state.ui.tooltip_showing {
             if since + TOOLTIP_DELAY < now {
                 state.ui.tooltip_showing = None;
@@ -253,6 +242,44 @@ pub async fn play(theme: &mut Theme) -> Result<NextStage, AnyError> {
         }
         next_frame().await
     }
+}
+
+fn use_debug_slider(
+    theme: &mut Theme,
+    panel: &Panel,
+    mut slider_value: &mut f32,
+    refresh_render: &mut bool,
+    resize: &mut bool,
+) {
+    let mut slider = juquad::lazy::slider::Slider::new(
+        juquad::lazy::Style {
+            coloring: STYLE.clone(),
+            ..Default::default()
+        },
+        0.1,
+        5.0,
+        *slider_value,
+    );
+    set_positions(
+        &mut slider,
+        Anchor::above(panel.main_menu.rect(), Horizontal::Center, theme.cell_pad()),
+    );
+    slider.interact();
+    if *slider_value != slider.custom.current {
+        *refresh_render = true;
+        *resize = true;
+    }
+    *slider_value = slider.custom.current;
+    slider.render();
+    render_text(
+        &new_text(
+            &format!("slider value: {}", slider_value),
+            Anchor::above(slider.rect(), Horizontal::Center, theme.cell_pad()),
+            1.0,
+            theme,
+        ),
+        &TEXT_STYLE,
+    );
 }
 
 fn add_user_constraint(
@@ -286,7 +313,7 @@ impl Tooltips {
         let text = match self {
             Tooltips::FixedCell => "Can't change locked cells",
             Tooltips::UserFixedCell => "Can't change locked cells, use right click to unlock",
-            Tooltips::EditSolution => "Can't change cells from solution, click 'Hide solution'",
+            Tooltips::EditSolution => "Can't change cells from solution, click 'HIDE SOLUTION'",
         };
         let text_rect = new_text(text, anchor, 1.0, &theme);
         render_tooltip(&text_rect, &TEXT_STYLE);
@@ -310,6 +337,11 @@ async fn reset(level: Option<Level>, theme: &mut Theme) -> (State, Panel) {
 
         (initial_grid, constraints, solution)
     };
+    // let Level {
+    //     initial_grid: grid,
+    //     constraints,
+    //     solution,
+    // } = level;
     theme.layout.resize_grid_mut(grid.rows(), grid.columns());
     let show_solution = DEFAULT_SHOW_SOLUTION;
     let previous_satisfaction = None;
@@ -326,12 +358,14 @@ async fn reset(level: Option<Level>, theme: &mut Theme) -> (State, Panel) {
         },
     };
     let panel = Panel::new(theme.button_panel_rect(&state.grid), theme);
-    
     (state, panel)
 }
 fn reset_render_target(sw: f32, sh: f32, render_target_scale: f32) -> Option<RenderTarget> {
     if CACHE_TEXTURE {
-        let render_target = macroquad::prelude::render_target((sw * render_target_scale) as u32, (sh * render_target_scale) as u32);
+        let render_target = macroquad::prelude::render_target(
+            (sw * render_target_scale) as u32,
+            (sh * render_target_scale) as u32,
+        );
         render_target.texture.set_filter(FilterMode::Nearest);
         Some(render_target)
     } else {

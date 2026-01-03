@@ -1,3 +1,4 @@
+use crate::levels::Level;
 use crate::logic::grid::Grid;
 use crate::scenes::loading_screen::Resources;
 use crate::{NUM_COLUMNS, NUM_ROWS, STYLE};
@@ -175,10 +176,10 @@ impl Theme {
     }
 
     pub fn small_triangle_half_width(&self) -> f32 {
-        2.0 * self.cell_pad()
+        0.15
     }
     pub fn triangle_half_width(&self) -> f32 {
-        4.0 * self.cell_pad()
+        0.3
     }
 }
 

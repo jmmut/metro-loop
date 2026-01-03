@@ -16,7 +16,7 @@ pub struct LevelHistory {
 #[derive(Debug)]
 pub enum GameTrack {
     Campaign { section: i32, level: i32 },
-    Procedural,
+    Procedural, // (Level)
 }
 
 impl LevelHistory {
@@ -34,23 +34,26 @@ impl LevelHistory {
         })
     }
     pub fn get_current(&self) -> Option<Level> {
-        match self.current {
+        match &self.current {
             GameTrack::Campaign { section, level } => Some(
                 self.levels
                     .sections
-                    .get(section as usize)?
+                    .get(*section as usize)
+                    .unwrap()
                     .levels
-                    .get(level as usize)?
+                    .get(*level as usize)
+                    .unwrap()
                     .clone(),
             ),
             GameTrack::Procedural => None,
+            // GameTrack::Procedural(level) => level.clone(),
         }
     }
-    pub fn next(&mut self) -> &Self {
-        match self.current {
+    pub async fn next(&mut self) -> &Self {
+        match &mut self.current {
             GameTrack::Campaign { section, mut level } => {
                 level += 1;
-                for i_section in (section as usize)..self.levels.sections.len() {
+                for i_section in (*section as usize)..self.levels.sections.len() {
                     for i_level in level as usize..self.levels.sections[i_section].levels.len() {
                         if !self.solved[i_section][i_level] {
                             self.current = GameTrack::Campaign {
@@ -63,8 +66,9 @@ impl LevelHistory {
                     level = 0;
                 }
                 self.current = GameTrack::Procedural;
+                // self.current = GameTrack::Procedural(generate_procedural(theme).await);
             }
-            GameTrack::Procedural => {}
+            GameTrack::Procedural => {} // GameTrack::Procedural(level) => *level = generate_procedural(theme).await,
         }
         self
     }
@@ -73,7 +77,7 @@ impl LevelHistory {
             GameTrack::Campaign { section, level } => {
                 self.solved[section as usize][level as usize] = true;
             }
-            GameTrack::Procedural => {}
+            GameTrack::Procedural => {} // GameTrack::Procedural(_) => {}
         }
     }
 }
@@ -101,6 +105,7 @@ impl GameTrack {
         match self {
             GameTrack::Campaign { .. } => false,
             GameTrack::Procedural => true,
+            // GameTrack::Procedural(_) => true,
         }
     }
 }
@@ -111,6 +116,7 @@ impl Display for GameTrack {
             GameTrack::Campaign { section, level } => {
                 write!(f, "Level: {}-{}", section, level)
             }
+            // GameTrack::Procedural(_) => {
             GameTrack::Procedural => {
                 write!(f, "Level: Random")
             }

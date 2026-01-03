@@ -8,9 +8,9 @@ use crate::{
     ENABLED_CELL, PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, SUCCESS, SUCCESS_DARK, TEXT_STYLE,
     TRIANGLE, TRIANGLE_BORDER,
 };
-use juquad::draw::{draw_rect, draw_rect_lines};
+use juquad::draw::{draw_rect, draw_rect_lines, to_rect};
 use juquad::lazy::add_contour;
-use juquad::widgets::anchor::{Anchor, Horizontal};
+use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::text::TextRect;
@@ -21,6 +21,7 @@ use macroquad::math::{vec2, Rect, Vec2};
 pub struct Panel {
     pub rect: Rect,
     pub level_title: TextRect,
+    pub restart_game: Button,
     pub next_game: Button,
     pub main_menu: Button,
     pub show_solution: Option<Button>,
@@ -36,11 +37,18 @@ impl Panel {
         let half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
 
         let level_name = theme.resources.level_history.current.to_string();
-        let anchor_left = Anchor::top_right_v(anchor_point - half_pad);
-        let level_title = new_text(&level_name, anchor_left, 1.0, theme);
+        let anchor_name = Anchor::top_center_v(anchor_point);
+        let level_title = new_text(&level_name, anchor_name, 1.0, theme);
+        let below_title = vec2(
+            level_title.rect.center().x,
+            level_title.rect.bottom() + theme.cell_pad(),
+        );
 
-        let anchor_right = Anchor::top_left_v(anchor_point + half_pad);
-        let next_game = new_button("NEXT", anchor_right, &theme);
+        let anchor_next = Anchor::top_center_v(below_title);
+        let restart_game = new_button("RESTART", anchor_next, &theme);
+
+        let anchor_next = Anchor::below(restart_game.rect(), Horizontal::Center, theme.cell_pad());
+        let next_game = new_button("NEXT", anchor_next, &theme);
 
         let anchor_bottom = Anchor::bottom_center_v(vec2(
             panel_rect.x + panel_rect.w * 0.5,
@@ -51,6 +59,7 @@ impl Panel {
         Self {
             rect: panel_rect,
             level_title,
+            restart_game,
             next_game,
             main_menu,
             show_solution: None,
@@ -72,6 +81,8 @@ impl Panel {
             let show_anchor = Anchor::below(rect, Horizontal::Center, theme.button_pad());
             let show_text = if *show_solution {
                 "HIDE SOLUTION"
+            } else if satisfaction.success() {
+                "SHOW POSSIBLE SOLUTION"
             } else {
                 "GIVE UP"
             };
@@ -88,10 +99,8 @@ impl Panel {
     }
 
     pub fn interact(&mut self, theme: &Theme) {
-        self.main_menu.interact();
-        self.next_game.interact();
-        if let Some(show) = &mut self.show_solution {
-            show.interact();
+        for b in self.buttons_mut() {
+            b.interact();
         }
         self.satisfaction.interact(theme);
     }
@@ -101,13 +110,28 @@ impl Panel {
         self.satisfaction.render_static(theme);
     }
     pub fn render_interactive(&self) {
-        render_button(&self.next_game);
-        render_button(&self.main_menu);
-
-        if let Some(show) = &self.show_solution {
-            render_button(&show);
+        for b in self.buttons() {
+            render_button(b);
         }
         self.satisfaction.render_interactive();
+    }
+    pub fn buttons(&self) -> Vec<&Button> {
+        let mut buttons = vec![&self.main_menu, &self.restart_game, &self.next_game];
+        if let Some(button) = self.show_solution.as_ref() {
+            buttons.push(button)
+        }
+        buttons
+    }
+    pub fn buttons_mut(&mut self) -> Vec<&mut Button> {
+        let mut buttons = vec![
+            &mut self.main_menu,
+            &mut self.restart_game,
+            &mut self.next_game,
+        ];
+        if let Some(button) = self.show_solution.as_mut() {
+            buttons.push(button)
+        }
+        buttons
     }
 }
 pub fn split_tuple<const N: usize, T: Copy, U: Copy>(array: [(T, U); N]) -> ([T; N], [U; N]) {
@@ -169,7 +193,11 @@ impl SatisfactionPanel {
             let (texts_success, tooltips) = split_tuple(texts_and_tooltips);
             let (texts, successes) = split_tuple(texts_success);
 
-            let anchor = Anchor::below(previous_rect, Horizontal::Center, theme.button_pad());
+            let anchor_point = vec2(
+                previous_rect.center().x,
+                previous_rect.bottom() + theme.button_pad(),
+            );
+            let anchor = Anchor::top_left_v(anchor_point);
             let labels = new_text_group_generic(
                 anchor,
                 theme,
@@ -181,7 +209,13 @@ impl SatisfactionPanel {
             let text_rects = labels.create(texts);
 
             Self::Unsolved {
-                texts: text_rects.into(),
+                texts: text_rects
+                    .into_iter()
+                    .map(|mut t| {
+                        t.rect.x += t.rect.h * 0.5;
+                        t
+                    })
+                    .collect(),
                 successes: successes.into(),
                 tooltips: tooltips
                     .into_iter()
@@ -197,7 +231,9 @@ impl SatisfactionPanel {
             } => {
                 let mouse_pos = Vec2::from(mouse_position());
                 for (i, text) in texts.iter().enumerate() {
-                    if text.rect().contains(mouse_pos) {
+                    if text.rect().contains(mouse_pos)
+                        || Self::get_icon_rect(text).contains(mouse_pos)
+                    {
                         let anchor = Anchor::bottom_right_v(mouse_pos);
                         let tooltip = new_text(tooltips[i].text(), anchor, 1.0, theme);
                         tooltips[i] = Tooltip::Renderable(tooltip);
@@ -222,19 +258,19 @@ impl SatisfactionPanel {
             } => {
                 let mut cross_tick_rects = Vec::new();
                 for (i, text_rect) in texts.iter().enumerate() {
-                    let icon_size = text_rect.rect().h;
-                    let anchor = Anchor::top_right_v(text_rect.rect().point());
+                    let icon_rect = Self::get_icon_rect(text_rect);
                     cross_tick_rects.push((if successes[i] {
                         render_tick
                     } else {
                         render_cross
-                    })(anchor, icon_size, theme));
+                    })(icon_rect, theme));
                     render_text(&text_rect, &TEXT_STYLE);
                 }
                 assert_eq!(cross_tick_rects.len(), 3);
                 let icon_size = cross_tick_rects[0].size();
                 let anchor = Anchor::top_right_v(cross_tick_rects[0].point());
                 let icon_rect = anchor.get_rect(icon_size);
+                let icon_rect = add_contour(icon_rect, Vec2::splat(theme.cell_pad()));
                 let width = vec2(icon_rect.w, 0.0);
                 draw_station(
                     theme,
@@ -247,6 +283,7 @@ impl SatisfactionPanel {
                 );
                 let anchor = Anchor::top_right_v(cross_tick_rects[1].point());
                 let icon_rect = anchor.get_rect(icon_size).offset(-width * 0.5);
+                let icon_rect = add_contour(icon_rect, -Vec2::splat(theme.cell_pad()));
                 // draw_rect(icon_rect, PANEL_BACKGROUND); // this should be TRIANGLE, but bg contrast makes it look too dark
                 draw_rect(icon_rect, TRIANGLE);
                 draw_rect_lines(icon_rect, 2.0, TRIANGLE_BORDER);
@@ -259,6 +296,14 @@ impl SatisfactionPanel {
             Self::Unknown => {}
         }
     }
+
+    fn get_icon_rect(text_rect: &TextRect) -> Rect {
+        let icon_size = text_rect.rect().h;
+        let anchor = Anchor::top_right_v(text_rect.rect().point());
+        let icon_rect = anchor.get_rect(vec2(icon_size, icon_size));
+        icon_rect
+    }
+
     pub fn render_interactive(&self) {
         match self {
             Self::Solved { .. } => {}

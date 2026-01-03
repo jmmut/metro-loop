@@ -42,15 +42,17 @@ pub const VISUALIZE: bool = false;
 pub const FONT_SIZE_CHANGING: bool = false;
 pub const STEP_GENERATION: bool = false;
 pub const SHOW_FPS: bool = false;
-pub const CACHE_TEXTURE: bool = false;
+pub const CACHE_TEXTURE: bool = true;
+pub const SHOW_SLIDER: bool = false;
 
 pub const DEFAULT_VOLUME: f32 = 0.6;
 // pub const DEFAULT_VOLUME: f32 = 0.0;
 pub const TOOLTIP_DELAY: f64 = 2.5;
 
 pub const TRANSPARENT: Color = Color::new(0.0, 0.0, 0.0, 0.0);
-pub const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
-pub const BACKGROUND_2: Color = Color::new(0.05, 0.05, 0.05, 1.00);
+// pub const BACKGROUND: Color = Color::new(0.1, 0.1, 0.1, 1.00);
+pub const BACKGROUND: Color = DARKDARKGRAY;
+pub const BACKGROUND_2: Color = color_average_weight(BACKGROUND, GRAY, 0.5);
 pub const PANEL_BACKGROUND: Color = DISABLED_CELL;
 // pub const PANEL_BACKGROUND: Color = LIGHTGRAY;
 
@@ -73,15 +75,19 @@ pub const RAIL: Color = TRIANGLE;
 pub const RAIL_BORDER: Color = TRIANGLE_BORDER;
 pub const UNREACHABLE_RAIL: Color = FAILING;
 
-pub const ENABLED_CELL: Color = color_average_weight(TRIANGLE, GRAY, 0.5);
+pub const ENABLED_CELL: Color = color_average_weight(TRIANGLE, DISABLED_CELL, 0.5);
 pub const DISABLED_CELL: Color = DARKGRAY;
 pub const HOVERED_CELL: Color = color_average(ENABLED_CELL, DISABLED_CELL);
+pub const FIX_MARKER: Color = color_average_weight(BLACK, DARKGRAY, 0.3);
+pub const USER_FIX_MARKER: Color = LIGHTLIGHTGRAY;
 
 pub const LIGHTLIGHTGRAY: Color = color_average(LIGHTGRAY, WHITE);
+pub const LIGTHDARKDARKGRAY: Color = color_average_weight(BLACK, DARKGRAY, 0.8);
+pub const DARKDARKGRAY: Color = color_average_weight(BLACK, DARKGRAY, 0.7);
 
 pub const STYLE: Style = Style {
     at_rest: StateStyle {
-        bg_color: color_average_weight(BLACK, DARKGRAY, 0.8),
+        bg_color: LIGTHDARKDARKGRAY,
         text_color: LIGHTLIGHTGRAY,
         border_color: LIGHTGRAY,
     },
@@ -98,9 +104,9 @@ pub const STYLE: Style = Style {
 };
 
 pub const TEXT_STYLE: StateStyle = StateStyle {
-        bg_color: color_average_weight(BLACK, DARKGRAY, 0.7),
-        text_color: LIGHTLIGHTGRAY,
-        border_color: GRAY,
+    bg_color: DARKDARKGRAY,
+    text_color: LIGHTLIGHTGRAY,
+    border_color: GRAY,
 };
 
 pub const NUM_ROWS: i32 = 10;

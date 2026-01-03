@@ -3,7 +3,8 @@ use crate::logic::grid::{get_cell, is_system_fixed};
 use crate::logic::intersection::{Crossing, Intersection};
 use crate::theme::Theme;
 use crate::*;
-use juquad::draw::draw_rect;
+use juquad::draw::{draw_rect, draw_rect_lines};
+use juquad::lazy::add_contour;
 use juquad::widgets::anchor::{Anchor, Horizontal, Sense};
 use macroquad::math::f32;
 use macroquad::prelude::*;
@@ -51,23 +52,25 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
     for i_row in 0..grid.rows() {
         for i_column in 0..grid.columns() {
             let current_cell = *get(&grid.fixed_cells, i_row, i_column);
-            let color = if is_system_fixed(grid, i_row, i_column) {
-                BACKGROUND
-            } else {
-                TRIANGLE
-            };
+            let system_fixed = is_system_fixed(grid, i_row, i_column);
+            let color = if system_fixed { FIX_MARKER } else { TRIANGLE };
             if current_cell {
                 let mut intersection = top_left_rail_intersection(i_row, i_column, theme);
                 intersection += vec2(theme.cell_width(), theme.cell_height()) * 0.5;
-                draw_rect(
-                    Rect::new(
-                        intersection.x,
-                        intersection.y,
-                        theme.cell_pad(),
-                        theme.cell_pad(),
-                    ),
-                    color,
+                let rect = Rect::new(
+                    intersection.x,
+                    intersection.y,
+                    theme.cell_pad(),
+                    theme.cell_pad(),
                 );
+                draw_rect(rect, color);
+                let thickness = 2.0;
+                let border_rect = add_contour(rect, Vec2::splat(thickness * 0.5));
+                if !system_fixed {
+                    draw_rect_lines(border_rect, thickness, DISABLED_CELL);
+                } else {
+                    draw_rect_lines(border_rect, thickness, HOVERED_CELL);
+                }
             }
         }
     }
@@ -227,11 +230,12 @@ fn calculate_and_draw_triangle(
     leftwards: Vec2,
     color_border: Color,
 ) {
+    let length = end - start;
     let mid = (start + end) * 0.5;
-    let triangle_width = 2.0 * theme.cell_pad();
-    let left = mid + leftwards * triangle_width;
-    let right = mid - leftwards * triangle_width;
-    let tip = mid + triangle_width * direction;
+    let triangle_half_width = length.length() * theme.small_triangle_half_width();
+    let left = mid + leftwards * triangle_half_width;
+    let right = mid - leftwards * triangle_half_width;
+    let tip = mid + triangle_half_width * direction;
     draw_bordered_triangle(left, right, tip, color, color_border);
 }
 
@@ -324,8 +328,8 @@ pub fn draw_station(
     length: Vec2,
     start: Vec2,
 ) {
-    let small_triangle_half_width = theme.small_triangle_half_width();
-    let triangle_half_width = theme.triangle_half_width();
+    let small_triangle_half_width = length.length() * theme.small_triangle_half_width();
+    let triangle_half_width = length.length() * theme.triangle_half_width();
     let end = start + length;
     let mid = (start + end) * 0.5;
     let mut diff = (end - start).normalize();
@@ -461,9 +465,11 @@ pub fn draw_bordered_triangle(p_1: Vec2, p_2: Vec2, p_3: Vec2, color: Color, bor
     draw_triangle_lines(p_1, p_2, p_3, 1.0, border);
 }
 
-pub fn render_tick(anchor: Anchor, size: f32, theme: &Theme) -> Rect {
-    let rect = anchor.get_rect(vec2(size, size));
-    draw_rect(rect, SUCCESS_DARK);
+pub fn render_tick(rect: Rect, theme: &Theme) -> Rect {
+    // draw_rect(rect, SUCCESS_DARK);
+    // draw_rect_lines(rect, 2.0, TEXT_STYLE.bg_color);
+    draw_rect(rect, TEXT_STYLE.bg_color);
+    draw_rect_lines(rect, 2.0, SUCCESS_DARK);
     let start = rect.point() + rect.size() * 0.25;
     let mid = rect.point() + rect.size() * 0.5;
     let end = rect.point() + rect.size() * 0.75;
@@ -479,9 +485,11 @@ pub fn render_tick(anchor: Anchor, size: f32, theme: &Theme) -> Rect {
     rect
 }
 
-pub fn render_cross(anchor: Anchor, font_size: f32, theme: &Theme) -> Rect {
-    let rect = anchor.get_rect(vec2(font_size, font_size));
-    draw_rect(rect, FAILING_DARK);
+pub fn render_cross(rect: Rect, theme: &Theme) -> Rect {
+    // draw_rect(rect, FAILING_DARK);
+    // draw_rect_lines(rect, 2.0, TEXT_STYLE.bg_color);
+    draw_rect(rect, TEXT_STYLE.bg_color);
+    draw_rect_lines(rect, 2.0, FAILING_DARK);
     let start = rect.point() + rect.size() * 0.25;
     let end = rect.point() + rect.size() * 0.75;
     draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), FAILING);

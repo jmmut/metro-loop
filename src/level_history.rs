@@ -18,7 +18,7 @@ pub struct GameTrack {
     pub solved: Solved,
     pub current: CurrentGame,
     pub in_progress: Grid,
-    pub cached_level: Level,
+    cached_level: Level,
 }
 
 #[derive(Debug)]

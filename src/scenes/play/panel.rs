@@ -13,7 +13,7 @@ use crate::{
 };
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::lazy::add_contour;
-use juquad::widgets::anchor::{Anchor, Horizontal};
+use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::text::TextRect;
@@ -33,43 +33,48 @@ pub struct Panel {
 }
 
 impl Panel {
-    pub fn new(panel_rect: Rect, theme: &Theme, game_track: &GameTrack) -> Self {
-        let anchor_point = vec2(
-            panel_rect.x + panel_rect.w * 0.5,
-            panel_rect.y + theme.button_margin(),
-        );
+    pub fn new(
+        panel_rect: Rect,
+        satisfaction: Satisfaction,
+        theme: &Theme,
+        game_track: &GameTrack,
+    ) -> Self {
+        let button_margin_v = Vec2::splat(theme.button_margin());
         let _half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
 
         let level_name = game_track.current.to_string();
-        let anchor_name = Anchor::top_center_v(anchor_point);
+        let anchor_name = Anchor::from_top(panel_rect, Horizontal::Center, button_margin_v);
         let level_title = new_text(&level_name, anchor_name, 1.0, theme);
-        let below_title = vec2(
-            level_title.rect.center().x,
-            level_title.rect.bottom() + theme.cell_pad(),
+
+        let anchor_below_title =
+            Anchor::below(level_title.rect(), Horizontal::Center, theme.cell_pad());
+        let satisfaction_panel = SatisfactionPanel::new(satisfaction, anchor_below_title, theme);
+
+        let anchor = Anchor::below_v(
+            satisfaction_panel.rect(),
+            Horizontal::Center,
+            button_margin_v,
         );
+        let restart_game = new_button("RESTART", anchor, &theme);
 
-        let anchor_next = Anchor::top_center_v(below_title);
-        let restart_game = new_button("RESTART", anchor_next, &theme);
+        let anchor = Anchor::from_bottom(panel_rect, Horizontal::Right, button_margin_v);
+        let next_game = new_button("NEXT", anchor, &theme);
 
-        let anchor_next = Anchor::below(restart_game.rect(), Horizontal::Center, theme.cell_pad());
-        let next_game = new_button("NEXT", anchor_next, &theme);
+        let anchor = Anchor::from_bottom(panel_rect, Horizontal::Left, button_margin_v);
+        let main_menu = new_button("CAMPAIGN", anchor, theme);
 
-        let anchor_bottom = Anchor::bottom_center_v(vec2(
-            panel_rect.x + panel_rect.w * 0.5,
-            panel_rect.bottom() - theme.button_margin(),
-        ));
-        let main_menu = new_button("CAMPAIGN", anchor_bottom, theme);
-
-        Self {
+        let mut s = Self {
             rect: panel_rect,
             level_title,
             restart_game,
             next_game,
             main_menu,
             show_solution: None,
-            satisfaction: SatisfactionPanel::Unknown,
+            satisfaction: satisfaction_panel,
             allow_next: false,
-        }
+        };
+        s.add_satisfaction(&satisfaction, theme, &mut false);
+        s
     }
 
     pub fn allow_next(&mut self) {
@@ -82,13 +87,21 @@ impl Panel {
         theme: &Theme,
         show_solution: &mut bool,
     ) {
-        let satisfaction_panel = SatisfactionPanel::new(*satisfaction, self.filled_rect(), theme);
+        let anchor = Anchor::below(
+            self.level_title.rect(),
+            Horizontal::Center,
+            theme.cell_pad(),
+        );
+        let satisfaction_panel = SatisfactionPanel::new(*satisfaction, anchor, theme);
         self.satisfaction = satisfaction_panel;
         let mut rect = self.satisfaction.rect();
         self.show_solution = if satisfaction.success() || SEE_SOLUTION_DURING_GAME {
             rect.x = self.rect.x;
             rect.w = self.rect.w;
-            let show_anchor = Anchor::below(rect, Horizontal::Center, theme.button_margin());
+            let small_margin = Vec2::splat(theme.cell_pad());
+
+            let anchor =
+                Anchor::below_v(self.restart_game.rect(), Horizontal::Center, small_margin);
             let show_text = if *show_solution {
                 "HIDE SOLUTION"
             } else if satisfaction.success() {
@@ -96,7 +109,8 @@ impl Panel {
             } else {
                 "GIVE UP"
             };
-            let show = new_button(show_text, show_anchor, &theme);
+            let show = new_button(show_text, anchor, &theme);
+
             Some(show)
         } else {
             None
@@ -104,7 +118,7 @@ impl Panel {
     }
     pub fn filled_rect(&self) -> Rect {
         let mut rect = self.rect;
-        rect.h = self.next_game.rect().bottom() - rect.y;
+        rect.h = self.level_title.rect().bottom() - rect.y;
         rect
     }
 
@@ -169,7 +183,6 @@ enum SatisfactionPanel {
         successes: Vec<bool>,
         tooltips: Vec<Tooltip>,
     },
-    Unknown,
 }
 
 enum Tooltip {
@@ -190,9 +203,8 @@ pub fn station_render() -> impl Fn(&Theme) {
 }
 
 impl SatisfactionPanel {
-    pub fn new(satisfaction: Satisfaction, previous_rect: Rect, theme: &Theme) -> Self {
+    pub fn new(satisfaction: Satisfaction, anchor: Anchor, theme: &Theme) -> Self {
         if satisfaction.success() {
-            let anchor = Anchor::below(previous_rect, Horizontal::Center, theme.button_margin());
             let text = new_text(&"SOLVED!", anchor, 2.0, &theme);
             Self::Solved { text }
         } else {
@@ -205,11 +217,12 @@ impl SatisfactionPanel {
             let (texts_success, tooltips) = split_tuple(texts_and_tooltips);
             let (texts, successes) = split_tuple(texts_success);
 
-            let anchor_point = vec2(
-                previous_rect.center().x,
-                previous_rect.bottom() + theme.button_margin(),
+            let anchor = Anchor::chain(
+                Horizontal::Left,
+                Vertical::Top,
+                anchor,
+                vec2(0.0, theme.button_margin()),
             );
-            let anchor = Anchor::top_left_v(anchor_point);
             let labels = new_text_group_generic(
                 anchor,
                 theme,
@@ -283,8 +296,8 @@ impl SatisfactionPanel {
                 let start = icon_rect.center() - width * 0.5;
                 draw_rail(start, start + width, theme, true);
                 draw_station(theme, true, SUCCESS, SUCCESS_DARK, start, width, false);
-                let start_2 = start - width;
-                draw_line_thickness(start_2, start, theme.cell_pad(), BACKGROUND);
+                let start_2 = start - width * 1.2;
+                draw_line_thickness(start_2, start_2 + width, theme.cell_pad(), BACKGROUND);
                 draw_blockade(
                     theme,
                     true,
@@ -312,7 +325,6 @@ impl SatisfactionPanel {
                 let end = icon_rect.center() + length * 0.5;
                 draw_rail(end - length, end, theme, true);
             }
-            Self::Unknown => {}
         }
     }
 
@@ -329,7 +341,6 @@ impl SatisfactionPanel {
                     }
                 }
             }
-            Self::Unknown => {}
         }
     }
 }
@@ -349,16 +360,8 @@ impl Widget for SatisfactionPanel {
     fn rect(&self) -> Rect {
         match self {
             SatisfactionPanel::Solved { text } => text.rect(),
-            SatisfactionPanel::Unsolved { texts, .. } =>
-            //Rect::default(),
-            {
-                texts
-                    .first()
-                    .unwrap()
-                    .rect()
-                    .combine_with(texts.last().unwrap().rect())
-            }
-            SatisfactionPanel::Unknown => panic!("logic error: should be unreachable"),
+            SatisfactionPanel::Unsolved { texts, .. } => get_icon_rect(texts.first().unwrap())
+                .combine_with(get_icon_rect(texts.last().unwrap())),
         }
     }
 

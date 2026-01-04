@@ -73,6 +73,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                 .resize_grid(state.in_progress().rows(), state.in_progress().columns());
             panel = Panel::new(
                 theme.button_panel_rect(state.in_progress()),
+                compute_satisfaction(&state.game_track.in_progress, state.constraints()),
                 theme,
                 state.game_track,
             );
@@ -338,12 +339,15 @@ fn setup<'a>(theme: &mut Theme, game_track: &'a mut GameTrack) -> (State<'a>, Pa
         game_track.in_progress.columns(),
     );
     let show_solution = DEFAULT_SHOW_SOLUTION;
-    let previous_satisfaction = None;
     let success_sound_played = false;
+    let satisfaction = compute_satisfaction(
+        &game_track.in_progress,
+        &game_track.get_current().constraints,
+    );
     let state = State {
         game_track,
         show_solution,
-        previous_satisfaction,
+        previous_satisfaction: Some(satisfaction),
         success_sound_played,
         ui: UiState {
             tooltip_showing: None,
@@ -351,6 +355,7 @@ fn setup<'a>(theme: &mut Theme, game_track: &'a mut GameTrack) -> (State<'a>, Pa
     };
     let panel = Panel::new(
         theme.button_panel_rect(&state.game_track.in_progress),
+        satisfaction,
         theme,
         &state.game_track,
     );

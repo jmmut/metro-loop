@@ -1,11 +1,11 @@
-use crate::logic::constraints::{matches_constraint_and_reachable, Constraint, Reverse};
+use crate::logic::constraints::{matches_constraint_and_reachable, Constraint};
 use crate::logic::grid::{get_cell, is_system_fixed};
 use crate::logic::intersection::{Crossing, Intersection};
 use crate::theme::Theme;
 use crate::*;
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::lazy::add_contour;
-use juquad::widgets::anchor::{Anchor, Horizontal, Sense};
+use juquad::widgets::anchor::Horizontal;
 use macroquad::math::f32;
 use macroquad::prelude::*;
 
@@ -216,11 +216,11 @@ pub fn draw_rail(start: Vec2, end: Vec2, theme: &Theme, reachable: bool) {
         calculate_and_draw_triangle(
             theme,
             color,
+            TRIANGLE_BORDER,
             start,
-            end,
+            end - start,
             direction,
             leftwards,
-            TRIANGLE_BORDER,
         );
     }
 }
@@ -228,14 +228,13 @@ pub fn draw_rail(start: Vec2, end: Vec2, theme: &Theme, reachable: bool) {
 fn calculate_and_draw_triangle(
     theme: &Theme,
     color: Color,
+    color_border: Color,
     start: Vec2,
-    end: Vec2,
+    length: Vec2,
     direction: Vec2,
     leftwards: Vec2,
-    color_border: Color,
 ) {
-    let length = end - start;
-    let mid = (start + end) * 0.5;
+    let mid = start + length * 0.5;
     let triangle_half_width = length.length() * theme.small_triangle_half_width();
     let left = mid + leftwards * triangle_half_width;
     let right = mid - leftwards * triangle_half_width;
@@ -263,34 +262,26 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
         let start = corner - reverse as i32 as f32 * length;
 
         match constraint_render {
-            Constraint::Station(sense) => {
+            Constraint::Station(_) => {
                 draw_station(
                     theme,
                     success,
-                    reversed_rail,
                     color,
                     color_border,
-                    length,
                     start,
+                    length,
                     reachable,
                 );
             }
             Constraint::Blockade => {
-                let end = start + length;
-                let mid = (start + end) * 0.5;
-                let diff = (end - start).normalize();
-                let to_left = vec2(diff.y, -diff.x);
                 let enabled = *get(&grid.cells, row, column);
                 draw_blockade(
                     theme,
                     success,
                     color,
                     color_border,
-                    mid,
-                    diff,
-                    to_left,
                     start,
-                    end,
+                    length,
                     reversed_rail.is_reverse(),
                     enabled,
                     reachable,
@@ -331,15 +322,14 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
 pub fn draw_station(
     theme: &Theme,
     success: bool,
-    reversed_rail: Reverse,
     color: Color,
     color_border: Color,
-    length: Vec2,
     start: Vec2,
+    length: Vec2,
     reachable: bool,
 ) {
-    let small_triangle_half_width = length.length() * theme.small_triangle_half_width();
-    let triangle_half_width = length.length() * theme.triangle_half_width();
+    let small_triangle_half_width: f32 = length.length() * theme.small_triangle_half_width();
+    let triangle_half_width: f32 = length.length() * theme.triangle_half_width();
     let end = start + length;
     let mid = (start + end) * 0.5;
     let mut diff = (end - start).normalize();
@@ -363,33 +353,31 @@ pub fn draw_station(
         color_border,
     );
     if !success && reachable {
-        if reversed_rail != Reverse::None {
-            diff *= -1.0;
-            calculate_and_draw_triangle(theme, color_border, start, end, diff, to_left, color);
-        }
+        diff *= -1.0;
+        calculate_and_draw_triangle(theme, color, color_border, start, length, diff, to_left);
     }
 }
 
-fn draw_blockade(
+pub fn draw_blockade(
     theme: &Theme,
     success: bool,
     color: Color,
     color_border: Color,
-    mid: Vec2,
-    mut direction: Vec2,
-    to_left: Vec2,
     start: Vec2,
-    end: Vec2,
+    length: Vec2,
     reverse: bool,
     enabled: bool,
     reachable: bool,
 ) {
-    let length = (end - start).length();
-    let small_triangle_half_width = length * theme.small_triangle_half_width();
-    let forward = direction * small_triangle_half_width * 1.0;
-    let forward_long = direction * small_triangle_half_width * 2.0;
-    // let leftward = to_left * (theme.cell_pad() * 0.5 + 1.0);
+    let mid = start + length * 0.5;
+    let mut direction = length.normalize();
+    let to_left = vec2(direction.y, -direction.x);
+    let small_triangle_half_width: f32 = length.length() * theme.small_triangle_half_width();
+    let forward = direction * small_triangle_half_width * 1.5;
+    let forward_long = direction * small_triangle_half_width * 2.5;
     let leftward = to_left * small_triangle_half_width * 0.5;
+    let leftward_gap = to_left * (theme.cell_pad() * 0.5 + 1.0);
+    // let leftward_gap = to_left * theme.cell_pad() * 0.5;
     let al = mid + forward_long + leftward;
     let a = mid + forward + leftward;
     let bl = mid + forward_long - leftward;
@@ -406,7 +394,15 @@ fn draw_blockade(
     // if success {
     if success {
         let center_color = if enabled { ENABLED_CELL } else { DISABLED_CELL };
-        draw_triangles(&[a, b, c, d], center_color);
+        draw_triangles(
+            &[
+                mid + forward + leftward_gap,
+                mid + forward - leftward_gap,
+                mid - forward + leftward_gap,
+                mid - forward - leftward_gap,
+            ],
+            center_color,
+        );
     }
     draw_triangles(&[al, a, bl, b], color);
     draw_lines(&[al, a, b, bl, al], color_border);
@@ -427,7 +423,15 @@ fn draw_blockade(
             direction *= -1.0;
         }
         // calculate_and_draw_triangle(theme, color, start, end, direction, to_left, color_border);
-        calculate_and_draw_triangle(theme, color, start, end, direction, to_left, color_border);
+        calculate_and_draw_triangle(
+            theme,
+            color,
+            color_border,
+            start,
+            length,
+            direction,
+            to_left,
+        );
         // calculate_and_draw_triangle(theme, RAIL, start, end, direction, to_left, TRIANGLE_BORDER);
 
         //     let forward = diff * thickness * 0.5;
@@ -450,21 +454,15 @@ fn render_user_rail_constraint(
     theme: &Theme,
 ) {
     let start = top_left_rail_intersection(row, column, theme);
-    let end = start + direction * (theme.cell_width() + theme.cell_pad());
-    let mid = (start + end) * 0.5;
-    let diff = (end - start).normalize();
-    let to_left = vec2(diff.y, -diff.x);
+    let length = direction * (theme.cell_width() + theme.cell_pad());
     let (success, reverse, reachable) = matches_constraint_and_reachable(grid, &constraint);
     draw_blockade(
         theme,
         success,
         RAIL,
         TRIANGLE_BORDER,
-        mid,
-        diff,
-        to_left,
         start,
-        end,
+        length,
         reverse.is_reverse(),
         *get(&grid.cells, row, column),
         reachable,
@@ -522,7 +520,7 @@ pub fn draw_line_v(start: Vec2, end: Vec2, color: Color) {
     draw_line_thickness(start, end, 1.0, color)
 }
 
-fn draw_line_thickness(start: Vec2, end: Vec2, thickness: f32, color: Color) {
+pub fn draw_line_thickness(start: Vec2, end: Vec2, thickness: f32, color: Color) {
     draw_line(start.x, start.y, end.x, end.y, thickness, color)
 }
 

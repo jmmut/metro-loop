@@ -1,4 +1,3 @@
-use crate::levels::Level;
 use crate::logic::grid::Grid;
 use crate::scenes::loading_screen::Resources;
 use crate::{NUM_COLUMNS, NUM_ROWS, STYLE};
@@ -307,7 +306,7 @@ mod tests {
             Layout {
                 screen_width: 988.44446,
                 screen_height: 556.0,
-                font_size: 15.0,
+                font_size: 16.0,
                 cell_width: 45.1,
                 cell_height: 45.1,
                 grid_pad: 30.0,
@@ -329,7 +328,7 @@ mod tests {
             Layout {
                 screen_width: 988.44446,
                 screen_height: 556.0,
-                font_size: 15.0,
+                font_size: 16.0,
                 cell_width: 57.625,
                 cell_height: 57.625,
                 grid_pad: 30.0,
@@ -351,7 +350,7 @@ mod tests {
             Layout {
                 screen_width: 1976.8889,
                 screen_height: 1112.0,
-                font_size: 22.5,
+                font_size: 24.0,
                 cell_width: 95.45,
                 cell_height: 95.45,
                 grid_pad: 45.0,

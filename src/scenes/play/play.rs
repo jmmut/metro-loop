@@ -1,4 +1,4 @@
-use crate::level_history::{generate_procedural, GameTrack};
+use crate::level_history::GameTrack;
 use crate::levels::Level;
 use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
 use crate::logic::grid::{
@@ -7,11 +7,11 @@ use crate::logic::grid::{
 };
 use crate::render::{render_cells, render_constraints, render_grid};
 use crate::scenes::play::panel::Panel;
-use crate::theme::{new_text, render_button, render_text, render_tooltip, Theme};
+use crate::theme::{new_text, render_text, render_tooltip, Theme};
 use crate::{
     new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, CACHE_TEXTURE,
     DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF, SHOW_FPS, SHOW_SLIDER, STEP_GENERATION, STYLE,
-    TEXT_STYLE, TOOLTIP_DELAY, VISUALIZE,
+    TEXT_STYLE, TOOLTIP_DELAY,
 };
 use juquad::lazy::{set_positions, Interactable, Renderable, WidgetTrait};
 use juquad::widgets::anchor::{Anchor, Horizontal};
@@ -251,7 +251,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
 fn use_debug_slider(
     theme: &mut Theme,
     panel: &Panel,
-    mut slider_value: &mut f32,
+    slider_value: &mut f32,
     refresh_render: &mut bool,
     resize: &mut bool,
 ) {
@@ -325,9 +325,9 @@ impl Tooltips {
     pub fn render(&self, pos: Vec2, theme: &Theme) {
         let anchor = Anchor::bottom_left_v(Vec2::from(pos));
         let text = match self {
-            Tooltips::FixedCell => "Can't change locked cells",
-            Tooltips::UserFixedCell => "Can't change locked cells, use right click to unlock",
-            Tooltips::EditSolution => "Can't change cells from solution, click 'HIDE SOLUTION'",
+            Tooltips::FixedCell => "Can't change locked blocks",
+            Tooltips::UserFixedCell => "Can't change locked blocks, use right click to unlock",
+            Tooltips::EditSolution => "Can't change blocks from solution, click 'HIDE SOLUTION'",
         };
         let text_rect = new_text(text, anchor, 1.0, &theme);
         render_tooltip(&text_rect, &TEXT_STYLE);
@@ -508,7 +508,6 @@ impl State<'_> {
 }
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     #[test]

@@ -1,4 +1,3 @@
-use crate::level_history::LevelHistory;
 use crate::levels::Levels;
 use crate::sound::Sounds;
 use crate::theme::{new_text_unloaded, render_text, Preferences, Theme};

@@ -1,17 +1,19 @@
 use crate::level_history::GameTrack;
-use crate::logic::constraints::{Reverse, Satisfaction};
-use crate::render::{draw_rail, draw_station, render_cross, render_tick};
+use crate::logic::constraints::Satisfaction;
+use crate::render::{
+    draw_blockade, draw_line_thickness, draw_rail, draw_station, render_cross, render_tick,
+};
 use crate::theme::{
     labels_from_theme, new_button, new_text, new_text_group_generic, render_button, render_text,
     render_tooltip, Theme,
 };
 use crate::{
-    ENABLED_CELL, PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, SUCCESS, SUCCESS_DARK, TEXT_STYLE,
-    TRIANGLE, TRIANGLE_BORDER,
+    BACKGROUND, ENABLED_CELL, PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, SUCCESS, SUCCESS_DARK,
+    TEXT_STYLE, TRIANGLE, TRIANGLE_BORDER,
 };
-use juquad::draw::{draw_rect, draw_rect_lines, to_rect};
+use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::lazy::add_contour;
-use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
+use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::text::TextRect;
@@ -35,7 +37,7 @@ impl Panel {
             panel_rect.x + panel_rect.w * 0.5,
             panel_rect.y + theme.button_pad(),
         );
-        let half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
+        let _half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
 
         let level_name = game_track.current.to_string();
         let anchor_name = Anchor::top_center_v(anchor_point);
@@ -187,9 +189,9 @@ impl SatisfactionPanel {
         } else {
             #[rustfmt::skip]
             let texts_and_tooltips = [
-                ((&satisfaction.stations.format(), satisfaction.stations.success()), "satisfied stations"),
-                ((&satisfaction.cell_count.format(), satisfaction.cell_count.success()), "active cells"),
-                ((&satisfaction.reachable.format(), satisfaction.reachable.success()), "reachable rails"),
+                ((&satisfaction.stations.format(), satisfaction.stations.success()), "Satisfied bridges and stations"),
+                ((&satisfaction.cell_count.format(), satisfaction.cell_count.success()), "Active blocks"),
+                ((&satisfaction.reachable.format(), satisfaction.reachable.success()), "Reachable rails"),
             ];
             let (texts_success, tooltips) = split_tuple(texts_and_tooltips);
             let (texts, successes) = split_tuple(texts_success);
@@ -272,16 +274,22 @@ impl SatisfactionPanel {
                 let margin_x = vec2(icon_size.x * 0.375, 0.0);
                 let anchor = Anchor::top_right_v(cross_tick_rects[0].point() - margin_x);
                 let icon_rect = anchor.get_rect(icon_size);
-                let icon_rect = add_contour(icon_rect, Vec2::splat(theme.cell_pad()));
+                // let icon_rect = add_contour(icon_rect, Vec2::splat(theme.cell_pad()));
                 let width = vec2(icon_rect.w, 0.0);
-                draw_station(
+                let start = icon_rect.center() - width * 0.5;
+                draw_rail(start, start + width, theme, true);
+                draw_station(theme, true, SUCCESS, SUCCESS_DARK, start, width, false);
+                let start_2 = start - width;
+                draw_line_thickness(start_2, start, theme.cell_pad(), BACKGROUND);
+                draw_blockade(
                     theme,
                     true,
-                    Reverse::Regular,
                     SUCCESS,
                     SUCCESS_DARK,
+                    start_2,
                     width,
-                    icon_rect.center() - width * 0.5,
+                    false,
+                    false,
                     false,
                 );
 

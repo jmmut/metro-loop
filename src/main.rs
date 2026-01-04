@@ -19,6 +19,7 @@ async fn main() -> Result<(), AnyError> {
     loop {
         next_stage = match next_stage {
             NextStage::MainMenu => scenes::main_menu(&mut theme).await?,
+            NextStage::LevelSelector => scenes::level_selector(&mut theme, &mut game_track).await?,
             NextStage::Campaign => scenes::play(&mut theme, &mut game_track).await?,
             NextStage::Options => scenes::options(&mut theme).await?,
             NextStage::Quit => return Ok(()),

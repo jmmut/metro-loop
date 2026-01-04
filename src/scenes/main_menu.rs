@@ -51,14 +51,14 @@ pub async fn main_menu(theme: &mut Theme) -> Result<NextStage, AnyError> {
             LabelGroup {
                 font_size: 1.5,
                 anchor,
-                pad_x: Some(theme.button_pad() * 4.0),
+                pad_x: Some(theme.button_margin() * 4.0),
                 ..labels_from_theme(theme)
             },
         );
         let mut buttons: Buttons = labels.create(["CAMPAIGN", "OPTIONS", "QUIT"]).into();
 
         if buttons.campaign.interact().is_clicked() {
-            return Ok(NextStage::Campaign);
+            return Ok(NextStage::LevelSelector);
         }
         if buttons.options.interact().is_clicked() {
             return Ok(NextStage::Options);

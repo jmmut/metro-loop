@@ -35,7 +35,7 @@ impl Panel {
     pub fn new(panel_rect: Rect, theme: &Theme, game_track: &GameTrack) -> Self {
         let anchor_point = vec2(
             panel_rect.x + panel_rect.w * 0.5,
-            panel_rect.y + theme.button_pad(),
+            panel_rect.y + theme.button_margin(),
         );
         let _half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
 
@@ -55,9 +55,9 @@ impl Panel {
 
         let anchor_bottom = Anchor::bottom_center_v(vec2(
             panel_rect.x + panel_rect.w * 0.5,
-            panel_rect.bottom() - theme.button_pad(),
+            panel_rect.bottom() - theme.button_margin(),
         ));
-        let main_menu = new_button("MENU", anchor_bottom, theme);
+        let main_menu = new_button("CAMPAIGN", anchor_bottom, theme);
 
         Self {
             rect: panel_rect,
@@ -81,7 +81,7 @@ impl Panel {
         self.show_solution = if satisfaction.success() || SEE_SOLUTION_DURING_GAME {
             rect.x = self.rect.x;
             rect.w = self.rect.w;
-            let show_anchor = Anchor::below(rect, Horizontal::Center, theme.button_pad());
+            let show_anchor = Anchor::below(rect, Horizontal::Center, theme.button_margin());
             let show_text = if *show_solution {
                 "HIDE SOLUTION"
             } else if satisfaction.success() {
@@ -183,7 +183,7 @@ pub fn station_render() -> impl Fn(&Theme) {
 impl SatisfactionPanel {
     pub fn new(satisfaction: Satisfaction, previous_rect: Rect, theme: &Theme) -> Self {
         if satisfaction.success() {
-            let anchor = Anchor::below(previous_rect, Horizontal::Center, theme.button_pad());
+            let anchor = Anchor::below(previous_rect, Horizontal::Center, theme.button_margin());
             let text = new_text(&"SOLVED!", anchor, 2.0, &theme);
             Self::Solved { text }
         } else {
@@ -198,7 +198,7 @@ impl SatisfactionPanel {
 
             let anchor_point = vec2(
                 previous_rect.center().x,
-                previous_rect.bottom() + theme.button_pad(),
+                previous_rect.bottom() + theme.button_margin(),
             );
             let anchor = Anchor::top_left_v(anchor_point);
             let labels = new_text_group_generic(

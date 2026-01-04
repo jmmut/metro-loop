@@ -473,7 +473,7 @@ fn top_left_rail_intersection(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 
     cell_top_left(i_row, i_column, theme) - theme.cell_pad() * 0.5
 }
 
-fn cell_top_left(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 {
+pub fn cell_top_left(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 {
     let x = theme.grid_pad() + i_column as f32 * (theme.cell_width() + theme.cell_pad());
     let y = theme.grid_pad() + i_row as f32 * (theme.cell_height() + theme.cell_pad());
     vec2(x, y)

@@ -6,8 +6,8 @@ use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::{ButtonGroup, Direction, LabelGroup};
 use juquad::widgets::text::TextRect;
-use juquad::widgets::StateStyle;
 use juquad::widgets::Widget;
+use juquad::widgets::{Interaction, StateStyle};
 use macroquad::math::{f32, Rect};
 use macroquad::prelude::Font;
 
@@ -122,16 +122,26 @@ impl Theme {
     pub fn grid_width(&self, grid: &Grid) -> f32 {
         (self.cell_width() + self.cell_pad()) * grid.columns() as f32 - self.cell_pad()
     }
+    pub fn default_width(&self) -> f32 {
+        (self.cell_width() + self.cell_pad()) * self.default_columns() as f32 - self.cell_pad()
+    }
 
     pub fn grid_height(&self, grid: &Grid) -> f32 {
         (self.cell_height() + self.cell_pad()) * grid.rows() as f32 - self.cell_pad()
+    }
+    pub fn default_height(&self) -> f32 {
+        (self.cell_height() + self.cell_pad()) * self.default_rows() as f32 - self.cell_pad()
     }
 
     pub fn button_panel_width(&self, grid: &Grid) -> f32 {
         let (sw, _sh) = self.useable_screen_size();
         sw - self.grid_pad() * 3.0 - self.grid_width(grid)
     }
-    pub fn button_pad(&self) -> f32 {
+    pub fn default_button_panel_width(&self) -> f32 {
+        let (sw, _sh) = self.useable_screen_size();
+        sw - self.grid_pad() * 3.0 - self.default_width()
+    }
+    pub fn button_margin(&self) -> f32 {
         self.grid_pad()
     }
     pub fn button_panel_rect(&self, grid: &Grid) -> Rect {
@@ -140,6 +150,14 @@ impl Theme {
             self.grid_pad(),
             self.button_panel_width(grid),
             self.grid_height(grid),
+        )
+    }
+    pub fn default_button_panel_rect(&self) -> Rect {
+        Rect::new(
+            self.default_width() + self.grid_pad() * 2.0,
+            self.grid_pad(),
+            self.default_button_panel_width(),
+            self.default_height(),
         )
     }
     pub fn preferred_rows(&self) -> i32 {
@@ -185,6 +203,12 @@ impl Theme {
 pub fn new_button(text: &str, anchor: Anchor, theme: &Theme) -> Button {
     let text_rect = new_text(text, anchor, 1.0, theme);
     text_rect.into()
+}
+pub fn new_imm_button(text: &str, anchor: Anchor, theme: &Theme) -> (Rect, Interaction) {
+    let mut button = new_button(text, anchor, theme);
+    let interaction = button.interact();
+    render_button(&button);
+    (button.rect(), interaction)
 }
 
 pub fn labels_from_theme(theme: &Theme) -> LabelGroup {

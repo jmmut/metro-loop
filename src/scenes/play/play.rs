@@ -203,7 +203,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         }
 
         if panel.main_menu.interaction().is_clicked() || is_key_pressed(KeyCode::Escape) {
-            return Ok(NextStage::MainMenu);
+            return Ok(NextStage::LevelSelector);
         }
         panel.interact(theme);
         if is_key_pressed(KeyCode::N) || panel.next_game.interaction().is_clicked() {
@@ -461,11 +461,22 @@ pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
     solution
 }
 
-fn pixel_to_coord(pixel_pos: Vec2, grid: &Grid, theme: &Theme) -> Option<(i32, i32)> {
+pub fn pixel_to_coord(pixel_pos: Vec2, grid: &Grid, theme: &Theme) -> Option<(i32, i32)> {
     pixel_to_coord_inner(
         pixel_pos,
         grid.rows(),
         grid.columns(),
+        theme.grid_pad(),
+        theme.cell_pad(),
+        theme.cell_width(),
+        theme.cell_height(),
+    )
+}
+pub fn default_pixel_to_coord(pixel_pos: Vec2, theme: &Theme) -> Option<(i32, i32)> {
+    pixel_to_coord_inner(
+        pixel_pos,
+        theme.default_rows(),
+        theme.default_columns(),
         theme.grid_pad(),
         theme.cell_pad(),
         theme.cell_width(),

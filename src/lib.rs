@@ -18,6 +18,8 @@ pub mod scenes {
     pub use options::options;
     pub mod loading_screen;
     pub use loading_screen::loading_screen;
+    pub mod level_selector;
+    pub use level_selector::level_selector;
     pub mod play {
         pub mod panel;
         pub mod play;
@@ -151,6 +153,7 @@ pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
 
 pub enum NextStage {
     MainMenu,
+    LevelSelector,
     Campaign,
     Options,
     Quit,

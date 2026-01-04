@@ -11,9 +11,11 @@ pub struct LevelHistory {
     pub levels: Levels,
 }
 
+pub type Solved = Vec<Vec<bool>>;
+
 #[derive(Debug)]
 pub struct GameTrack {
-    pub solved: Vec<Vec<bool>>,
+    pub solved: Solved,
     pub current: CurrentGame,
     pub in_progress: Grid,
     pub cached_level: Level,
@@ -84,6 +86,16 @@ impl GameTrack {
                 self.solved[section as usize][level as usize] = true;
             }
             CurrentGame::Procedural => {}
+        }
+    }
+    pub fn select(&mut self, section: i32, level: i32, levels: &Levels) -> bool {
+        if let Some(level_copy) = levels.maybe_get_level(section, level).cloned() {
+            self.current = CurrentGame::Campaign { section, level };
+            self.cached_level = level_copy;
+            self.in_progress = self.cached_level.initial_grid.clone();
+            true
+        } else {
+            false
         }
     }
 }

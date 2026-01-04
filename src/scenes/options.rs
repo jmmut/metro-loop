@@ -31,15 +31,15 @@ pub async fn options(theme: &mut Theme) -> Result<NextStage, AnyError> {
         clear_background(BACKGROUND);
         draw_rect(panel, PANEL_BACKGROUND);
 
-        let mut point = vec2(panel.center().x, panel.y + theme.button_pad());
+        let mut point = vec2(panel.center().x, panel.y + theme.button_margin());
         for f in [change_font_ui, change_rows, change_columns] {
             point = f(theme, point);
-            point += vec2(0.0, theme.button_pad());
+            point += vec2(0.0, theme.button_margin());
         }
         point = interact_volume(&mut title, &mut volume, theme, point);
-        point += vec2(0.0, theme.button_pad());
+        point += vec2(0.0, theme.button_margin());
 
-        let anchor_point = vec2(panel.center().x, panel.bottom() - theme.button_pad());
+        let anchor_point = vec2(panel.center().x, panel.bottom() - theme.button_margin());
         let mut back = new_button("MENU", Anchor::bottom_center_v(anchor_point), theme);
         if is_key_pressed(KeyCode::Escape) || back.interact().is_clicked() {
             return Ok(NextStage::MainMenu);

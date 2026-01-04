@@ -290,6 +290,12 @@ impl Levels {
             .get(level)
             .unwrap()
     }
+    pub fn maybe_get_level(&self, section: i32, level: i32) -> Option<&Level> {
+        self.sections
+            .get(section as usize)?
+            .levels
+            .get(level as usize)
+    }
 }
 impl Level {
     pub fn from_str(s: &str) -> Result<Level, AnyError> {

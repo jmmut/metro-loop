@@ -166,7 +166,8 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             let satisfaction =
                 compute_satisfaction(&state.game_track.in_progress, state.constraints());
             if satisfaction.success() {
-                state.game_track.solved()
+                state.game_track.solved();
+                panel.allow_next();
             }
             if satisfaction.success() {
                 if !state.success_sound_played {
@@ -176,16 +177,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             }
             panel.add_satisfaction(&satisfaction, &theme, &mut state.show_solution);
             panel.render_static(theme);
-            // if let Some(previous) = &previous_satisfaction {
-            //     if should_play_sound {
-            //         should_play_sound = false;
-            //         if satisfaction.failing_rails < previous.failing_rails {
-            //             play_sound(sound_correct, PlaySoundParams::default());
-            //         } else if satisfaction.failing_rails > previous.failing_rails {
-            //             play_sound(sound_incorrect, PlaySoundParams::default());
-            //         }
-            //     }
-            // }
+
             state.previous_satisfaction = Some(satisfaction);
 
             if state.show_solution {

@@ -1,7 +1,8 @@
 use crate::level_history::{GameTrack, Solved};
 use crate::render::{cell_top_left, render_rail, RenderRail};
 use crate::scenes::play::default_pixel_to_coord;
-use crate::theme::{new_imm_button, new_text, render_text, Theme};
+use crate::scenes::play::panel::{get_icon_rect, render_tick_or_cross};
+use crate::theme::{new_imm_button, new_text, render_text, render_tooltip, Theme};
 use crate::{
     new_layout, AnyError, NextStage, BACKGROUND, DISABLED_CELL, ENABLED_CELL, HOVERED_CELL,
     PANEL_BACKGROUND, RAIL, TEXT_STYLE, UNREACHABLE_RAIL,
@@ -9,7 +10,9 @@ use crate::{
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::Widget;
-use macroquad::input::{is_mouse_button_pressed, mouse_position, MouseButton};
+use macroquad::input::{
+    is_key_pressed, is_mouse_button_pressed, mouse_position, KeyCode, MouseButton,
+};
 use macroquad::math::{IVec2, Rect, Vec2};
 use macroquad::prelude::{
     clear_background, draw_rectangle, next_frame, screen_height, screen_width, vec2,
@@ -41,8 +44,8 @@ pub async fn level_selector(
                 new_layout(screen.x, screen.y).resize_grid(grid_sections, longest_section);
         }
 
-        let pos = Vec2::from(mouse_position());
-        let hovered_cell = default_pixel_to_coord(pos, &theme);
+        let mouse_pos = Vec2::from(mouse_position());
+        let hovered_cell = default_pixel_to_coord(mouse_pos, &theme);
 
         clear_background(BACKGROUND);
         render_solved(&game_track.solved, &hovered_cell, theme);
@@ -51,7 +54,7 @@ pub async fn level_selector(
         draw_rect(panel, PANEL_BACKGROUND);
 
         if is_mouse_button_pressed(MouseButton::Left) {
-            if !panel.contains(pos) {
+            if !panel.contains(mouse_pos) {
                 selected_level = hovered_cell;
             };
         }
@@ -63,15 +66,29 @@ pub async fn level_selector(
                 let title = new_text(&level_name, anchor, 1.0, theme);
                 render_text(&title, &TEXT_STYLE);
 
+                let icon_rect = get_icon_rect(&title);
+                let solved = game_track.is_solved(i_row, i_column);
+                render_tick_or_cross(icon_rect, solved, theme);
+                if icon_rect.contains(mouse_pos) || title.rect().contains(mouse_pos) {
+                    let anchor = Anchor::bottom_right_v(mouse_pos);
+                    let text = if solved {
+                        "Level is solved"
+                    } else {
+                        "Level is unsolved"
+                    };
+                    let tooltip = new_text(text, anchor, 1.0, theme);
+                    render_tooltip(&tooltip, &TEXT_STYLE)
+                }
+
                 let anchor = Anchor::below(title.rect(), Horizontal::Center, theme.button_margin());
                 if new_imm_button("PLAY", anchor, theme).1.is_clicked() {
                     return Ok(NextStage::Campaign);
                 }
-                render_rails_on_selected_level(i_row, i_column, game_track, theme);
+                render_rails_on_selected_level(i_row, i_column, solved, theme);
             }
         }
         let anchor = Anchor::from_bottom(panel, Horizontal::Center, button_margin_v);
-        if new_imm_button("MENU", anchor, theme).1.is_clicked() {
+        if is_key_pressed(KeyCode::Escape) || new_imm_button("MENU", anchor, theme).1.is_clicked() {
             return Ok(NextStage::MainMenu);
         }
 
@@ -79,15 +96,10 @@ pub async fn level_selector(
     }
 }
 
-fn render_rails_on_selected_level(
-    i_row: i32,
-    i_column: i32,
-    game_track: &GameTrack,
-    theme: &Theme,
-) {
+fn render_rails_on_selected_level(i_row: i32, i_column: i32, is_solved: bool, theme: &Theme) {
     let points = [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)];
     for i in 1..points.len() {
-        let level_solved = game_track.is_solved(i_row, i_column);
+        let level_solved = is_solved;
         render_rail(
             RenderRail::Some {
                 reachable: level_solved,

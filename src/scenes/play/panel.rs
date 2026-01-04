@@ -29,6 +29,7 @@ pub struct Panel {
     pub main_menu: Button,
     pub show_solution: Option<Button>,
     satisfaction: SatisfactionPanel,
+    allow_next: bool,
 }
 
 impl Panel {
@@ -67,8 +68,14 @@ impl Panel {
             main_menu,
             show_solution: None,
             satisfaction: SatisfactionPanel::Unknown,
+            allow_next: false,
         }
     }
+
+    pub fn allow_next(&mut self) {
+        self.allow_next = true;
+    }
+
     pub fn add_satisfaction(
         &mut self,
         satisfaction: &Satisfaction,
@@ -119,18 +126,20 @@ impl Panel {
         self.satisfaction.render_interactive();
     }
     pub fn buttons(&self) -> Vec<&Button> {
-        let mut buttons = vec![&self.main_menu, &self.restart_game, &self.next_game];
+        let mut buttons = vec![&self.main_menu, &self.restart_game];
+        if self.allow_next {
+            buttons.push(&self.next_game);
+        }
         if let Some(button) = self.show_solution.as_ref() {
             buttons.push(button)
         }
         buttons
     }
     pub fn buttons_mut(&mut self) -> Vec<&mut Button> {
-        let mut buttons = vec![
-            &mut self.main_menu,
-            &mut self.restart_game,
-            &mut self.next_game,
-        ];
+        let mut buttons = vec![&mut self.main_menu, &mut self.restart_game];
+        if self.allow_next {
+            buttons.push(&mut self.next_game);
+        }
         if let Some(button) = self.show_solution.as_mut() {
             buttons.push(button)
         }
@@ -234,9 +243,7 @@ impl SatisfactionPanel {
             } => {
                 let mouse_pos = Vec2::from(mouse_position());
                 for (i, text) in texts.iter().enumerate() {
-                    if text.rect().contains(mouse_pos)
-                        || Self::get_icon_rect(text).contains(mouse_pos)
-                    {
+                    if text.rect().contains(mouse_pos) || get_icon_rect(text).contains(mouse_pos) {
                         let anchor = Anchor::bottom_right_v(mouse_pos);
                         let tooltip = new_text(tooltips[i].text(), anchor, 1.0, theme);
                         tooltips[i] = Tooltip::Renderable(tooltip);
@@ -261,13 +268,10 @@ impl SatisfactionPanel {
             } => {
                 let mut cross_tick_rects = Vec::new();
                 for (i, text_rect) in texts.iter().enumerate() {
-                    let icon_rect = Self::get_icon_rect(text_rect);
-                    cross_tick_rects.push((if successes[i] {
-                        render_tick
-                    } else {
-                        render_cross
-                    })(icon_rect, theme));
                     render_text(&text_rect, &TEXT_STYLE);
+                    let icon_rect = get_icon_rect(text_rect);
+                    cross_tick_rects.push(icon_rect);
+                    render_tick_or_cross(icon_rect, successes[i], theme);
                 }
                 assert_eq!(cross_tick_rects.len(), 3);
                 let icon_size = cross_tick_rects[0].size();
@@ -312,13 +316,6 @@ impl SatisfactionPanel {
         }
     }
 
-    fn get_icon_rect(text_rect: &TextRect) -> Rect {
-        let icon_size = text_rect.rect().h;
-        let anchor = Anchor::top_right_v(text_rect.rect().point());
-        let icon_rect = anchor.get_rect(vec2(icon_size, icon_size));
-        icon_rect
-    }
-
     pub fn render_interactive(&self) {
         match self {
             Self::Solved { .. } => {}
@@ -335,6 +332,17 @@ impl SatisfactionPanel {
             Self::Unknown => {}
         }
     }
+}
+
+pub fn get_icon_rect(text_rect: &TextRect) -> Rect {
+    let icon_size = text_rect.rect().h;
+    let anchor = Anchor::top_right_v(text_rect.rect().point());
+    let icon_rect = anchor.get_rect(vec2(icon_size, icon_size));
+    icon_rect
+}
+
+pub fn render_tick_or_cross(icon_rect: Rect, enabled: bool, theme: &Theme) -> Rect {
+    (if enabled { render_tick } else { render_cross })(icon_rect, theme)
 }
 
 impl Widget for SatisfactionPanel {

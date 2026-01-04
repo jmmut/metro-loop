@@ -45,21 +45,21 @@ impl GameTrack {
             cached_level,
         })
     }
-    pub fn get_current_ids(&self) -> Option<(i32, i32)> {
+    pub fn get_current_ids(&self) -> (i32, i32) {
         match self.current {
-            CurrentGame::Campaign { section, level } => Some((section, level)),
-            CurrentGame::Procedural => None,
+            CurrentGame::Campaign { section, level } => (section, level),
+            CurrentGame::Procedural => (self.solved.len() as i32, 0),
         }
     }
     pub async fn get_next_unsolved_ids(&mut self, theme: &Theme) -> Option<(i32, i32)> {
-        while let Some((section, level)) = self.get_current_ids() {
+        loop {
+            let (section, level) = self.get_current_ids();
             if self.is_solved(section, level) {
                 self.next(theme).await;
             } else {
                 return Some((section, level));
             }
         }
-        None
     }
     pub fn get_current(&self) -> &Level {
         &self.cached_level
@@ -97,7 +97,14 @@ impl GameTrack {
         self
     }
     pub fn is_solved(&self, section: i32, level: i32) -> bool {
-        *get(&self.solved, section, level)
+        if self.is_random_index(section, level) {
+            false
+        } else {
+            *get(&self.solved, section, level)
+        }
+    }
+    pub fn is_random_index(&self, section: i32, level: i32) -> bool {
+        section == self.solved.len() as i32 && level == 0
     }
     pub fn solved(&mut self) {
         match self.current {
@@ -107,11 +114,25 @@ impl GameTrack {
             CurrentGame::Procedural => {}
         }
     }
-    pub fn select(&mut self, section: i32, level: i32, levels: &Levels) -> bool {
+    pub async fn select(
+        &mut self,
+        section: i32,
+        level: i32,
+        levels: &Levels,
+        theme: &Theme,
+    ) -> bool {
         if let Some(level_copy) = levels.maybe_get_level(section, level).cloned() {
             self.current = CurrentGame::Campaign { section, level };
             self.cached_level = level_copy;
             self.in_progress = self.cached_level.initial_grid.clone();
+            true
+        } else if self.is_random_index(section, level) {
+            if let CurrentGame::Procedural = self.current {
+            } else {
+                self.current = CurrentGame::Procedural;
+                self.cached_level = generate_procedural(VISUALIZE, theme).await;
+                self.in_progress = self.cached_level.initial_grid.clone();
+            }
             true
         } else {
             false

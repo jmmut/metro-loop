@@ -33,7 +33,7 @@ pub async fn level_selector(
         .unwrap()
         .levels
         .len() as i32;
-    let grid_sections = 8.max(theme.resources.levels.sections.len()) as i32;
+    let grid_sections = 8.max(theme.resources.levels.sections.len() + 1) as i32;
     theme.layout.resize_grid_mut(grid_sections, longest_section);
     let mut selected_level = game_track.get_next_unsolved_ids(theme).await;
     loop {
@@ -60,7 +60,10 @@ pub async fn level_selector(
         }
 
         if let Some((i_row, i_column)) = selected_level.clone() {
-            if game_track.select(i_row, i_column, &theme.resources.levels) {
+            if game_track
+                .select(i_row, i_column, &theme.resources.levels, theme)
+                .await
+            {
                 let anchor = Anchor::from_top(panel, Horizontal::Center, button_margin_v);
                 let level_name = game_track.current.to_string();
                 let title = new_text(&level_name, anchor, 1.0, theme);
@@ -122,25 +125,36 @@ fn render_rails_on_selected_level(i_row: i32, i_column: i32, is_solved: bool, th
 pub fn render_solved(solved: &Solved, hovered_cell: &Option<(i32, i32)>, theme: &Theme) {
     for (i_row, section) in solved.iter().enumerate() {
         for (i_column, level) in section.iter().enumerate() {
-            let i_row = i_row as i32;
-            let i_column = i_column as i32;
-            let color = if *hovered_cell == Some((i_row, i_column)) {
-                HOVERED_CELL
-            } else {
-                if *level {
-                    ENABLED_CELL
-                } else {
-                    DISABLED_CELL
-                }
-            };
-            let cell_pos = cell_top_left(i_row, i_column, theme);
-            draw_rectangle(
-                cell_pos.x,
-                cell_pos.y,
-                theme.cell_width(),
-                theme.cell_height(),
-                color,
-            );
+            render_solved_at(hovered_cell, theme, i_row, i_column, level);
         }
     }
+    render_solved_at(hovered_cell, theme, solved.len(), 0, &false);
+}
+
+fn render_solved_at(
+    hovered_cell: &Option<(i32, i32)>,
+    theme: &Theme,
+    i_row: usize,
+    i_column: usize,
+    level: &bool,
+) {
+    let i_row = i_row as i32;
+    let i_column = i_column as i32;
+    let color = if *hovered_cell == Some((i_row, i_column)) {
+        HOVERED_CELL
+    } else {
+        if *level {
+            ENABLED_CELL
+        } else {
+            DISABLED_CELL
+        }
+    };
+    let cell_pos = cell_top_left(i_row, i_column, theme);
+    draw_rectangle(
+        cell_pos.x,
+        cell_pos.y,
+        theme.cell_width(),
+        theme.cell_height(),
+        color,
+    );
 }

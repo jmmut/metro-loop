@@ -49,6 +49,7 @@ pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>, theme: &Them
     }
 }
 pub fn render_grid(grid: &Grid, theme: &Theme) {
+    // fix markers
     for i_row in 0..grid.rows() {
         for i_column in 0..grid.columns() {
             let current_cell = *get(&grid.fixed_cells, i_row, i_column);

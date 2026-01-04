@@ -24,7 +24,7 @@ jobs:
           sudo apt-get install libx11-dev libxi-dev libgl1-mesa-dev gcc-mingw-w64 libasound2-dev
           # -L follows redirects
           # -O specifies output name
-          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          curl -L -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
           unzip butler.zip
           # GNU unzip tends to not set the executable bit even though it's set in the .zip
           chmod +x butler
@@ -89,7 +89,7 @@ jobs:
         run: |
           # -L follows redirects
           # -O specifies output name
-          curl -L -o butler.zip https://broth.itch.ovh/butler/darwin-amd64/LATEST/archive/default
+          curl -L -o butler.zip https://broth.itch.zone/butler/darwin-amd64/LATEST/archive/default
           unzip butler.zip
           # GNU unzip tends to not set the executable bit even though it's set in the .zip
           chmod +x butler

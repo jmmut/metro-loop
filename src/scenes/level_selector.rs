@@ -1,4 +1,5 @@
 use crate::level_history::{GameTrack, Solved};
+use crate::logic::pixel_grid::Coord;
 use crate::render::{cell_top_left, render_rail, RenderRail};
 use crate::scenes::play::default_pixel_to_coord;
 use crate::scenes::play::panel::{get_icon_rect, render_tick_or_cross};
@@ -59,9 +60,9 @@ pub async fn level_selector(
             };
         }
 
-        if let Some((i_row, i_column)) = selected_level.clone() {
+        if let Some(coord) = selected_level.clone() {
             if game_track
-                .select(i_row, i_column, &theme.resources.levels, theme)
+                .select(coord.row(), coord.column(), &theme.resources.levels, theme)
                 .await
             {
                 let anchor = Anchor::from_top(panel, Horizontal::Center, button_margin_v);
@@ -70,7 +71,7 @@ pub async fn level_selector(
                 render_text(&title, &TEXT_STYLE);
 
                 let icon_rect = get_icon_rect(&title);
-                let solved = game_track.is_solved(i_row, i_column);
+                let solved = game_track.is_solved(coord.row(), coord.column());
                 render_tick_or_cross(icon_rect, solved, theme);
                 if icon_rect.contains(mouse_pos) || title.rect().contains(mouse_pos) {
                     let anchor = Anchor::bottom_right_v(mouse_pos);
@@ -87,7 +88,7 @@ pub async fn level_selector(
                 if new_imm_button("PLAY", anchor, theme).1.is_clicked() {
                     return Ok(NextStage::Campaign);
                 }
-                render_rails_on_selected_level(i_row, i_column, solved, theme);
+                render_rails_on_selected_level(coord, solved, theme);
             }
         }
         let anchor = Anchor::from_bottom(panel, Horizontal::Center, button_margin_v);
@@ -99,7 +100,9 @@ pub async fn level_selector(
     }
 }
 
-fn render_rails_on_selected_level(i_row: i32, i_column: i32, is_solved: bool, theme: &Theme) {
+fn render_rails_on_selected_level(coord: Coord, is_solved: bool, theme: &Theme) {
+    let i_row = coord.row();
+    let i_column = coord.column();
     let points = [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)];
     for i in 1..points.len() {
         let level_solved = is_solved;
@@ -122,7 +125,7 @@ fn render_rails_on_selected_level(i_row: i32, i_column: i32, is_solved: bool, th
     }
 }
 
-pub fn render_solved(solved: &Solved, hovered_cell: &Option<(i32, i32)>, theme: &Theme) {
+pub fn render_solved(solved: &Solved, hovered_cell: &Option<Coord>, theme: &Theme) {
     for (i_row, section) in solved.iter().enumerate() {
         for (i_column, level) in section.iter().enumerate() {
             render_solved_at(hovered_cell, theme, i_row, i_column, level);
@@ -132,7 +135,7 @@ pub fn render_solved(solved: &Solved, hovered_cell: &Option<(i32, i32)>, theme: 
 }
 
 fn render_solved_at(
-    hovered_cell: &Option<(i32, i32)>,
+    hovered_cell: &Option<Coord>,
     theme: &Theme,
     i_row: usize,
     i_column: usize,
@@ -140,7 +143,7 @@ fn render_solved_at(
 ) {
     let i_row = i_row as i32;
     let i_column = i_column as i32;
-    let color = if *hovered_cell == Some((i_row, i_column)) {
+    let color = if *hovered_cell == Some(Coord::new_i(i_row, i_column)) {
         HOVERED_CELL
     } else {
         if *level {

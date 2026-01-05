@@ -1,6 +1,7 @@
 use crate::logic::intersection::{
     crossing_to_char, horiz_to_char, vert_to_char, Crossing, Intersection, Intersections,
 };
+use crate::logic::pixel_grid::Coord;
 use crate::logic::rails::Rails;
 use crate::{generate_nested_vec, AnyError};
 use juquad::widgets::anchor::{Horizontal, Vertical};
@@ -9,6 +10,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
 pub type Cell = bool;
+
 #[derive(Clone)]
 pub struct Grid {
     pub num_rows: i32,
@@ -17,7 +19,7 @@ pub struct Grid {
     pub fixed_cells: Vec<Vec<Cell>>,
     pub rails: Rails<Horizontal, Vertical>,
     pub reachable_rails: Rails<bool, bool>,
-    pub fixed_rails: Rails<bool, bool>,
+    pub fixed_rails: Rails<UserFix, UserFix>,
     pub intersections: Intersections,
     pub root: IVec2,
     pub total_rails: i32,
@@ -51,7 +53,12 @@ impl Grid {
     ) -> Grid {
         let rails = Rails::new(num_rows, num_columns, Horizontal::Center, Vertical::Center);
         let reachable_rails = Rails::new(num_rows, num_columns, false, false);
-        let fixed_rails = Rails::new(num_rows, num_columns, false, false);
+        let fixed_rails = Rails::new(
+            num_rows,
+            num_columns,
+            UserFix::default(),
+            UserFix::default(),
+        );
         let intersections = Intersections::new(num_rows, num_columns);
         Self {
             num_rows,
@@ -311,6 +318,9 @@ impl Grid {
     }
 }
 
+pub fn get_coord_mut<T>(vec_vec: &mut [Vec<T>], coord: Coord) -> &mut T {
+    get_mut(vec_vec, coord.row(), coord.column())
+}
 pub fn get_mut<T>(vec_vec: &mut [Vec<T>], row: i32, column: i32) -> &mut T {
     assert!(row >= 0);
     assert!(column >= 0);
@@ -320,7 +330,9 @@ pub fn get_mut<T>(vec_vec: &mut [Vec<T>], row: i32, column: i32) -> &mut T {
         .get_mut(column as usize)
         .unwrap()
 }
-
+pub fn get_coord<T>(vec_vec: &[Vec<T>], coord: Coord) -> &T {
+    get(vec_vec, coord.row(), coord.column())
+}
 pub fn get<T>(vec_vec: &[Vec<T>], row: i32, column: i32) -> &T {
     assert!(row >= 0);
     assert!(column >= 0);
@@ -329,6 +341,13 @@ pub fn get<T>(vec_vec: &[Vec<T>], row: i32, column: i32) -> &T {
         .unwrap()
         .get(column as usize)
         .unwrap()
+}
+pub fn get_cell_coord(grid: &Grid, coord: Coord) -> &Cell {
+    get(&grid.cells, coord.row(), coord.column())
+}
+
+pub fn get_cell_coord_mut(grid: &mut Grid, coord: Coord) -> &mut Cell {
+    get_mut(&mut grid.cells, coord.row(), coord.column())
 }
 pub fn get_cell(grid: &Grid, row: i32, column: i32) -> &Cell {
     get(&grid.cells, row, column)
@@ -554,6 +573,21 @@ impl Grid {
     }
 }
 
+#[derive(Copy, Clone)]
+pub struct UserFix {
+    pub blockade: bool,
+    pub station_forward: bool,
+    pub station_backwards: bool,
+}
+impl Default for UserFix {
+    fn default() -> Self {
+        Self {
+            blockade: false,
+            station_forward: false,
+            station_backwards: false,
+        }
+    }
+}
 #[cfg(test)]
 mod grid_serde_tests {
     use super::*;

@@ -336,12 +336,12 @@ impl Level {
                     '?' => Code::Cell{is_root: false, cell: true, fixed_cell: false, solution: false},
                     '.' => Code::Cell{is_root: false, cell: false, fixed_cell: true, solution: false},
                     ' ' | '-' => Code::NoRailConstraint,
-                    'v' => Code::Constraint(RailCoord::Vertical {row: (line_count-1)/2, column: (letter_count+1)/2, direction: Vertical::Bottom}),
-                    '=' => Code::Constraint(RailCoord::Vertical {row: (line_count-1)/2, column: (letter_count+1)/2, direction: Vertical::Center}),
-                    '^' => Code::Constraint(RailCoord::Vertical {row: (line_count-1)/2, column: (letter_count+1)/2, direction: Vertical::Top}),
-                    '>' => Code::Constraint(RailCoord::Horizontal {row: (line_count+1)/2, column: (letter_count-1)/2, direction: Horizontal::Right}),
-                    '"' => Code::Constraint(RailCoord::Horizontal {row: (line_count+1)/2, column: (letter_count-1)/2, direction: Horizontal::Center}),
-                    '<' => Code::Constraint(RailCoord::Horizontal {row: (line_count+1)/2, column: (letter_count-1)/2, direction: Horizontal::Left}),
+                    'v' => Code::Constraint(RailCoord::Vertical {row: (line_count-1)/2, column: (letter_count+1)/2, sense: Vertical::Bottom}),
+                    '=' => Code::Constraint(RailCoord::Vertical {row: (line_count-1)/2, column: (letter_count+1)/2, sense: Vertical::Center}),
+                    '^' => Code::Constraint(RailCoord::Vertical {row: (line_count-1)/2, column: (letter_count+1)/2, sense: Vertical::Top}),
+                    '>' => Code::Constraint(RailCoord::Horizontal {row: (line_count+1)/2, column: (letter_count-1)/2, sense: Horizontal::Right}),
+                    '"' => Code::Constraint(RailCoord::Horizontal {row: (line_count+1)/2, column: (letter_count-1)/2, sense: Horizontal::Center}),
+                    '<' => Code::Constraint(RailCoord::Horizontal {row: (line_count+1)/2, column: (letter_count-1)/2, sense: Horizontal::Left}),
                     _ => {
                         return Err(format!(
                             "Wrong format for grid at (1-based) line {}, letter {}",
@@ -447,7 +447,7 @@ impl Display for Level {
                 RailCoord::Horizontal {
                     row,
                     column,
-                    direction,
+                    sense: direction,
                 } => {
                     lines[row as usize * 2 - 1][column as usize * 2] = match direction {
                         Horizontal::Left => '<',
@@ -458,7 +458,7 @@ impl Display for Level {
                 RailCoord::Vertical {
                     row,
                     column,
-                    direction,
+                    sense: direction,
                 } => {
                     lines[row as usize * 2][column as usize * 2 - 1] = match direction {
                         Vertical::Top => '^',

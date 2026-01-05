@@ -1,6 +1,7 @@
 use crate::levels::{Level, Levels};
 use crate::logic::constraints::{choose_constraints, count_unreachable_rails};
 use crate::logic::grid::{get, Grid};
+use crate::logic::pixel_grid::Coord;
 use crate::scenes::play::generate_grid;
 use crate::theme::Theme;
 use crate::{AnyError, VISUALIZE};
@@ -51,13 +52,13 @@ impl GameTrack {
             CurrentGame::Procedural => (self.solved.len() as i32, 0),
         }
     }
-    pub async fn get_next_unsolved_ids(&mut self, theme: &Theme) -> Option<(i32, i32)> {
+    pub async fn get_next_unsolved_ids(&mut self, theme: &Theme) -> Option<Coord> {
         loop {
             let (section, level) = self.get_current_ids();
             if self.is_solved(section, level) {
                 self.next(theme).await;
             } else {
-                return Some((section, level));
+                return Some(Coord::new_i(section, level));
             }
         }
     }

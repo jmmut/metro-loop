@@ -2,6 +2,7 @@ pub mod logic {
     pub mod constraints;
     pub mod grid;
     pub mod intersection;
+    pub mod pixel_grid;
     pub mod rails;
 }
 pub mod level_history;

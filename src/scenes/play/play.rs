@@ -2,24 +2,27 @@ use crate::level_history::GameTrack;
 use crate::levels::Level;
 use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
 use crate::logic::grid::{
-    count_neighbours, get, get_cell, get_cell_mut, get_mut, in_expanded_range_inner, in_range,
-    is_system_fixed_v, Grid,
+    count_neighbours, get_cell, get_cell_coord_mut, get_cell_mut, get_coord, get_coord_mut,
+    in_expanded_range_inner, in_range, is_system_fixed_v, Grid,
 };
-use crate::render::{render_cells, render_constraints, render_grid};
+use crate::logic::pixel_grid::{manhattan_distance, CellSpot, Coord};
+use crate::render::{
+    cell_top_left_coord, draw_lines_thickness, render_cells, render_constraints, render_grid,
+};
 use crate::scenes::play::panel::Panel;
 use crate::theme::{new_text, render_text, render_tooltip, Theme};
 use crate::{
     new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, CACHE_TEXTURE,
     DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF, SHOW_FPS, SHOW_SLIDER, STEP_GENERATION, STYLE,
-    TEXT_STYLE, TOOLTIP_DELAY,
+    TEXT_STYLE, TOOLTIP_DELAY, TRIANGLE,
 };
 use juquad::lazy::{set_positions, Interactable, Renderable, WidgetTrait};
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use macroquad::camera::{set_camera, set_default_camera, Camera2D};
 use macroquad::color::{Color, WHITE};
 use macroquad::input::{
-    is_key_pressed, is_mouse_button_pressed, is_mouse_button_released, mouse_position, KeyCode,
-    MouseButton,
+    is_key_pressed, is_mouse_button_down, is_mouse_button_pressed, is_mouse_button_released,
+    mouse_position, KeyCode, MouseButton,
 };
 use macroquad::math::{ivec2, vec2, IVec2, Vec2};
 use macroquad::miniquad::date::now;
@@ -100,40 +103,43 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         }
 
         if is_mouse_button_released(MouseButton::Right) {
-            if let (
-                Some((released_row, released_column)),
-                Some((right_clicked_row, right_clicked_column)),
-            ) = (hovered_cell.clone(), right_click_pressed)
+            if let (Some(released_coord), Some(right_clicked_coord)) =
+                (hovered_cell.clone(), right_click_pressed)
             {
+                right_click_pressed = None;
                 if state.show_solution {
                     state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
                 } else {
-                    let released = ivec2(released_column, released_row);
-                    let pressed = ivec2(right_clicked_column, right_clicked_row);
+                    let released: IVec2 = released_coord.into();
+                    let pressed: IVec2 = right_clicked_coord.into();
                     if is_system_fixed_v(released, state.in_progress()) && pressed == released {
                         state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
                     } else {
-                        add_user_constraint(pressed, released, &mut state, &mut refresh_render);
+                        add_user_constraint(
+                            right_clicked_coord,
+                            released_coord,
+                            &mut state,
+                            &mut refresh_render,
+                        );
                     }
                 }
             }
         }
         if is_mouse_button_pressed(MouseButton::Left) {
             state.ui.tooltip_showing = None;
-            if let Some((i_row, i_column)) = hovered_cell.clone() {
+            if let Some(coord) = hovered_cell.clone() {
                 if state.show_solution {
                     state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
                 } else {
-                    let clicked = ivec2(i_column, i_row);
+                    let clicked: IVec2 = coord.into();
                     if is_system_fixed_v(clicked, state.in_progress()) {
                         state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
                     } else {
-                        let fixed = get(&state.in_progress().fixed_cells, i_row, i_column);
+                        let fixed = get_coord(&state.in_progress().fixed_cells, coord);
                         if *fixed {
                             state.ui.tooltip_showing = Some((Tooltips::UserFixedCell, now));
                         } else {
-                            let cell =
-                                get_cell_mut(&mut state.game_track.in_progress, i_row, i_column);
+                            let cell = get_cell_coord_mut(&mut state.game_track.in_progress, coord);
                             *cell = !*cell;
                             state.game_track.in_progress.recalculate_rails();
                             refresh_render = true;
@@ -214,6 +220,14 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             refresh_render = true;
             (state, panel) = reset(theme, state).await;
         }
+        if let Some(coord) = right_click_pressed {
+            draw_diamond(coord, theme);
+        }
+        if is_mouse_button_down(MouseButton::Right) {
+            if let Some(coord) = hovered_cell {
+                draw_diamond(coord, theme)
+            }
+        }
         if SHOW_FPS {
             let text = format!("FPS: {}", get_fps());
             let text = new_text(&text, Anchor::top_left(0.0, 0.0), 1.0, &theme);
@@ -241,6 +255,47 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
     }
 }
 
+fn draw_diamond(coord: Coord, theme: &mut Theme) {
+    let cell_spot = CellSpot::new(coord.into());
+    if cell_spot.is_corner() {
+        let corner = cell_spot.corner();
+        let top_left = cell_top_left_coord(corner, theme);
+        let half_w = (theme.cell_pad() + theme.cell_width()) * 0.5;
+        let half_h = (theme.cell_pad() + theme.cell_height()) * 0.5;
+        draw_lines_thickness(
+            &[
+                top_left + vec2(half_w, 0.0),
+                top_left + vec2(0.0, half_h),
+                top_left + vec2(-half_w, 0.0),
+                top_left + vec2(0.0, -half_h),
+                top_left + vec2(half_w, 0.0),
+            ],
+            2.0,
+            TRIANGLE,
+        )
+    } else {
+        let floored = cell_spot.floored();
+        let top_left = cell_top_left_coord(floored, theme);
+        let half_w = (theme.cell_pad() + theme.cell_width()) * 0.5;
+        let half_h = (theme.cell_pad() + theme.cell_height()) * 0.5;
+        draw_lines_thickness(
+            &[
+                top_left + vec2(half_w, 0.0),
+                top_left + vec2(half_w * 2.0, half_h),
+                top_left + vec2(half_w, half_h * 2.0),
+                top_left + vec2(0.0, half_h),
+                top_left + vec2(half_w, 0.0),
+            ],
+            2.0,
+            TRIANGLE,
+        )
+    }
+}
+
+#[allow(unused)]
+fn to_i_pair(p: (f32, f32)) -> (i32, i32) {
+    (p.0.floor() as i32, p.1.floor() as i32)
+}
 fn use_debug_slider(
     theme: &mut Theme,
     panel: &Panel,
@@ -280,36 +335,78 @@ fn use_debug_slider(
 }
 
 fn add_user_constraint(
-    pressed: IVec2,
-    released: IVec2,
+    pressed: Coord,
+    released: Coord,
     state: &mut State,
     refresh_render: &mut bool,
 ) {
-    let diff_vec = (pressed - released).abs();
-    let diff = diff_vec.x + diff_vec.y;
-    if diff == 1 {
-        let rail = pressed.max(released);
-        let fixed = if diff_vec.y == 1 {
+    let pressed_spot = CellSpot::new(pressed);
+    let released_spot = CellSpot::new(released);
+
+    let diff_rounded = released_spot.diff_rounded(pressed_spot);
+    let diff_rounded_abs = diff_rounded.abs();
+    let dist_rounded = manhattan_distance(diff_rounded_abs.into());
+    let _diff_floored = manhattan_distance(
+        released_spot
+            .diff_floored(pressed_spot)
+            .into::<IVec2>()
+            .abs(),
+    );
+
+    if pressed_spot.is_corner() && released_spot.is_corner() && dist_rounded == 1 {
+        let reversed = manhattan_distance(diff_rounded.into()) < 0;
+        let coord: Coord = released_spot
+            .rounded()
+            .into::<IVec2>()
+            .min(pressed_spot.rounded().into())
+            .into();
+
+        let user_fix = if diff_rounded_abs == Coord::new_i(0, 1) {
             state
                 .in_progress_mut()
                 .fixed_rails
-                .get_horiz_mut(rail.y, rail.x)
+                .get_horiz_mut(coord.row(), coord.column())
+        } else if diff_rounded_abs == Coord::new_i(1, 0) {
+            state
+                .in_progress_mut()
+                .fixed_rails
+                .get_vert_mut(coord.row(), coord.column())
         } else {
-            state
-                .in_progress_mut()
-                .fixed_rails
-                .get_vert_mut(rail.y, rail.x)
+            panic!("logic error with diff rounded: {:?}", diff_rounded);
         };
-        *fixed = !*fixed;
+        if reversed {
+            user_fix.station_backwards = !user_fix.station_backwards;
+        } else {
+            user_fix.station_forward = !user_fix.station_forward;
+        }
         *refresh_render = true;
-    } else if diff == 0 {
-        let cell = get_mut(
-            &mut state.in_progress_mut().fixed_cells,
-            released.y,
-            released.x,
-        );
-        *cell = !*cell;
-        *refresh_render = true;
+    } else {
+        let diff_vec = pressed_spot.diff_floored(released_spot).abs();
+        let diff = manhattan_distance(diff_vec.into());
+        if diff == 1 {
+            let rail: Coord = pressed.into::<IVec2>().max(released.into()).into();
+            let fixed = if diff_vec == Coord::new_i(1, 0) {
+                &mut state
+                    .in_progress_mut()
+                    .fixed_rails
+                    .get_horiz_mut(rail.row(), rail.column())
+                    .blockade
+            } else if diff_vec == Coord::new_i(0, 1) {
+                &mut state
+                    .in_progress_mut()
+                    .fixed_rails
+                    .get_vert_mut(rail.row(), rail.column())
+                    .blockade
+            } else {
+                panic!("logic error with diff_vec: {:?}", diff_vec);
+            };
+            *fixed = !*fixed;
+            *refresh_render = true;
+        } else if diff == 0 {
+            let cell = get_coord_mut(&mut state.in_progress_mut().fixed_cells, released);
+            *cell = !*cell;
+            *refresh_render = true;
+        }
     }
     // TODO: diff = 2, diagonal constraints
 }
@@ -458,7 +555,7 @@ pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
     solution
 }
 
-pub fn pixel_to_coord(pixel_pos: Vec2, grid: &Grid, theme: &Theme) -> Option<(i32, i32)> {
+pub fn pixel_to_coord(pixel_pos: Vec2, grid: &Grid, theme: &Theme) -> Option<Coord> {
     pixel_to_coord_inner(
         pixel_pos,
         grid.rows(),
@@ -469,7 +566,7 @@ pub fn pixel_to_coord(pixel_pos: Vec2, grid: &Grid, theme: &Theme) -> Option<(i3
         theme.cell_height(),
     )
 }
-pub fn default_pixel_to_coord(pixel_pos: Vec2, theme: &Theme) -> Option<(i32, i32)> {
+pub fn default_pixel_to_coord(pixel_pos: Vec2, theme: &Theme) -> Option<Coord> {
     pixel_to_coord_inner(
         pixel_pos,
         theme.default_rows(),
@@ -488,13 +585,12 @@ fn pixel_to_coord_inner(
     cell_pad: f32,
     cell_width: f32,
     cell_height: f32,
-) -> Option<(i32, i32)> {
+) -> Option<Coord> {
     let grid_indexes =
         (pixel_pos - grid_pad + cell_pad * 0.5) / (vec2(cell_width, cell_height) + cell_pad);
-    let i_row = grid_indexes.y.floor() as i32;
-    let i_column = grid_indexes.x.floor() as i32;
-    if in_expanded_range_inner(i_row, i_column, rows, columns) {
-        Some((i_row, i_column))
+    let coord: Coord = grid_indexes.into();
+    if in_expanded_range_inner(coord.row(), coord.column(), rows, columns) {
+        Some(coord)
     } else {
         None
     }
@@ -528,12 +624,12 @@ mod tests {
     fn test_pixel_to_row_column() {
         let pixel = vec2(25.0, 12.0);
         let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
-        assert_eq!(cell_coords, Some((0, 1)));
+        assert_eq!(cell_coords.map(Coord::floor), Some(Coord::new_i(0, 1)));
     }
     #[test]
     fn test_pixel_to_row_column_in_cell_border() {
         let pixel = vec2(28.0, 9.0);
         let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
-        assert_eq!(cell_coords, Some((0, 1)));
+        assert_eq!(cell_coords.map(Coord::floor), Some(Coord::new_i(0, 1)));
     }
 }

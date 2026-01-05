@@ -1,11 +1,12 @@
 use crate::logic::constraints::{matches_constraint_and_reachable, Constraint};
-use crate::logic::grid::{get_cell, is_system_fixed};
+use crate::logic::grid::{get_cell, is_system_fixed, UserFix};
 use crate::logic::intersection::{Crossing, Intersection};
+use crate::logic::pixel_grid::Coord;
 use crate::theme::Theme;
 use crate::*;
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::lazy::add_contour;
-use juquad::widgets::anchor::Horizontal;
+use juquad::widgets::anchor::{Direction, Horizontal, Spot};
 use macroquad::math::f32;
 use macroquad::prelude::*;
 
@@ -24,10 +25,10 @@ pub fn is_horizontal_center(horizontal: Horizontal) -> bool {
     horizontal.opposite() == horizontal
 }
 
-pub fn render_cells(grid: &Grid, hovered_cell: &Option<(i32, i32)>, theme: &Theme) {
+pub fn render_cells(grid: &Grid, hovered_cell: &Option<Coord>, theme: &Theme) {
     for i_row in 0..grid.rows() {
         for i_column in 0..grid.columns() {
-            let color = if *hovered_cell == Some((i_row, i_column)) {
+            let color = if *hovered_cell == Some(Coord::new_i(i_row, i_column)) {
                 HOVERED_CELL
             } else {
                 let current_cell = *get_cell(grid, i_row, i_column);
@@ -293,30 +294,80 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
     for row in 1..grid.fixed_rails.horiz_rows() {
         for column in 1..grid.fixed_rails.horiz_columns() {
             let user_constraint = grid.fixed_rails.get_horiz(row, column);
-            if user_constraint {
-                let direction = vec2(1.0, 0.0);
-                let constraint = RailCoord::Horizontal {
-                    row,
-                    column,
-                    direction: Horizontal::Center,
-                };
-                render_user_rail_constraint(row, column, direction, constraint, grid, theme);
-            }
+            draw_user_rail_constraints(
+                grid,
+                theme,
+                row,
+                column,
+                user_constraint,
+                Direction::Horizontal,
+            );
         }
     }
     for row in 1..grid.fixed_rails.vert_rows() {
         for column in 1..grid.fixed_rails.vert_columns() {
             let user_constraint = grid.fixed_rails.get_vert(row, column);
-            if user_constraint {
-                let direction = vec2(0.0, 1.0);
-                let constraint = RailCoord::Vertical {
-                    row,
-                    column,
-                    direction: Vertical::Center,
-                };
-                render_user_rail_constraint(row, column, direction, constraint, grid, theme);
-            }
+            draw_user_rail_constraints(
+                grid,
+                theme,
+                row,
+                column,
+                user_constraint,
+                Direction::Vertical,
+            );
         }
+    }
+}
+
+fn draw_user_rail_constraints(
+    grid: &Grid,
+    theme: &Theme,
+    row: i32,
+    column: i32,
+    user_constraint: UserFix,
+    direction: Direction,
+) {
+    let direction_v = match direction {
+        Direction::Horizontal => vec2(1.0, 0.0),
+        Direction::Vertical => vec2(0.0, 1.0),
+    };
+    if user_constraint.blockade {
+        let constraint = RailCoord::from_direction(row, column, Spot::Center, direction);
+        render_user_rail_blockade(row, column, direction_v, constraint, grid, theme);
+    }
+    let length = direction_v * (theme.cell_width() + theme.cell_pad());
+    draw_user_stations(theme, row, column, user_constraint, length);
+}
+
+fn draw_user_stations(
+    theme: &Theme,
+    row: i32,
+    column: i32,
+    user_constraint: UserFix,
+    length: Vec2,
+) {
+    let start = top_left_rail_intersection(row, column, theme);
+    if user_constraint.station_forward {
+        draw_station(
+            theme,
+            false,
+            TRIANGLE,
+            TRIANGLE_BORDER,
+            start,
+            length,
+            false,
+        );
+    }
+    if user_constraint.station_backwards {
+        draw_station(
+            theme,
+            false,
+            TRIANGLE,
+            TRIANGLE_BORDER,
+            start + length,
+            -length,
+            false,
+        );
     }
 }
 
@@ -446,7 +497,7 @@ pub fn draw_blockade(
     }
 }
 
-fn render_user_rail_constraint(
+fn render_user_rail_blockade(
     row: i32,
     column: i32,
     direction: Vec2,
@@ -474,6 +525,10 @@ fn top_left_rail_intersection(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 
     cell_top_left(i_row, i_column, theme) - theme.cell_pad() * 0.5
 }
 
+pub fn cell_top_left_coord(coord: Coord, theme: &Theme) -> Vec2 {
+    let pos: Vec2 = coord.into();
+    pos * (vec2(theme.cell_width(), theme.cell_height()) + theme.cell_pad()) + theme.grid_pad()
+}
 pub fn cell_top_left(i_row: i32, i_column: i32, theme: &Theme) -> Vec2 {
     let x = theme.grid_pad() + i_column as f32 * (theme.cell_width() + theme.cell_pad());
     let y = theme.grid_pad() + i_row as f32 * (theme.cell_height() + theme.cell_pad());
@@ -526,9 +581,12 @@ pub fn draw_line_thickness(start: Vec2, end: Vec2, thickness: f32, color: Color)
 }
 
 pub fn draw_lines(points: &[Vec2], color: Color) {
+    draw_lines_thickness(points, 1.0, color)
+}
+pub fn draw_lines_thickness(points: &[Vec2], thickness: f32, color: Color) {
     assert!(points.len() >= 2);
     for i in 1..points.len() {
-        draw_line_v(points[i - 1], points[i], color);
+        draw_line_thickness(points[i - 1], points[i], thickness, color);
     }
 }
 pub fn draw_triangles(vertices: &[Vec2], color: Color) {

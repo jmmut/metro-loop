@@ -1,6 +1,6 @@
 use crate::logic::grid::{get_cell, Grid};
 use crate::CLUE_PERCENTAGE;
-use juquad::widgets::anchor::{Horizontal, Sense, Vertical};
+use juquad::widgets::anchor::{Direction, Horizontal, Sense, Spot, Vertical};
 use macroquad::math::vec2;
 use macroquad::prelude::Vec2;
 use macroquad::rand::rand;
@@ -10,12 +10,12 @@ pub enum RailCoord {
     Horizontal {
         row: i32,
         column: i32,
-        direction: Horizontal,
+        sense: Horizontal,
     },
     Vertical {
         row: i32,
         column: i32,
-        direction: Vertical,
+        sense: Vertical,
     },
 }
 pub enum Constraint {
@@ -23,6 +23,20 @@ pub enum Constraint {
     Blockade,
 }
 impl RailCoord {
+    pub fn from_direction(row: i32, column: i32, spot: Spot, direction: Direction) -> Self {
+        match direction {
+            Direction::Horizontal => RailCoord::Horizontal {
+                row,
+                column,
+                sense: spot.into(),
+            },
+            Direction::Vertical => RailCoord::Vertical {
+                row,
+                column,
+                sense: spot.into(),
+            },
+        }
+    }
     pub fn row_column(&self) -> (i32, i32) {
         match self {
             RailCoord::Horizontal { row, column, .. } => (*row, *column),
@@ -31,12 +45,16 @@ impl RailCoord {
     }
     pub fn vec2(&self) -> Vec2 {
         match self {
-            RailCoord::Horizontal { direction, .. } => match direction {
+            RailCoord::Horizontal {
+                sense: direction, ..
+            } => match direction {
                 Horizontal::Left => vec2(-1.0, 0.0),
                 Horizontal::Center => vec2(1.0, 0.0),
                 Horizontal::Right => vec2(1.0, 0.0),
             },
-            RailCoord::Vertical { direction, .. } => match direction {
+            RailCoord::Vertical {
+                sense: direction, ..
+            } => match direction {
                 Vertical::Top => vec2(0.0, -1.0),
                 Vertical::Center => vec2(0.0, 1.0),
                 Vertical::Bottom => vec2(0.0, 1.0),
@@ -45,12 +63,16 @@ impl RailCoord {
     }
     pub fn type_(&self) -> Constraint {
         match self {
-            RailCoord::Horizontal { direction, .. } => match direction {
+            RailCoord::Horizontal {
+                sense: direction, ..
+            } => match direction {
                 Horizontal::Left => Constraint::Station(Sense::Backwards),
                 Horizontal::Center => Constraint::Blockade,
                 Horizontal::Right => Constraint::Station(Sense::Forwards),
             },
-            RailCoord::Vertical { direction, .. } => match direction {
+            RailCoord::Vertical {
+                sense: direction, ..
+            } => match direction {
                 Vertical::Top => Constraint::Station(Sense::Backwards),
                 Vertical::Center => Constraint::Blockade,
                 Vertical::Bottom => Constraint::Station(Sense::Forwards),
@@ -102,7 +124,7 @@ pub fn choose_constraints(grid: &Grid) -> Constraints {
         rails.push(RailCoord::Horizontal {
             row,
             column,
-            direction,
+            sense: direction,
         });
     }
     for row in 1..grid.rails.horiz_rows() - 1 {
@@ -113,7 +135,7 @@ pub fn choose_constraints(grid: &Grid) -> Constraints {
                 rails.push(RailCoord::Horizontal {
                     row,
                     column,
-                    direction,
+                    sense: direction,
                 });
             }
         }
@@ -125,7 +147,7 @@ pub fn choose_constraints(grid: &Grid) -> Constraints {
                 rails.push(RailCoord::Vertical {
                     row,
                     column,
-                    direction,
+                    sense: direction,
                 });
             }
         }
@@ -210,12 +232,12 @@ pub fn matches_constraint(grid: &Grid, constraint: &RailCoord) -> bool {
         RailCoord::Horizontal {
             row,
             column,
-            direction,
+            sense: direction,
         } => grid.rails.get_horiz(row, column) == direction,
         RailCoord::Vertical {
             row,
             column,
-            direction,
+            sense: direction,
         } => grid.rails.get_vert(row, column) == direction,
     }
 }
@@ -257,7 +279,7 @@ pub fn matches_constraint_and_reachable(
         RailCoord::Horizontal {
             row,
             column,
-            direction,
+            sense: direction,
         } => {
             let rail = grid.rails.get_horiz(row, column);
             let reachable = grid.reachable_rails.get_horiz(row, column);
@@ -270,7 +292,7 @@ pub fn matches_constraint_and_reachable(
         RailCoord::Vertical {
             row,
             column,
-            direction,
+            sense: direction,
         } => {
             let rail = grid.rails.get_vert(row, column);
             let reachable = grid.reachable_rails.get_vert(row, column);
@@ -286,7 +308,7 @@ pub fn matches_constraint_and_reachable(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::logic::grid::Cell;
+    use crate::logic::grid::{Cell, UserFix};
     use crate::logic::intersection::Intersections;
     use crate::logic::rails::Rails;
     use macroquad::prelude::IVec2;
@@ -294,7 +316,7 @@ mod tests {
     fn mock_grid(cells: Vec<Vec<Cell>>) -> Grid {
         let rails = Rails::new(0, 0, Horizontal::Center, Vertical::Center);
         let reachable_rails = Rails::new(0, 0, false, false);
-        let fixed_rails = Rails::new(0, 0, false, false);
+        let fixed_rails = Rails::new(0, 0, UserFix::default(), UserFix::default());
         let root = IVec2::default();
         let intersections = Intersections::new(0, 0);
         let fixed_cells = cells.clone();

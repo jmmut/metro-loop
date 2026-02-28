@@ -38,6 +38,13 @@ If that fails, you might need some system packages. If you're on linux, see how 
   - [ ] better sound balance. Higher music, lower effects.
 - [ ] contrasting font for the title?
 
+- [ ] fix hover
+- [ ] draw ghosts for right click dragging
+- [ ] move NEXT below SOLVED and above RESTART, move CAMPAIGN to bottom center
+- [ ] music off by default
+- [ ] name for bridges (ui is not clear, icons don't explain anything)
+- [ ] didn't see level was solved,
+
 ## Bugs
 
 - when pressing "options", the button in the same position stays highlighted in phones

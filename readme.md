@@ -22,15 +22,19 @@ If that fails, you might need some system packages. If you're on linux, see how 
 - [x] add button for resetting level
 - [ ] diagonal constraint
 - [x] rail user constraint (clickable corners)
+- [ ] animation
+  - [ ] lightness = sin(t) or circling movement for unsatisfied constraints when hovering on the right panel
+    - [ ] stations and bridges
+    - [ ] unlinked rails
+    - can't animate missing blocks, can I?
+  - [ ] lightness = sin(t) or lightness wave when puzzle is solved
 
 ### Minor
 
 - [/] Select difficulty (should have easy/medium/hard?)
 - [ ] rendering details
-  - [ ] constraint animations
   - [x] make constraint icons scale smoothly
   - [-] triangles should not have direction when inside constraints on unconnected rails. (decided to keep same icon for incorrect rails)
-  - [ ] sin(color lightness) or circle movement on hover satisfaction failures
   - [ ] textures for + and -
 - [/] sound
   - [ ] better sounds

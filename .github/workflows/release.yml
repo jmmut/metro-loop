@@ -31,6 +31,9 @@ jobs:
           # just a sanity check run (and also helpful in case you're sharing CI logs)
           ./butler -V
 
+      - name: Temporarily modify the rust toolchain version
+        run: rustup override set 1.95
+
       - name: Build
         run: cargo build -r
 

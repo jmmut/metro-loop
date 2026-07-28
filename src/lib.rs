@@ -48,7 +48,7 @@ pub const SHOW_FPS: bool = false;
 pub const CACHE_TEXTURE: bool = true;
 pub const SHOW_SLIDER: bool = false;
 
-pub const DEFAULT_VOLUME: f32 = 0.6;
+pub const DEFAULT_VOLUME: f32 = 0.0;
 // pub const DEFAULT_VOLUME: f32 = 0.0;
 pub const TOOLTIP_DELAY: f64 = 2.5;
 

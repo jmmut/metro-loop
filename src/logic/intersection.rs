@@ -42,7 +42,7 @@ impl From<Horizontal> for Direction {
 pub enum Crossing {
     None,
     Single,
-    TopLeftToBottomRigt,
+    TopLeftToBottomRight,
     TopRightToBottomLeft,
     VerticalOnTop,
     HorizontalOnTop,
@@ -150,7 +150,7 @@ pub fn crossing_to_char(inter: Intersection) -> char {
     match inter.crossing {
         Crossing::None => '•',
         Crossing::Single => 'o',
-        Crossing::TopLeftToBottomRigt => '\\',
+        Crossing::TopLeftToBottomRight => '\\',
         Crossing::TopRightToBottomLeft => '/',
         Crossing::VerticalOnTop => '"',
         Crossing::HorizontalOnTop => '=',

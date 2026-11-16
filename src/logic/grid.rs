@@ -91,6 +91,7 @@ impl Grid {
 
                 let direction = if current != above {
                     if current {
+                        // these non-center directions may be overwritten later
                         rail_count += 1;
                         Horizontal::Right
                     } else {
@@ -105,6 +106,7 @@ impl Grid {
 
                 let direction = if current != left {
                     if current {
+                        // these non-center directions may be overwritten later
                         rail_count += 1;
                         Vertical::Top
                     } else {
@@ -132,7 +134,7 @@ impl Grid {
                 let crossing = if cell_current && cell_left_above && !cell_above && !cell_left {
                     Crossing::TopRightToBottomLeft
                 } else if !cell_current && !cell_left_above && cell_above && cell_left {
-                    Crossing::TopLeftToBottomRigt
+                    Crossing::TopLeftToBottomRight
                 } else if [1, 2, 3].contains(&enabled_cells) {
                     Crossing::Single
                 } else {
@@ -206,7 +208,7 @@ impl Grid {
                             panic!()
                         }
                     }
-                    Crossing::TopLeftToBottomRigt => {
+                    Crossing::TopLeftToBottomRight => {
                         backwards = !backwards;
                         crossing.crossing = Crossing::HorizontalOnTop;
                         if horizontal == Horizontal::Left {
@@ -277,7 +279,7 @@ impl Grid {
                             panic!()
                         }
                     }
-                    Crossing::TopLeftToBottomRigt => {
+                    Crossing::TopLeftToBottomRight => {
                         backwards = !backwards;
                         crossing.crossing = Crossing::VerticalOnTop;
                         if vertical == Vertical::Bottom {

@@ -151,7 +151,7 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
             match crossing {
                 Crossing::None => {}
                 Crossing::Single => draw_rect(intersection_rect, color),
-                Crossing::TopLeftToBottomRigt => {
+                Crossing::TopLeftToBottomRight => {
                     draw_rect(intersection_rect, color);
                     draw_line_v(top_left, bottom_right, TRIANGLE_BORDER);
                 }

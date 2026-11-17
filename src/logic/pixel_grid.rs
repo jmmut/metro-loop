@@ -55,7 +55,7 @@ pub fn to_ivec(v: Vec2) -> IVec2 {
     IVec2::new(x as i32, y as i32)
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Coord {
     pub row: f32,
     pub column: f32,
@@ -90,6 +90,16 @@ impl Coord {
             row: self.row.floor(),
             column: self.column.floor(),
         }
+    }
+    pub fn equals_cell(&self, other: Coord) -> bool {
+        let v_1: IVec2 = self.floor().into();
+        let v_2: IVec2 = other.floor().into();
+        v_1 == v_2
+    }
+    pub fn equals_float(&self, other: Coord) -> bool {
+        let v_1: Vec2 = (*self).into();
+        let v_2: Vec2 = other.into();
+        v_1 == v_2
     }
     pub fn into<T: From<Coord>>(self) -> T {
         Into::<T>::into(self)
@@ -140,6 +150,34 @@ impl Sub<Coord> for Coord {
     }
 }
 
+pub fn assert_coord_eq_float(one: Coord, other: Coord) {
+    assert_coord_eq(one, other, |v| v)
+}
+pub fn assert_coord_eq_cell(one: Coord, other: Coord) {
+    assert_coord_eq(one, other, |v| v.floor())
+}
+pub fn assert_coord_eq(one: Coord, other: Coord, f: impl Fn(Coord) -> Coord) {
+    let c_1 = f(one);
+    let c_2 = f(other);
+    assert_eq!((c_1.row, c_1.column), (c_2.row, c_2.column), "{:?} should equal {:?}", one, other);
+}
+pub fn option_equals_cell(c_1_opt: &Option<Coord>, c_2: Coord) -> bool {
+    if let Some(c_1) = c_1_opt {
+        c_1.equals_cell(c_2)
+    } else {
+        false
+    }
+}
+
+pub fn assert_option_coord_eq(c_1_opt: Option<Coord>, c_2_opt: Option<Coord>, f: impl Fn(Coord) -> Coord) {
+    if let (Some(c_1), Some(c_2)) = (c_1_opt, c_2_opt) {
+        assert_coord_eq(c_1, c_2, f);
+    } else {
+        assert!(c_1_opt.is_none() && c_2_opt.is_none(), "{:?} should equal {:?}", c_1_opt, c_2_opt);
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -149,55 +187,55 @@ mod tests {
         let pos = Coord::new_f(1.2, 1.25);
         let spot = CellSpot::new(pos);
         assert_eq!(spot.is_corner(), true);
-        assert_eq!(spot.quadrant(), Coord::new_i(0, 0))
+        assert_coord_eq_float(spot.quadrant(), Coord::new_i(0, 0))
     }
     #[test]
     fn test_00_center() {
         let pos = Coord::new_f(1.3, 1.25);
         let spot = CellSpot::new(pos);
         assert_eq!(spot.is_corner(), false);
-        assert_eq!(spot.quadrant(), Coord::new_i(0, 0))
+        assert_coord_eq_float(spot.quadrant(), Coord::new_i(0, 0))
     }
     #[test]
     fn test_01_corner() {
         let pos = Coord::new_f(1.2, 1.9);
         let spot = CellSpot::new(pos);
         assert_eq!(spot.is_corner(), true);
-        assert_eq!(spot.quadrant(), Coord::new_i(0, 1))
+        assert_coord_eq_float(spot.quadrant(), Coord::new_i(0, 1))
     }
     #[test]
     fn test_01_center() {
         let pos = Coord::new_f(1.2, 1.55);
         let spot = CellSpot::new(pos);
         assert_eq!(spot.is_corner(), false);
-        assert_eq!(spot.quadrant(), Coord::new_i(0, 1))
+        assert_coord_eq_float(spot.quadrant(), Coord::new_i(0, 1))
     }
     #[test]
     fn test_10_corner() {
         let pos = Coord::new_f(1.8, 1.25);
         let spot = CellSpot::new(pos);
         assert_eq!(spot.is_corner(), true);
-        assert_eq!(spot.quadrant(), Coord::new_i(1, 0))
+        assert_coord_eq_float(spot.quadrant(), Coord::new_i(1, 0))
     }
     #[test]
     fn test_10_center() {
         let pos = Coord::new_f(1.6, 1.25);
         let spot = CellSpot::new(pos);
         assert_eq!(spot.is_corner(), false);
-        assert_eq!(spot.quadrant(), Coord::new_i(1, 0))
+        assert_coord_eq_float(spot.quadrant(), Coord::new_i(1, 0))
     }
     #[test]
     fn test_11_corner() {
         let pos = Coord::new_f(1.8, 1.9);
         let spot = CellSpot::new(pos);
         assert_eq!(spot.is_corner(), true);
-        assert_eq!(spot.quadrant(), Coord::new_i(1, 1))
+        assert_coord_eq_float(spot.quadrant(), Coord::new_i(1, 1))
     }
     #[test]
     fn test_11_center() {
         let pos = Coord::new_f(1.6, 1.55);
         let spot = CellSpot::new(pos);
         assert_eq!(spot.is_corner(), false);
-        assert_eq!(spot.quadrant(), Coord::new_i(1, 1))
+        assert_coord_eq_float(spot.quadrant(), Coord::new_i(1, 1))
     }
 }

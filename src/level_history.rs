@@ -67,11 +67,11 @@ impl GameTrack {
     }
     pub async fn next(&mut self, theme: &Theme) -> &Self {
         match &mut self.current {
-            CurrentGame::Campaign { section, mut level } => {
-                level += 1;
+            CurrentGame::Campaign { section, level } => {
+                *level += 1;
                 for i_section in (*section as usize)..theme.resources.levels.sections.len() {
                     for i_level in
-                        level as usize..theme.resources.levels.sections[i_section].levels.len()
+                        *level as usize..theme.resources.levels.sections[i_section].levels.len()
                     {
                         if !self.solved[i_section][i_level] {
                             self.current = CurrentGame::Campaign {
@@ -84,7 +84,7 @@ impl GameTrack {
                             return self;
                         }
                     }
-                    level = 0;
+                    *level = 0;
                 }
                 self.cached_level = generate_procedural(VISUALIZE, theme).await;
                 self.in_progress = self.cached_level.initial_grid.clone();

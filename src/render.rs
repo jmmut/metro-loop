@@ -1,7 +1,7 @@
 use crate::logic::constraints::{matches_constraint_and_reachable, Constraint};
 use crate::logic::grid::{get_cell, is_system_fixed, UserFix};
 use crate::logic::intersection::{Crossing, Intersection};
-use crate::logic::pixel_grid::Coord;
+use crate::logic::pixel_grid::{option_equals_cell, Coord};
 use crate::theme::Theme;
 use crate::*;
 use juquad::draw::{draw_rect, draw_rect_lines};
@@ -28,7 +28,7 @@ pub fn is_horizontal_center(horizontal: Horizontal) -> bool {
 pub fn render_cells(grid: &Grid, hovered_cell: &Option<Coord>, theme: &Theme) {
     for i_row in 0..grid.rows() {
         for i_column in 0..grid.columns() {
-            let color = if *hovered_cell == Some(Coord::new_i(i_row, i_column)) {
+            let color = if option_equals_cell(hovered_cell, Coord::new_i(i_row, i_column)) {
                 HOVERED_CELL
             } else {
                 let current_cell = *get_cell(grid, i_row, i_column);

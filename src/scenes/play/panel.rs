@@ -94,10 +94,7 @@ impl Panel {
         );
         let satisfaction_panel = SatisfactionPanel::new(*satisfaction, anchor, theme);
         self.satisfaction = satisfaction_panel;
-        let mut rect = self.satisfaction.rect();
         self.show_solution = if satisfaction.success() || SEE_SOLUTION_DURING_GAME {
-            rect.x = self.rect.x;
-            rect.w = self.rect.w;
             let small_margin = Vec2::splat(theme.cell_pad());
 
             let anchor =

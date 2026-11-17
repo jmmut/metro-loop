@@ -58,6 +58,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
     let mut render_target = reset_render_target(sw, sh, render_target_scale);
     let mut refresh_render = true;
     let mut resize = false;
+    let mut debug_mouse = None;
 
     let mut right_click_pressed = None;
     loop {
@@ -91,7 +92,17 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             println!("{}", level);
         }
 
-        let pos = Vec2::from(mouse_position());
+        let mut pos = Vec2::from(mouse_position());
+        if is_key_pressed(KeyCode::M) {
+            if let Some(debug_pos) = debug_mouse {
+                println!("using mouse pos: {}", debug_pos);
+                pos = debug_pos;
+                debug_mouse = None;
+            } else {
+                println!("storing mouse pos: {}", pos);
+                debug_mouse = Some(pos);
+            }
+        }
         let hovered_cell = pixel_to_coord(pos, state.in_progress(), &theme);
 
         // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
@@ -361,12 +372,12 @@ fn add_user_constraint(
             .min(pressed_spot.rounded().into())
             .into();
 
-        let user_fix = if diff_rounded_abs == Coord::new_i(0, 1) {
+        let user_fix = if diff_rounded_abs.equals_cell(Coord::new_i(0, 1)) {
             state
                 .in_progress_mut()
                 .fixed_rails
                 .get_horiz_mut(coord.row(), coord.column())
-        } else if diff_rounded_abs == Coord::new_i(1, 0) {
+        } else if diff_rounded_abs.equals_cell(Coord::new_i(1, 0)) {
             state
                 .in_progress_mut()
                 .fixed_rails
@@ -385,13 +396,13 @@ fn add_user_constraint(
         let diff = manhattan_distance(diff_vec.into());
         if diff == 1 {
             let rail: Coord = pressed.into::<IVec2>().max(released.into()).into();
-            let fixed = if diff_vec == Coord::new_i(1, 0) {
+            let fixed = if diff_vec.equals_cell(Coord::new_i(1, 0)) {
                 &mut state
                     .in_progress_mut()
                     .fixed_rails
                     .get_horiz_mut(rail.row(), rail.column())
                     .blockade
-            } else if diff_vec == Coord::new_i(0, 1) {
+            } else if diff_vec.equals_cell(Coord::new_i(0, 1)) {
                 &mut state
                     .in_progress_mut()
                     .fixed_rails
@@ -612,24 +623,25 @@ impl State<'_> {
 }
 #[cfg(test)]
 mod tests {
+    use crate::logic::pixel_grid::assert_option_coord_eq;
     use super::*;
 
     #[test]
     fn test_pixel_to_row_column_out_top_left() {
         let pixel = vec2(1.0, 5.0);
         let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
-        assert_eq!(cell_coords, None);
+        assert_option_coord_eq(cell_coords, None, Coord::into);
     }
     #[test]
     fn test_pixel_to_row_column() {
         let pixel = vec2(25.0, 12.0);
         let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
-        assert_eq!(cell_coords.map(Coord::floor), Some(Coord::new_i(0, 1)));
+        assert_option_coord_eq(cell_coords, Some(Coord::new_i(0, 1)), |c|c.floor().into());
     }
     #[test]
     fn test_pixel_to_row_column_in_cell_border() {
         let pixel = vec2(28.0, 9.0);
         let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
-        assert_eq!(cell_coords.map(Coord::floor), Some(Coord::new_i(0, 1)));
+        assert_option_coord_eq(cell_coords, Some(Coord::new_i(0, 1)), |c|c.floor().into());
     }
 }

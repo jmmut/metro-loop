@@ -1,5 +1,5 @@
 use crate::level_history::{GameTrack, Solved};
-use crate::logic::pixel_grid::Coord;
+use crate::logic::pixel_grid::{option_equals_cell, Coord};
 use crate::render::{cell_top_left, render_rail, RenderRail};
 use crate::scenes::play::default_pixel_to_coord;
 use crate::scenes::play::panel::{get_icon_rect, render_tick_or_cross};
@@ -143,7 +143,7 @@ fn render_solved_at(
 ) {
     let i_row = i_row as i32;
     let i_column = i_column as i32;
-    let color = if *hovered_cell == Some(Coord::new_i(i_row, i_column)) {
+    let color = if option_equals_cell(hovered_cell, Coord::new_i(i_row, i_column)) {
         HOVERED_CELL
     } else {
         if *level {

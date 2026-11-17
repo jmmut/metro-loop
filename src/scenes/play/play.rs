@@ -84,25 +84,12 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             render_target = reset_render_target(sw, sh, render_target_scale);
         }
         if is_key_pressed(KeyCode::P) {
-            let level = Level {
-                initial_grid: state.in_progress().clone(),
-                constraints: state.constraints().clone(),
-                solution: state.solution().clone(),
-                subtitle: "".to_string(),
-            };
-            println!("{}", level);
+            print_level(&state);
         }
 
         let mut pos = Vec2::from(mouse_position());
         if is_key_pressed(KeyCode::M) {
-            if let Some(debug_pos) = debug_mouse {
-                println!("using mouse pos: {}", debug_pos);
-                pos = debug_pos;
-                debug_mouse = None;
-            } else {
-                println!("storing mouse pos: {}", pos);
-                debug_mouse = Some(pos);
-            }
+            update_mouse_debugging(&mut debug_mouse, &mut pos);
         }
         let hovered_cell = pixel_to_coord(pos, state.in_progress(), &theme);
 
@@ -265,6 +252,27 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         }
         next_frame().await
     }
+}
+
+fn update_mouse_debugging(debug_mouse: &mut Option<Vec2>, pos: &mut Vec2) {
+    if let Some(debug_pos) = debug_mouse {
+        println!("using mouse pos: {}", debug_pos);
+        *pos = *debug_pos;
+        *debug_mouse = None;
+    } else {
+        println!("storing mouse pos: {}", pos);
+        *debug_mouse = Some(*pos);
+    }
+}
+
+fn print_level(state: &State) {
+    let level = Level {
+        initial_grid: state.in_progress().clone(),
+        constraints: state.constraints().clone(),
+        solution: state.solution().clone(),
+        subtitle: "".to_string(),
+    };
+    println!("{}", level);
 }
 
 fn draw_diamond(coord: Coord, theme: &mut Theme) {

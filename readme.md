@@ -55,6 +55,8 @@ If that fails, you might need some system packages. If you're on linux, see how 
 ## Bugs
 
 - when pressing "options", the button in the same position stays highlighted in phones
-
+- when resizing a solved level, the "Restart" button is too high
+- when resizing a post-solved level, the "Next" button gets disabled
+- fences are ignored to detect a solved level
 
 

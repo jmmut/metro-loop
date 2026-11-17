@@ -70,24 +70,24 @@ pub async fn level_selector(
                 let level_name = game_track.current.to_string();
                 let title = new_text(&level_name, anchor, 1.0, theme);
                 render_text(&title, &TEXT_STYLE);
+                let subtitle = &game_track.get_current().subtitle;
 
                 let icon_rect = get_tick_or_cross_rect(&title);
                 let solved = game_track.is_solved(coord.row(), coord.column());
                 render_tick_or_cross(icon_rect, solved, theme);
-
                 let text = if solved {
                     "Level is solved"
                 } else {
                     "Level is unsolved"
                 };
-                new_rendered_tooltip_at(text, icon_rect, mouse_pos, theme);
-                new_rendered_tooltip_at(&game_track.get_current().subtitle, title.rect(), mouse_pos, theme);
-
                 let anchor = Anchor::below(title.rect(), Horizontal::Center, theme.button_margin());
                 if new_imm_button("PLAY", anchor, theme).1.is_clicked() {
                     return Ok(NextStage::Campaign);
                 }
                 render_rails_on_selected_level(coord, solved, theme);
+
+                new_rendered_tooltip_at(subtitle, title.rect(), mouse_pos, theme);
+                new_rendered_tooltip_at(text, icon_rect, mouse_pos, theme);
             }
         }
         let anchor = Anchor::from_bottom(panel, Horizontal::Center, button_margin_v);
@@ -99,13 +99,13 @@ pub async fn level_selector(
     }
 }
 
-fn new_tooltip(text: &str, mouse_pos: Vec2, theme: &Theme) -> TextRect {
+pub fn new_tooltip(text: &str, mouse_pos: Vec2, theme: &Theme) -> TextRect {
     let anchor = Anchor::bottom_right_v(mouse_pos);
     let tooltip = new_text(text, anchor, 1.0, theme);
     tooltip
 }
 
-fn new_rendered_tooltip_at(text: &str, triggering_rect: Rect, mouse_pos: Vec2, theme: &Theme) {
+pub fn new_rendered_tooltip_at(text: &str, triggering_rect: Rect, mouse_pos: Vec2, theme: &Theme) {
     if triggering_rect.contains(mouse_pos) {
         let tooltip = new_tooltip(text, mouse_pos, theme);
         render_tooltip(&tooltip, &TEXT_STYLE);

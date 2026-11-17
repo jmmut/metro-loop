@@ -21,10 +21,12 @@ use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::text::TextRect;
 use macroquad::input::mouse_position;
 use macroquad::math::{Rect, Vec2, vec2};
+use crate::scenes::level_selector::new_rendered_tooltip_at;
 
 pub struct Panel {
     pub rect: Rect,
     pub level_title: TextRect,
+    pub level_subtitle: String,
     pub restart_game: Button,
     pub next_game: Button,
     pub main_menu: Button,
@@ -46,6 +48,7 @@ impl Panel {
         let level_name = game_track.current.to_string();
         let anchor_name = Anchor::from_top(panel_rect, Horizontal::Center, button_margin_v);
         let level_title = new_text(&level_name, anchor_name, 1.0, theme);
+        let level_subtitle = game_track.get_current().subtitle.to_string();
 
         let anchor_below_title =
             Anchor::below(level_title.rect(), Horizontal::Center, theme.cell_pad());
@@ -67,6 +70,7 @@ impl Panel {
         let mut s = Self {
             rect: panel_rect,
             level_title,
+            level_subtitle,
             restart_game,
             next_game,
             main_menu,
@@ -124,6 +128,9 @@ impl Panel {
         for b in self.buttons_mut() {
             b.interact();
         }
+
+        let mouse_pos = Vec2::from(mouse_position());
+        new_rendered_tooltip_at(&self.level_subtitle, self.level_title.rect(), mouse_pos, theme);
         self.satisfaction.interact(theme);
     }
     pub fn render_static(&self, theme: &Theme) {

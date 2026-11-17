@@ -10,25 +10,25 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
     sections: &[
         RawSection {
             levels: &[
-//                 (
-//                     "If it seems obvious it's because it is",
-//                 r#". . . . .
-//          
-// . x x x .
-//          
-// . x . x .
-//     > >  
-// . x^% *v.
-//     < <  
-// . x x x .
-//          
-// . x x x .
-//          
-// . . . . .
-// "#),
+                //                 (
+                //                     "If it seems obvious it's because it is",
+                //                 r#". . . . .
+                //
+                // . x x x .
+                //
+                // . x . x .
+                //     > >
+                // . x^% *v.
+                //     < <
+                // . x x x .
+                //
+                // . x x x .
+                //
+                // . . . . .
+                // "#),
                 (
                     "Don't overthink it",
-                r#". . . . .
+                    r#". . . . .
          
 . x x x .
          
@@ -41,10 +41,11 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . . . . .
-"#),
+"#,
+                ),
                 (
                     "Your first diagonal",
-                r#". . . . .
+                    r#". . . . .
          
 . x x x .
          
@@ -57,10 +58,11 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . . . . .
-"#),
+"#,
+                ),
                 (
-                    "Yagami's demise",
-                r#". . . . .
+                    "Three little blocks",
+                    r#". . . . .
          
 . x x x .
          
@@ -73,10 +75,11 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . . . . .
-"#),
+"#,
+                ),
                 (
                     "Notice the reversal",
-                r#". . . . .
+                    r#". . . . .
          
 . x x x .
          
@@ -89,10 +92,15 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . . . . .
-"#),
+"#,
+                ),
+            ],
+        },
+        RawSection {
+            levels: &[
                 (
                     "Your first fence",
-                r#".-.-.-.-.
+                    r#".-.-.-.-.
 ---------
 .-x-x-x-.
 ---------
@@ -100,15 +108,16 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 ---->----
 .-x-%-x-.
 ----"----
-.-x-x-x-.
+.-x-*-x-.
 ---------
 .-x-x-x-.
 ---------
 .-.-.-.-.
-"#),
+"#,
+                ),
                 (
-                    "Fences are fine inside or outside",
-                r#".-.-.-.-.
+                    "Fences are fine inside or outside, but not in the white path",
+                    r#".-.-.-.-.
 ---------
 .-*=*-x-.
 --"------
@@ -121,10 +130,49 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-x-x-.
 ---------
 .-.-.-.-.
-"#),
+"#,
+                ),
+            ],
+        },
+        RawSection {
+            levels: &[
                 (
-                    "Think in loops",
-                r#".-.-.-.-.
+                    "You can use right click to mark your chained deductions",
+                    r#".-.-.-.-.
+---------
+.-*vx=x-.
+--"---"--
+.-*-.-x-.
+--"->-"--
+.-*-%-x-.
+--"---"--
+.-*-x-x-.
+--"---"--
+.-*-x-x-.
+------"--
+.-.-.-.-.
+"#,
+                ),
+                (
+                    "Keep chaining deductions",
+                    r#".-.-.-.-.
+---------
+.-x-*vx-.
+------<--
+.=x-.-*-.
+---->->--
+.-x-%vx-.
+----<----
+.-*-x-x=.
+---->----
+.-x-*-x-.
+----<----
+.-.-.-.-.
+"#,
+                ),
+                (
+                    "It's a counter-clockwise spiral! Kind of...",
+                    r#".-.-.-.-.
 ------<--
 .-*-*-*-.
 ----<----
@@ -132,19 +180,20 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 ---->----
 .=x-%-*-.
 ---------
-.=x-x-x-.
+.=x-x"x-.
 ----"----
 .-x=x=x-.
 ------"--
 .-.-.-.-.
-"#),
+"#,
+                ),
             ],
         },
         RawSection {
             levels: &[
                 (
                     "Your first real puzzle",
-                r#".-.-.-.-.-.-.
+                    r#".-.-.-.-.-.-.
 -------------
 .=xv*-x-x-x-.
 ----------"--
@@ -158,10 +207,11 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 ------<-<----
 .-.-.-.-.-.-.
 
-"#),
+"#,
+                ),
                 (
-                    "Let's change some constraints",
-                r#".-.-.-.-.-.-.
+                    "Let's add some constraints",
+                    r#".-.-.-.-.-.-.
 ----<--------
 .=xvO-x-x-x-.
 ----------"--
@@ -174,10 +224,11 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-*-O-O=*-.
 ----<-<-<----
 .-.-.-.-.-.-.
-"#),
+"#,
+                ),
                 (
                     "Am I too annoying?",
-                r#".-.-.-.-.-.-.
+                    r#".-.-.-.-.-.-.
 ----<--------
 .=xvO-*-*-x-.
 ----------"--
@@ -190,14 +241,15 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-O-O-O=O-.
 ----<-<-<----
 .-.-.-.-.-.-.
-"#),
+"#,
+                ),
             ],
         },
         RawSection {
             levels: &[
                 (
-                    "TODO 1",
-                r#".-.-.-.-.-.-.-.-.
+                    "Some puzzles have several solutions",
+                    r#".-.-.-.-.-.-.-.-.
 --"------->------
 .-x-x-x-x-*-*-*-.
 ----"------->----
@@ -212,10 +264,11 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-x-x-x=x=xv*-.
 ----"------------
 .-.-.-.-.-.-.-.-.
-"#),
+"#,
+                ),
                 (
-                    "TODO 2",
-                r#".-.-.-.-.-.-.-.-.
+                    "This is getting serious",
+                    r#".-.-.-.-.-.-.-.-.
 -----------------
 .-x-x-x-*-*-x-x=.
 -----------------
@@ -230,10 +283,11 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-x-*-*-x-x-x-.
 -----------------
 .-.-.-.-.-.-.-.-.
-"#),
+"#,
+                ),
                 (
-                    "TODO 3",
-                r#".-.-.-.-.-.-.-.-.
+                    "Think of what paths are possible",
+                    r#".-.-.-.-.-.-.-.-.
 --------"--------
 .v*=*-*-xv*=*-*^.
 ------>----------
@@ -248,7 +302,8 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-x-x-x-xv*=*^.
 ----"--------->--
 .-.-.-.-.-.-.-.-.
-"#),
+"#,
+                ),
             ],
         },
         RawSection {
@@ -270,8 +325,8 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
                 // .-.-.-.-.-.-.-.-.
                 // "#,
                 (
-                    "TODO 4",
-                r#".-.-.-.-.-.-.-.-.-.-.
+                    "Such a big map yet tight on space for active blocks",
+                    r#".-.-.-.-.-.-.-.-.-.-.
 ----"->----->----->--
 .-x-x-*-*-*-*vx^*-*v.
 ------"---------"-<--
@@ -290,10 +345,11 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-*-*vx=x=x^*=*-x=x=.
 ----------------"----
 .-.-.-.-.-.-.-.-.-.-.
-"#),
+"#,
+                ),
                 (
-                    "TODO 5",
-                r#".-.-.-.-.-.-.-.-.-.-.
+                    "You can deduce more than you think",
+                    r#".-.-.-.-.-.-.-.-.-.-.
 ----"-------------<--
 .-*-x-*=*-*-*^x-O=O-.
 ------"---<----------
@@ -312,7 +368,8 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-*-x-x-x=x=x-x=x-.
 ------------"-"------
 .-.-.-.-.-.-.-.-.-.-.
-"#),
+"#,
+                ),
                 (
                     "Interesting corners",
                     r#".-.-.-.-.-.-.-.-.-.-.

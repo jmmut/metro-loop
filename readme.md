@@ -22,7 +22,7 @@ If that fails, you might need some system packages. If you're on linux, see how 
 - [x] add button for resetting level
 - [ ] diagonal constraint
 - [x] rail user constraint (clickable corners)
-- [ ] split blockages and stations
+- [x] split blockages and stations
 - [ ] animation
   - [ ] lightness = sin(t) or circling movement for unsatisfied constraints when hovering on the right panel
     - [ ] stations and bridges
@@ -43,7 +43,7 @@ If that fails, you might need some system packages. If you're on linux, see how 
   - [ ] better sound balance. Higher music, lower effects.
 - [ ] contrasting font for the title?
 
-- [ ] fix hover
+- [x] fix hover
 - [ ] draw ghosts for right click dragging
 - [ ] move NEXT below SOLVED and above RESTART, move CAMPAIGN to bottom center
 - [ ] music off by default

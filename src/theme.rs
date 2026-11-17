@@ -2,13 +2,13 @@ use crate::logic::grid::Grid;
 use crate::scenes::loading_screen::Resources;
 use crate::{NUM_COLUMNS, NUM_ROWS, STYLE};
 use juquad::draw::{draw_rect, draw_rect_lines};
+use juquad::widgets::Widget;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::{ButtonGroup, Direction, LabelGroup};
 use juquad::widgets::text::TextRect;
-use juquad::widgets::Widget;
 use juquad::widgets::{Interaction, StateStyle};
-use macroquad::math::{f32, Rect};
+use macroquad::math::{Rect, f32};
 use macroquad::prelude::Font;
 
 pub struct Theme {
@@ -320,7 +320,7 @@ pub fn render_tooltip(text_rect: &TextRect, style: &StateStyle) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{new_layout, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH};
+    use crate::{DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_WIDTH, new_layout};
 
     #[test]
     fn test_basic_layout() {

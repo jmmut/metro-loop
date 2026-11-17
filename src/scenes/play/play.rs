@@ -1,34 +1,34 @@
 use crate::level_history::GameTrack;
 use crate::levels::Level;
-use crate::logic::constraints::{compute_satisfaction, Constraints, Satisfaction};
+use crate::logic::constraints::{Constraints, Satisfaction, compute_satisfaction};
 use crate::logic::grid::{
-    count_neighbours, get_cell, get_cell_coord_mut, get_cell_mut, get_coord, get_coord_mut,
-    in_expanded_range_inner, in_range, is_system_fixed_v, Grid,
+    Grid, count_neighbours, get_cell, get_cell_coord_mut, get_cell_mut, get_coord, get_coord_mut,
+    in_expanded_range_inner, in_range, is_system_fixed_v,
 };
-use crate::logic::pixel_grid::{manhattan_distance, CellSpot, Coord};
+use crate::logic::pixel_grid::{CellSpot, Coord, manhattan_distance};
 use crate::render::{
     cell_top_left_coord, draw_lines_thickness, render_cells, render_constraints, render_grid,
 };
 use crate::scenes::play::panel::Panel;
-use crate::theme::{new_text, render_text, render_tooltip, Theme};
+use crate::theme::{Theme, new_text, render_text, render_tooltip};
 use crate::{
-    new_layout, AnyError, NextStage, BACKGROUND, BACKGROUND_2, CACHE_TEXTURE,
-    DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF, SHOW_FPS, SHOW_SLIDER, STEP_GENERATION, STYLE,
-    TEXT_STYLE, TOOLTIP_DELAY, TRIANGLE,
+    AnyError, BACKGROUND, BACKGROUND_2, CACHE_TEXTURE, DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF,
+    NextStage, SHOW_FPS, SHOW_SLIDER, STEP_GENERATION, STYLE, TEXT_STYLE, TOOLTIP_DELAY, TRIANGLE,
+    new_layout,
 };
-use juquad::lazy::{set_positions, Interactable, Renderable, WidgetTrait};
+use juquad::lazy::{Interactable, Renderable, WidgetTrait, set_positions};
 use juquad::widgets::anchor::{Anchor, Horizontal};
-use macroquad::camera::{set_camera, set_default_camera, Camera2D};
+use macroquad::camera::{Camera2D, set_camera, set_default_camera};
 use macroquad::color::{Color, WHITE};
 use macroquad::input::{
-    is_key_pressed, is_mouse_button_down, is_mouse_button_pressed, is_mouse_button_released,
-    mouse_position, KeyCode, MouseButton,
+    KeyCode, MouseButton, is_key_pressed, is_mouse_button_down, is_mouse_button_pressed,
+    is_mouse_button_released, mouse_position,
 };
-use macroquad::math::{ivec2, vec2, IVec2, Vec2};
-use macroquad::miniquad::date::now;
+use macroquad::math::{IVec2, Vec2, ivec2, vec2};
 use macroquad::miniquad::FilterMode;
+use macroquad::miniquad::date::now;
 use macroquad::prelude::{
-    clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width, RenderTarget,
+    RenderTarget, clear_background, draw_texture, get_fps, next_frame, screen_height, screen_width,
 };
 use macroquad::rand::rand;
 
@@ -623,8 +623,8 @@ impl State<'_> {
 }
 #[cfg(test)]
 mod tests {
-    use crate::logic::pixel_grid::assert_option_coord_eq;
     use super::*;
+    use crate::logic::pixel_grid::assert_option_coord_eq;
 
     #[test]
     fn test_pixel_to_row_column_out_top_left() {
@@ -636,12 +636,12 @@ mod tests {
     fn test_pixel_to_row_column() {
         let pixel = vec2(25.0, 12.0);
         let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
-        assert_option_coord_eq(cell_coords, Some(Coord::new_i(0, 1)), |c|c.floor().into());
+        assert_option_coord_eq(cell_coords, Some(Coord::new_i(0, 1)), |c| c.floor().into());
     }
     #[test]
     fn test_pixel_to_row_column_in_cell_border() {
         let pixel = vec2(28.0, 9.0);
         let cell_coords = pixel_to_coord_inner(pixel, 5, 5, 10.0, 2.0, 8.0, 8.0);
-        assert_option_coord_eq(cell_coords, Some(Coord::new_i(0, 1)), |c|c.floor().into());
+        assert_option_coord_eq(cell_coords, Some(Coord::new_i(0, 1)), |c| c.floor().into());
     }
 }

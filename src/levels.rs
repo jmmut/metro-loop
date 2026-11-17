@@ -1,6 +1,6 @@
 use crate::logic::constraints::{Constraints, RailCoord};
-use crate::logic::grid::{get, get_cell, Grid};
-use crate::{generate_nested_vec, AnyError};
+use crate::logic::grid::{Grid, get, get_cell};
+use crate::{AnyError, generate_nested_vec};
 use juquad::widgets::anchor::{Horizontal, Vertical};
 use macroquad::math::ivec2;
 use std::fmt::{Display, Formatter};
@@ -507,7 +507,7 @@ impl Display for Level {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::logic::constraints::{compute_satisfaction, Goal, Satisfaction};
+    use crate::logic::constraints::{Goal, Satisfaction, compute_satisfaction};
 
     const RAW_LEVEL: &str = r#".-.-.-.-.-.
 -----------

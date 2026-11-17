@@ -1,10 +1,10 @@
-use crate::theme::{labels_from_theme, new_button_group_generic, render_button, Theme};
-use crate::{new_layout, AnyError, NextStage, BACKGROUND, PANEL_BACKGROUND};
+use crate::theme::{Theme, labels_from_theme, new_button_group_generic, render_button};
+use crate::{AnyError, BACKGROUND, NextStage, PANEL_BACKGROUND, new_layout};
 use juquad::draw::draw_rect;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::LabelGroup;
-use macroquad::input::{is_key_pressed, KeyCode};
+use macroquad::input::{KeyCode, is_key_pressed};
 use macroquad::math::Rect;
 use macroquad::prelude::{clear_background, next_frame, screen_height, screen_width, vec2};
 

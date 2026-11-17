@@ -1,4 +1,4 @@
-use macroquad::math::{vec2, IVec2, Vec2};
+use macroquad::math::{IVec2, Vec2, vec2};
 use std::ops::{Add, Sub};
 
 #[derive(Copy, Clone)]
@@ -159,7 +159,13 @@ pub fn assert_coord_eq_cell(one: Coord, other: Coord) {
 pub fn assert_coord_eq(one: Coord, other: Coord, f: impl Fn(Coord) -> Coord) {
     let c_1 = f(one);
     let c_2 = f(other);
-    assert_eq!((c_1.row, c_1.column), (c_2.row, c_2.column), "{:?} should equal {:?}", one, other);
+    assert_eq!(
+        (c_1.row, c_1.column),
+        (c_2.row, c_2.column),
+        "{:?} should equal {:?}",
+        one,
+        other
+    );
 }
 pub fn option_equals_cell(c_1_opt: &Option<Coord>, c_2: Coord) -> bool {
     if let Some(c_1) = c_1_opt {
@@ -169,14 +175,22 @@ pub fn option_equals_cell(c_1_opt: &Option<Coord>, c_2: Coord) -> bool {
     }
 }
 
-pub fn assert_option_coord_eq(c_1_opt: Option<Coord>, c_2_opt: Option<Coord>, f: impl Fn(Coord) -> Coord) {
+pub fn assert_option_coord_eq(
+    c_1_opt: Option<Coord>,
+    c_2_opt: Option<Coord>,
+    f: impl Fn(Coord) -> Coord,
+) {
     if let (Some(c_1), Some(c_2)) = (c_1_opt, c_2_opt) {
         assert_coord_eq(c_1, c_2, f);
     } else {
-        assert!(c_1_opt.is_none() && c_2_opt.is_none(), "{:?} should equal {:?}", c_1_opt, c_2_opt);
+        assert!(
+            c_1_opt.is_none() && c_2_opt.is_none(),
+            "{:?} should equal {:?}",
+            c_1_opt,
+            c_2_opt
+        );
     }
 }
-
 
 #[cfg(test)]
 mod tests {

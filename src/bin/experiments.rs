@@ -1,9 +1,9 @@
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::text::TextRect;
 use macroquad::color::{BLACK, GRAY};
-use macroquad::input::{is_key_pressed, KeyCode};
+use macroquad::input::{KeyCode, is_key_pressed};
 use macroquad::math::Rect;
-use macroquad::prelude::{clear_background, next_frame, Conf};
+use macroquad::prelude::{Conf, clear_background, next_frame};
 use metro_loop::slider::Slider;
 use metro_loop::{
     AnyError, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH, STYLE,

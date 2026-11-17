@@ -4,8 +4,8 @@ use crate::render::{
     draw_blockade, draw_line_thickness, draw_rail, draw_station, render_cross, render_tick,
 };
 use crate::theme::{
-    labels_from_theme, new_button, new_text, new_text_group_generic, render_button, render_text,
-    render_tooltip, Theme,
+    Theme, labels_from_theme, new_button, new_text, new_text_group_generic, render_button,
+    render_text, render_tooltip,
 };
 use crate::{
     BACKGROUND, ENABLED_CELL, PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, SUCCESS, SUCCESS_DARK,
@@ -13,13 +13,13 @@ use crate::{
 };
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::lazy::add_contour;
+use juquad::widgets::Widget;
 use juquad::widgets::anchor::{Anchor, Horizontal, Vertical};
 use juquad::widgets::button::Button;
 use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::text::TextRect;
-use juquad::widgets::Widget;
 use macroquad::input::mouse_position;
-use macroquad::math::{vec2, Rect, Vec2};
+use macroquad::math::{Rect, Vec2, vec2};
 
 pub struct Panel {
     pub rect: Rect,

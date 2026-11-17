@@ -1,7 +1,7 @@
-use crate::logic::constraints::{matches_constraint_and_reachable, Constraint};
-use crate::logic::grid::{get_cell, is_system_fixed, UserFix};
+use crate::logic::constraints::{Constraint, matches_constraint_and_reachable};
+use crate::logic::grid::{UserFix, get_cell, is_system_fixed};
 use crate::logic::intersection::{Crossing, Intersection};
-use crate::logic::pixel_grid::{option_equals_cell, Coord};
+use crate::logic::pixel_grid::{Coord, option_equals_cell};
 use crate::theme::Theme;
 use crate::*;
 use juquad::draw::{draw_rect, draw_rect_lines};

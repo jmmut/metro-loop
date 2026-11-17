@@ -1,6 +1,6 @@
 use crate::levels::{Level, Levels};
 use crate::logic::constraints::{choose_constraints, count_unreachable_rails};
-use crate::logic::grid::{get, Grid};
+use crate::logic::grid::{Grid, get};
 use crate::logic::pixel_grid::Coord;
 use crate::scenes::play::generate_grid;
 use crate::theme::Theme;

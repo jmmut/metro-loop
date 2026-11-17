@@ -1,14 +1,14 @@
 use crate::slider::Slider;
-use crate::theme::{new_button, new_button_group_direction, render_button, render_text, Theme};
-use crate::{new_layout, AnyError, NextStage, BACKGROUND, PANEL_BACKGROUND, STYLE, TEXT_STYLE};
+use crate::theme::{Theme, new_button, new_button_group_direction, render_button, render_text};
+use crate::{AnyError, BACKGROUND, NextStage, PANEL_BACKGROUND, STYLE, TEXT_STYLE, new_layout};
 use juquad::draw::draw_rect;
+use juquad::widgets::Widget;
 use juquad::widgets::anchor::Anchor;
 use juquad::widgets::button_group;
 use juquad::widgets::text::TextRect;
-use juquad::widgets::Widget;
-use macroquad::input::{is_key_pressed, KeyCode};
+use macroquad::input::{KeyCode, is_key_pressed};
 use macroquad::math::Rect;
-use macroquad::prelude::{clear_background, next_frame, screen_height, screen_width, vec2, Vec2};
+use macroquad::prelude::{Vec2, clear_background, next_frame, screen_height, screen_width, vec2};
 use std::ops::{Add, Sub};
 
 pub async fn options(theme: &mut Theme) -> Result<NextStage, AnyError> {

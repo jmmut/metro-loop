@@ -1,10 +1,10 @@
 use macroquad::miniquad::date::now;
-use macroquad::prelude::{next_frame, Conf};
+use macroquad::prelude::{Conf, next_frame};
 use macroquad::rand::srand;
 use metro_loop::level_history::GameTrack;
 use metro_loop::{
-    scenes, AnyError, NextStage, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH,
-    STARTING_LEVEL, STARTING_SECTION,
+    AnyError, DEFAULT_WINDOW_HEIGHT, DEFAULT_WINDOW_TITLE, DEFAULT_WINDOW_WIDTH, NextStage,
+    STARTING_LEVEL, STARTING_SECTION, scenes,
 };
 
 #[macroquad::main(window_conf)]

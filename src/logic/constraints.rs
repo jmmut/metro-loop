@@ -1,5 +1,5 @@
-use crate::logic::grid::{get_cell, Grid};
 use crate::CLUE_PERCENTAGE;
+use crate::logic::grid::{Grid, get_cell};
 use juquad::widgets::anchor::{Direction, Horizontal, Sense, Spot, Vertical};
 use macroquad::math::vec2;
 use macroquad::prelude::Vec2;

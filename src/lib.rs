@@ -30,7 +30,7 @@ pub mod scenes {
 }
 
 use crate::logic::constraints::{Constraints, RailCoord};
-use crate::logic::grid::{get, Grid};
+use crate::logic::grid::{Grid, get};
 use crate::theme::Layout;
 use juquad::widgets::anchor::Vertical;
 use juquad::widgets::{StateStyle, Style};

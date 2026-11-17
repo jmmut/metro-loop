@@ -1,11 +1,11 @@
 use crate::logic::intersection::{
-    crossing_to_char, horiz_to_char, vert_to_char, Crossing, Intersection, Intersections,
+    Crossing, Intersection, Intersections, crossing_to_char, horiz_to_char, vert_to_char,
 };
 use crate::logic::pixel_grid::Coord;
 use crate::logic::rails::Rails;
-use crate::{generate_nested_vec, AnyError};
+use crate::{AnyError, generate_nested_vec};
 use juquad::widgets::anchor::{Horizontal, Vertical};
-use macroquad::prelude::{ivec2, IVec2};
+use macroquad::prelude::{IVec2, ivec2};
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
@@ -504,7 +504,7 @@ impl Grid {
                             "Wrong format for grid at (1-based) line {}, letter {}: {}",
                             line_count, letter_count, line
                         )
-                        .into())
+                        .into());
                     }
                 };
                 if is_root {

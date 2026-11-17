@@ -1,20 +1,20 @@
 use crate::levels::Levels;
 use crate::sound::Sounds;
-use crate::theme::{new_text_unloaded, render_text, Preferences, Theme};
+use crate::theme::{Preferences, Theme, new_text_unloaded, render_text};
 use crate::{
-    new_layout, AnyError, BACKGROUND, DEFAULT_VOLUME, DISABLED_CELL, FAILING, RAIL, RAIL_BORDER,
-    STYLE, SUCCESS, TRANSPARENT,
+    AnyError, BACKGROUND, DEFAULT_VOLUME, DISABLED_CELL, FAILING, RAIL, RAIL_BORDER, STYLE,
+    SUCCESS, TRANSPARENT, new_layout,
 };
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::resource_loader::{Progress, ResourceLoader};
-use juquad::widgets::anchor::Anchor;
 use juquad::widgets::StateStyle;
-use macroquad::audio::{load_sound_from_bytes, stop_sound, Sound};
+use juquad::widgets::anchor::Anchor;
+use macroquad::audio::{Sound, load_sound_from_bytes, stop_sound};
 use macroquad::color::DARKGRAY;
 use macroquad::file::FileError;
 use macroquad::math::Rect;
 use macroquad::prelude::{
-    clear_background, load_ttf_font_from_bytes, next_frame, screen_height, screen_width, Vec2,
+    Vec2, clear_background, load_ttf_font_from_bytes, next_frame, screen_height, screen_width,
 };
 use macroquad::text::Font;
 use std::fmt::{Debug, Formatter};

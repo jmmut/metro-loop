@@ -1,18 +1,18 @@
 use crate::level_history::{GameTrack, Solved};
-use crate::logic::pixel_grid::{option_equals_cell, Coord};
-use crate::render::{cell_top_left, render_rail, RenderRail};
+use crate::logic::pixel_grid::{Coord, option_equals_cell};
+use crate::render::{RenderRail, cell_top_left, render_rail};
 use crate::scenes::play::default_pixel_to_coord;
 use crate::scenes::play::panel::{get_icon_rect, render_tick_or_cross};
-use crate::theme::{new_imm_button, new_text, render_text, render_tooltip, Theme};
+use crate::theme::{Theme, new_imm_button, new_text, render_text, render_tooltip};
 use crate::{
-    new_layout, AnyError, NextStage, BACKGROUND, DISABLED_CELL, ENABLED_CELL, HOVERED_CELL,
-    PANEL_BACKGROUND, RAIL, TEXT_STYLE, UNREACHABLE_RAIL,
+    AnyError, BACKGROUND, DISABLED_CELL, ENABLED_CELL, HOVERED_CELL, NextStage, PANEL_BACKGROUND,
+    RAIL, TEXT_STYLE, UNREACHABLE_RAIL, new_layout,
 };
 use juquad::draw::draw_rect;
-use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::Widget;
+use juquad::widgets::anchor::{Anchor, Horizontal};
 use macroquad::input::{
-    is_key_pressed, is_mouse_button_pressed, mouse_position, KeyCode, MouseButton,
+    KeyCode, MouseButton, is_key_pressed, is_mouse_button_pressed, mouse_position,
 };
 use macroquad::math::{IVec2, Rect, Vec2};
 use macroquad::prelude::{
@@ -146,11 +146,7 @@ fn render_solved_at(
     let color = if option_equals_cell(hovered_cell, Coord::new_i(i_row, i_column)) {
         HOVERED_CELL
     } else {
-        if *level {
-            ENABLED_CELL
-        } else {
-            DISABLED_CELL
-        }
+        if *level { ENABLED_CELL } else { DISABLED_CELL }
     };
     let cell_pos = cell_top_left(i_row, i_column, theme);
     draw_rectangle(

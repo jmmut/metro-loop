@@ -1,15 +1,16 @@
 use crate::level_history::GameTrack;
-use crate::logic::constraints::Satisfaction;
+use crate::logic::constraints::{Satisfaction, Wording};
 use crate::render::{
-    draw_blockade, draw_line_thickness, draw_rail, draw_station, render_cross, render_tick,
+    draw_blockade, draw_line_thickness, draw_rail, draw_rail_color, draw_station,
+    get_success_color, render_cross, render_tick,
 };
 use crate::theme::{
     Theme, labels_from_theme, new_button, new_text, new_text_group_generic, render_button,
     render_text, render_tooltip,
 };
 use crate::{
-    BACKGROUND, ENABLED_CELL, PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, SUCCESS, SUCCESS_DARK,
-    TEXT_STYLE, TRIANGLE, TRIANGLE_BORDER,
+    BACKGROUND, ENABLED_CELL, FAILING, FAILING_DARK, PANEL_BACKGROUND, RAIL,
+    SEE_SOLUTION_DURING_GAME, SUCCESS, SUCCESS_DARK, TEXT_STYLE, TRIANGLE, TRIANGLE_BORDER,
 };
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::lazy::add_contour;
@@ -207,10 +208,10 @@ impl SatisfactionPanel {
         } else {
             #[rustfmt::skip]
             let texts_and_tooltips = [
-                ((&satisfaction.stations.format(), satisfaction.stations.success()), "Satisfied stations"),
-                ((&satisfaction.bridges.format(), satisfaction.bridges.success()), "Satisfied bridges"),
-                ((&satisfaction.cell_count.format(), satisfaction.cell_count.success()), "Active blocks"),
-                ((&satisfaction.reachable.format(), satisfaction.reachable.success()), "Reachable rails"),
+                ((&satisfaction.stations.format(Wording::Incorrect), satisfaction.stations.success()), "Satisfied stations"),
+                ((&satisfaction.bridges.format(Wording::Incorrect), satisfaction.bridges.success()), "Satisfied bridges"),
+                ((&satisfaction.cell_count.format(Wording::Missing), satisfaction.cell_count.success()), "Active blocks"),
+                ((&satisfaction.reachable.format(Wording::Isolated), satisfaction.reachable.success()), "Reachable rails"),
             ];
             let (texts_success, tooltips) = split_tuple(texts_and_tooltips);
             let (texts, successes) = split_tuple(texts_success);
@@ -285,14 +286,14 @@ impl SatisfactionPanel {
                 for (i, text_rect) in texts.iter().enumerate() {
                     render_text(&text_rect, &TEXT_STYLE);
                     let icon_rect = get_tick_or_cross_rect(text_rect);
-                    cross_tick_rects.push(icon_rect);
+                    cross_tick_rects.push((icon_rect, successes[i]));
                     render_tick_or_cross(icon_rect, successes[i], theme);
                 }
                 assert_eq!(cross_tick_rects.len(), 4);
-                let station_rect = cross_tick_rects[0];
-                let bridge_rect = cross_tick_rects[1];
-                let enabled_rect = cross_tick_rects[2];
-                let isolated_rect = cross_tick_rects[3];
+                let (station_rect, station_success) = cross_tick_rects[0];
+                let (bridge_rect, bridge_success) = cross_tick_rects[1];
+                let (enabled_rect, enabled_success) = cross_tick_rects[2];
+                let (isolated_rect, isolated_success) = cross_tick_rects[3];
 
                 let icon_size = station_rect.size();
                 let margin_x = vec2(icon_size.x * 0.375, 0.0);
@@ -301,9 +302,20 @@ impl SatisfactionPanel {
                 // let icon_rect = add_contour(icon_rect, Vec2::splat(theme.cell_pad()));
                 let width = vec2(icon_rect.w, 0.0);
                 let start = icon_rect.center() - width * 0.5;
-                draw_rail(start, start + width, theme, true);
-                draw_station(theme, true, SUCCESS, SUCCESS_DARK, start, width, false);
+                // draw_rail_color(start, start + width, theme, false, RAIL);
+                draw_line_thickness(start, start + width, theme.cell_pad(), BACKGROUND);
+                let (color, color_border) = get_success_color(station_success);
+                draw_station(
+                    theme,
+                    station_success,
+                    color,
+                    color_border,
+                    start,
+                    width,
+                    false,
+                );
 
+                let (color, color_border) = get_success_color(bridge_success);
                 let icon_size = station_rect.size();
                 let margin_x = vec2(icon_size.x * 0.375, 0.0);
                 let anchor = Anchor::top_right_v(bridge_rect.point() - margin_x);
@@ -314,9 +326,9 @@ impl SatisfactionPanel {
                 draw_line_thickness(start_2, start_2 + width, theme.cell_pad(), BACKGROUND);
                 draw_blockade(
                     theme,
-                    true,
-                    SUCCESS,
-                    SUCCESS_DARK,
+                    bridge_success,
+                    color,
+                    color_border,
                     start_2,
                     width,
                     false,
@@ -337,7 +349,7 @@ impl SatisfactionPanel {
                 let icon_rect = anchor.get_rect(icon_size);
                 let length = vec2(icon_rect.w, 0.0);
                 let end = icon_rect.center() + length * 0.5;
-                draw_rail(end - length, end, theme, true);
+                draw_rail(end - length, end, theme, isolated_success);
             }
         }
     }

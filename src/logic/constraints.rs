@@ -87,6 +87,11 @@ pub struct Constraints {
     pub cell_count: i32,
 }
 
+pub enum Wording {
+    Incorrect,
+    Isolated,
+    Missing,
+}
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Goal {
     pub actual: i32,
@@ -99,8 +104,24 @@ impl Goal {
     pub fn success(&self) -> bool {
         self.actual == self.expected
     }
-    pub fn format(&self) -> String {
-        format!("{} correct out of {}", self.actual, self.expected)
+    pub fn format(&self, wording: Wording) -> String {
+        if self.actual == self.expected {
+            "Satisfied".to_string()
+        } else if self.actual < self.expected {
+            match wording {
+                Wording::Incorrect => {
+                    format!("{} incorrect", (self.expected - self.actual).abs())
+                }
+                Wording::Missing => {
+                    format!("{} missing", (self.expected - self.actual).abs())
+                }
+                Wording::Isolated => {
+                    format!("{} isolated", (self.expected - self.actual).abs())
+                }
+            }
+        } else {
+            format!("{} too many", (self.expected - self.actual).abs())
+        }
     }
 }
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]

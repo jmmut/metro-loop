@@ -203,7 +203,15 @@ pub fn render_rail(render_rail: RenderRail, theme: &Theme) {
 }
 
 pub fn draw_rail(start: Vec2, end: Vec2, theme: &Theme, reachable: bool) {
-    let color = if reachable { RAIL } else { UNREACHABLE_RAIL };
+    draw_rail_color(
+        start,
+        end,
+        theme,
+        reachable,
+        if reachable { RAIL } else { UNREACHABLE_RAIL },
+    )
+}
+pub fn draw_rail_color(start: Vec2, end: Vec2, theme: &Theme, reachable: bool, color: Color) {
     draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
     let direction = (end - start).normalize();
     let border_start = start + direction * theme.cell_pad() * 0.5;
@@ -250,11 +258,7 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
     for constraint in &constraints.rails {
         let (success, reversed_rail, reachable) =
             matches_constraint_and_reachable(grid, constraint);
-        let (color, color_border) = if success {
-            (SUCCESS, SUCCESS_DARK)
-        } else {
-            (FAILING, FAILING_DARK)
-        };
+        let (color, color_border) = get_success_color(success);
 
         let (row, column) = constraint.row_column();
         let direction = constraint.vec2();
@@ -319,6 +323,15 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
             );
         }
     }
+}
+
+pub fn get_success_color(success: bool) -> (Color, Color) {
+    let (color, color_border) = if success {
+        (SUCCESS, SUCCESS_DARK)
+    } else {
+        (FAILING, FAILING_DARK)
+    };
+    (color, color_border)
 }
 
 fn draw_user_rail_constraints(

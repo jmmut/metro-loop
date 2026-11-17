@@ -221,10 +221,10 @@ impl SatisfactionPanel {
         } else {
             #[rustfmt::skip]
             let goals = [
-                (satisfaction.stations, Wording::Incorrect, "stations"),
-                (satisfaction.bridges, Wording::Incorrect, "bridges"),
+                (satisfaction.stations, Wording::Incorrect, "directions"),
+                (satisfaction.bridges, Wording::Incorrect, "fences"),
                 (satisfaction.cell_count, Wording::Missing, "blocks"),
-                (satisfaction.reachable, Wording::Isolated, "rails"),
+                (satisfaction.reachable, Wording::Isolated, "paths"),
             ];
             let texts_and_tooltips = goals.map(|(goal, wording, name)| {
                 let text = goal.format(wording);

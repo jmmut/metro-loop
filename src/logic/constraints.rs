@@ -130,10 +130,20 @@ impl Goal {
                 format!("{} correct {} out of {}", self.actual, name, self.expected)
             }
             Wording::Missing => {
-                format!("{} active {} out of {}", self.actual, name, self.expected)
+                format!(
+                    "{} active {}, should be {}",
+                    self.actual, name, self.expected
+                )
             }
             Wording::Isolated => {
-                format!("{} reachable {} out of {}", self.actual, name, self.expected)
+                if self.actual == self.expected {
+                    format!("All {} reachable (currently {})", name, self.actual)
+                } else {
+                    format!(
+                        "{} {} reachable out of {}",
+                        self.actual, name, self.expected
+                    )
+                }
             }
         }
     }

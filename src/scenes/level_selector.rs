@@ -11,6 +11,7 @@ use crate::{
 use juquad::draw::draw_rect;
 use juquad::widgets::Widget;
 use juquad::widgets::anchor::{Anchor, Horizontal};
+use juquad::widgets::text::TextRect;
 use macroquad::input::{
     KeyCode, MouseButton, is_key_pressed, is_mouse_button_pressed, mouse_position,
 };
@@ -73,16 +74,14 @@ pub async fn level_selector(
                 let icon_rect = get_tick_or_cross_rect(&title);
                 let solved = game_track.is_solved(coord.row(), coord.column());
                 render_tick_or_cross(icon_rect, solved, theme);
-                if icon_rect.contains(mouse_pos) || title.rect().contains(mouse_pos) {
-                    let anchor = Anchor::bottom_right_v(mouse_pos);
-                    let text = if solved {
-                        "Level is solved"
-                    } else {
-                        "Level is unsolved"
-                    };
-                    let tooltip = new_text(text, anchor, 1.0, theme);
-                    render_tooltip(&tooltip, &TEXT_STYLE)
-                }
+
+                let text = if solved {
+                    "Level is solved"
+                } else {
+                    "Level is unsolved"
+                };
+                new_rendered_tooltip_at(text, icon_rect, mouse_pos, theme);
+                new_rendered_tooltip_at(&game_track.get_current().subtitle, title.rect(), mouse_pos, theme);
 
                 let anchor = Anchor::below(title.rect(), Horizontal::Center, theme.button_margin());
                 if new_imm_button("PLAY", anchor, theme).1.is_clicked() {
@@ -97,6 +96,19 @@ pub async fn level_selector(
         }
 
         next_frame().await;
+    }
+}
+
+fn new_tooltip(text: &str, mouse_pos: Vec2, theme: &Theme) -> TextRect {
+    let anchor = Anchor::bottom_right_v(mouse_pos);
+    let tooltip = new_text(text, anchor, 1.0, theme);
+    tooltip
+}
+
+fn new_rendered_tooltip_at(text: &str, triggering_rect: Rect, mouse_pos: Vec2, theme: &Theme) {
+    if triggering_rect.contains(mouse_pos) {
+        let tooltip = new_tooltip(text, mouse_pos, theme);
+        render_tooltip(&tooltip, &TEXT_STYLE);
     }
 }
 

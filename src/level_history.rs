@@ -156,6 +156,7 @@ pub async fn generate_procedural(visualize: bool, theme: &Theme) -> Level {
         initial_grid: grid,
         constraints,
         solution,
+        subtitle: "Good luck!".to_string(),
     }
 }
 
@@ -172,10 +173,10 @@ impl Display for CurrentGame {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             CurrentGame::Campaign { section, level } => {
-                write!(f, "Level: {}-{}", section, level)
+                write!(f, "Level {} - {}", section, level)
             }
             CurrentGame::Procedural => {
-                write!(f, "Level: Random")
+                write!(f, "Randomly generated level")
             }
         }
     }

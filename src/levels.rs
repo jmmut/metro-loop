@@ -10,20 +10,24 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
     sections: &[
         RawSection {
             levels: &[
-                r#". . . . .
-         
-. x x x .
-         
-. x . x .
-    > >  
-. x^% *v.
-    < <  
-. x x x .
-         
-. x x x .
-         
-. . . . .
-"#,
+//                 (
+//                     "If it seems obvious it's because it is",
+//                 r#". . . . .
+//          
+// . x x x .
+//          
+// . x . x .
+//     > >  
+// . x^% *v.
+//     < <  
+// . x x x .
+//          
+// . x x x .
+//          
+// . . . . .
+// "#),
+                (
+                    "Don't overthink it",
                 r#". . . . .
          
 . x x x .
@@ -37,7 +41,9 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . . . . .
-"#,
+"#),
+                (
+                    "Your first diagonal",
                 r#". . . . .
          
 . x x x .
@@ -51,7 +57,9 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . . . . .
-"#,
+"#),
+                (
+                    "Yagami's demise",
                 r#". . . . .
          
 . x x x .
@@ -65,7 +73,9 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . . . . .
-"#,
+"#),
+                (
+                    "Notice the reversal",
                 r#". . . . .
          
 . x x x .
@@ -79,7 +89,25 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 . x x x .
          
 . . . . .
-"#,
+"#),
+                (
+                    "Your first fence",
+                r#".-.-.-.-.
+---------
+.-x-x-x-.
+---------
+.-x-.-x-.
+---->----
+.-x-%-x-.
+----"----
+.-x-x-x-.
+---------
+.-x-x-x-.
+---------
+.-.-.-.-.
+"#),
+                (
+                    "Fences are fine inside or outside",
                 r#".-.-.-.-.
 ---------
 .-*=*-x-.
@@ -93,7 +121,9 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-x-x-.
 ---------
 .-.-.-.-.
-"#,
+"#),
+                (
+                    "Think in loops",
                 r#".-.-.-.-.
 ------<--
 .-*-*-*-.
@@ -107,11 +137,13 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x=x=x-.
 ------"--
 .-.-.-.-.
-"#,
+"#),
             ],
         },
         RawSection {
             levels: &[
+                (
+                    "Your first real puzzle",
                 r#".-.-.-.-.-.-.
 -------------
 .=xv*-x-x-x-.
@@ -126,7 +158,9 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 ------<-<----
 .-.-.-.-.-.-.
 
-"#,
+"#),
+                (
+                    "Let's change some constraints",
                 r#".-.-.-.-.-.-.
 ----<--------
 .=xvO-x-x-x-.
@@ -140,7 +174,9 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-*-O-O=*-.
 ----<-<-<----
 .-.-.-.-.-.-.
-"#,
+"#),
+                (
+                    "Am I too annoying?",
                 r#".-.-.-.-.-.-.
 ----<--------
 .=xvO-*-*-x-.
@@ -154,11 +190,13 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-O-O-O=O-.
 ----<-<-<----
 .-.-.-.-.-.-.
-"#,
+"#),
             ],
         },
         RawSection {
             levels: &[
+                (
+                    "TODO 1",
                 r#".-.-.-.-.-.-.-.-.
 --"------->------
 .-x-x-x-x-*-*-*-.
@@ -174,7 +212,9 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-x-x-x=x=xv*-.
 ----"------------
 .-.-.-.-.-.-.-.-.
-"#,
+"#),
+                (
+                    "TODO 2",
                 r#".-.-.-.-.-.-.-.-.
 -----------------
 .-x-x-x-*-*-x-x=.
@@ -190,7 +230,9 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-x-*-*-x-x-x-.
 -----------------
 .-.-.-.-.-.-.-.-.
-"#,
+"#),
+                (
+                    "TODO 3",
                 r#".-.-.-.-.-.-.-.-.
 --------"--------
 .v*=*-*-xv*=*-*^.
@@ -206,7 +248,7 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-x-x-x-xv*=*^.
 ----"--------->--
 .-.-.-.-.-.-.-.-.
-"#,
+"#),
             ],
         },
         RawSection {
@@ -227,6 +269,8 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
                 // -----------------
                 // .-.-.-.-.-.-.-.-.
                 // "#,
+                (
+                    "TODO 4",
                 r#".-.-.-.-.-.-.-.-.-.-.
 ----"->----->----->--
 .-x-x-*-*-*-*vx^*-*v.
@@ -246,7 +290,9 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-*-*vx=x=x^*=*-x=x=.
 ----------------"----
 .-.-.-.-.-.-.-.-.-.-.
-"#,
+"#),
+                (
+                    "TODO 5",
                 r#".-.-.-.-.-.-.-.-.-.-.
 ----"-------------<--
 .-*-x-*=*-*-*^x-O=O-.
@@ -266,8 +312,10 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-*-x-x-x=x=x-x=x-.
 ------------"-"------
 .-.-.-.-.-.-.-.-.-.-.
-"#,
-                r#".-.-.-.-.-.-.-.-.-.-.
+"#),
+                (
+                    "Interesting corners",
+                    r#".-.-.-.-.-.-.-.-.-.-.
 --"--------------->--
 .-xvO-x=x^O=Ovx-O=O-.
 ---->->--------------
@@ -286,8 +334,8 @@ pub const RAW_LEVELS: RawLevels = RawLevels {
 .-x-x-x-?-Ovx-?-x^O-.
 ----------------"----
 .-.-.-.-.-.-.-.-.-.-.
-
 "#,
+                ),
             ],
         },
     ],
@@ -305,7 +353,7 @@ pub struct Section {
     pub levels: Vec<Level>,
 }
 pub struct RawSection<'a> {
-    levels: &'a [&'a str],
+    levels: &'a [(&'a str, &'a str)],
 }
 
 #[derive(Clone, Debug)]
@@ -313,14 +361,15 @@ pub struct Level {
     pub initial_grid: Grid,
     pub constraints: Constraints,
     pub solution: Grid,
+    pub subtitle: String,
 }
 impl Levels {
     pub fn get() -> Result<Levels, AnyError> {
         let mut sections = Vec::new();
         for raw_section in RAW_LEVELS.sections {
             let mut levels = Vec::new();
-            for raw_level in raw_section.levels {
-                let level = Level::from_str(raw_level)?;
+            for (subtitle, raw_level) in raw_section.levels {
+                let level = Level::from_str_and_subtitle(raw_level, subtitle)?;
                 levels.push(level);
             }
             sections.push(Section { levels });
@@ -344,6 +393,9 @@ impl Levels {
 }
 impl Level {
     pub fn from_str(s: &str) -> Result<Level, AnyError> {
+        Level::from_str_and_subtitle(s, "")
+    }
+    pub fn from_str_and_subtitle(s: &str, subtitle: &str) -> Result<Level, AnyError> {
         let mut max_columns = 0;
         let mut cells = Vec::new();
         let mut fixed_cells = Vec::new();
@@ -458,6 +510,7 @@ impl Level {
             initial_grid,
             constraints,
             solution,
+            subtitle: subtitle.to_string(),
         })
     }
 }

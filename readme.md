@@ -4,6 +4,8 @@
 
 Play in your browser (or download the game) at https://jmmut.itch.io/metro-loop.
 
+Please buy the game to support me!
+
 ## Compiling and running this project
 
 Clone this repo, then [Install rust](https://www.rust-lang.org/tools/install), then do `cargo run --release`.

@@ -88,6 +88,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                 initial_grid: state.in_progress().clone(),
                 constraints: state.constraints().clone(),
                 solution: state.solution().clone(),
+                subtitle: "".to_string(),
             };
             println!("{}", level);
         }

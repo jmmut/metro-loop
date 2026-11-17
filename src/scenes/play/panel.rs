@@ -219,35 +219,13 @@ impl SatisfactionPanel {
             let text = new_text(&"SOLVED!", anchor, 2.0, &theme);
             Self::Solved { text }
         } else {
-            fn get_text_and_tooltip(
-                goal: Goal,
-                wording: Wording,
-                name: &str,
-            ) -> (String, bool, String) {
-                (
-                    goal.format(wording),
-                    goal.success(),
-                    goal.format_tooltip(wording, name),
-                )
-            }
             #[rustfmt::skip]
-            // let texts_and_tooltips = [
             let goals = [
                 (satisfaction.stations, Wording::Incorrect, "stations"),
                 (satisfaction.bridges, Wording::Incorrect, "bridges"),
                 (satisfaction.cell_count, Wording::Missing, "blocks"),
                 (satisfaction.reachable, Wording::Isolated, "rails"),
-                // ((&satisfaction.stations.format(Wording::Incorrect), satisfaction.stations.success()), &satisfaction.stations.format_tooltip(Wording::Incorrect, "stations")),
-                // ((&satisfaction.bridges.format(Wording::Incorrect), satisfaction.bridges.success()), &satisfaction.bridges.format_tooltip(Wording::Incorrect, "bridges")),
-                // ((&satisfaction.cell_count.format(Wording::Missing), satisfaction.cell_count.success()), &satisfaction.cell_count.format_tooltip(Wording::Missing, "blocks")),
-                // ((&satisfaction.reachable.format(Wording::Isolated), satisfaction.reachable.success()), &satisfaction.reachable.format_tooltip(Wording::Isolated, "rails")),
             ];
-            // let texts = texts_and_tooltips.map(|(goal, wording, _)| goal.format(wording));
-            // let successes = texts_and_tooltips.map(|(goal, _, _)| goal.success());
-            // let tooltips =
-            //     texts_and_tooltips.map(|(goal, wording, name)| goal.format_tooltip(wording, name));
-
-            // let mut texts = Vec::new();
             let texts_and_tooltips = goals.map(|(goal, wording, name)| {
                 let text = goal.format(wording);
                 let success = goal.success();
@@ -256,30 +234,6 @@ impl SatisfactionPanel {
             });
             let (texts, successes_tooltips) = split_tuple(texts_and_tooltips);
             let (successes, tooltips) = split_tuple(successes_tooltips);
-
-            // let tooltips = texts_and_tooltips
-            //     .iter_mut()
-            //     .map(|(_, _, x)| Tooltip::Text(x.take().unwrap()))
-            //     .collect();
-            // let successes = texts_and_tooltips.iter().map(|(_, x, _)| *x).collect();
-
-            // let mut successes = Vec::new();
-            // let mut tooltips = Vec::new();
-            // for (goal, wording, name) in texts_and_tooltips {
-            //     // texts.push(goal.format(wording));
-            //     successes.push(goal.success());
-            //     tooltips.push(Tooltip::Text(goal.format_tooltip(wording, name)));
-            // }
-
-            // let tooltips = texts_and_tooltips
-            //     .iter()
-            //     .map(|(goal, wording, name)| Tooltip::Text(goal.format_tooltip(*wording, name)))
-            //     .collect();
-            // let successes = texts_and_tooltips
-            //     .iter()
-            //     .map(|(goal, _, _)| goal.success())
-            //     .collect();
-            // let texts = texts_and_tooltips.map(|(goal, wording, _)| goal.format(wording));
 
             let anchor = Anchor::chain(
                 Horizontal::Left,
@@ -295,7 +249,6 @@ impl SatisfactionPanel {
                     ..labels_from_theme(theme)
                 },
             );
-            // let texts: [String; 4] = texts.try_into().unwrap();
             let text_rects = labels.create(texts);
 
             Self::Unsolved {

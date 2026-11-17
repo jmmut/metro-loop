@@ -87,6 +87,7 @@ pub struct Constraints {
     pub cell_count: i32,
 }
 
+#[derive(Copy, Clone, Debug)]
 pub enum Wording {
     Incorrect,
     Isolated,
@@ -121,6 +122,19 @@ impl Goal {
             }
         } else {
             format!("{} too many", (self.expected - self.actual).abs())
+        }
+    }
+    pub fn format_tooltip(&self, wording: Wording, name: &str) -> String {
+        match wording {
+            Wording::Incorrect => {
+                format!("{} correct {} out of {}", self.actual, name, self.expected)
+            }
+            Wording::Missing => {
+                format!("{} active {} out of {}", self.actual, name, self.expected)
+            }
+            Wording::Isolated => {
+                format!("{} reachable {} out of {}", self.actual, name, self.expected)
+            }
         }
     }
 }

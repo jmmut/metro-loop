@@ -1,16 +1,16 @@
 use crate::level_history::GameTrack;
-use crate::logic::constraints::{Goal, Satisfaction, Wording};
+use crate::logic::constraints::{Satisfaction, Wording};
 use crate::render::{
-    draw_blockade, draw_line_thickness, draw_rail, draw_rail_color, draw_station,
-    get_success_color, render_cross, render_tick,
+    draw_blockade, draw_line_thickness, draw_rail, draw_station, get_success_color, render_cross,
+    render_tick,
 };
 use crate::theme::{
     Theme, labels_from_theme, new_button, new_text, new_text_group_generic, render_button,
     render_text, render_tooltip,
 };
 use crate::{
-    BACKGROUND, ENABLED_CELL, FAILING, FAILING_DARK, PANEL_BACKGROUND, RAIL,
-    SEE_SOLUTION_DURING_GAME, SUCCESS, SUCCESS_DARK, TEXT_STYLE, TRIANGLE, TRIANGLE_BORDER,
+    BACKGROUND, ENABLED_CELL, PANEL_BACKGROUND, SEE_SOLUTION_DURING_GAME, TEXT_STYLE, TRIANGLE,
+    TRIANGLE_BORDER,
 };
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::lazy::add_contour;
@@ -308,7 +308,7 @@ impl SatisfactionPanel {
                 assert_eq!(cross_tick_rects.len(), 4);
                 let (station_rect, station_success) = cross_tick_rects[0];
                 let (bridge_rect, bridge_success) = cross_tick_rects[1];
-                let (enabled_rect, enabled_success) = cross_tick_rects[2];
+                let (enabled_rect, _enabled_success) = cross_tick_rects[2];
                 let (isolated_rect, isolated_success) = cross_tick_rects[3];
 
                 let icon_size = station_rect.size();

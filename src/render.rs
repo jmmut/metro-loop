@@ -28,7 +28,9 @@ pub fn is_horizontal_center(horizontal: Horizontal) -> bool {
 pub fn render_cells(grid: &Grid, hovered_cell: &Option<Coord>, theme: &Theme) {
     for i_row in 0..grid.rows() {
         for i_column in 0..grid.columns() {
-            let color = if option_equals_cell(hovered_cell, Coord::new_i(i_row, i_column)) {
+            let color = if option_equals_cell(hovered_cell, Coord::new_i(i_row, i_column))
+                && !get(&grid.fixed_cells, i_row, i_column)
+            {
                 HOVERED_CELL
             } else {
                 let current_cell = *get_cell(grid, i_row, i_column);

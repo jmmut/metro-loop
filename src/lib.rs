@@ -175,7 +175,7 @@ const fn color_average_weight(color_1: Color, color_2: Color, weight: f32) -> Co
 const fn choose_scale(width: f32, height: f32, font_size: f32) -> f32 {
     let min_side = width.min(height * 16.0 / 9.0);
     font_size
-        * if min_side < 1600.0 {
+        * if min_side < 1500.0 {
             1.0
         } else if min_side < 2500.0 {
             1.5

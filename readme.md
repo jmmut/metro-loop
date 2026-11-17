@@ -14,7 +14,7 @@ If that fails, you might need some system packages. If you're on linux, see how 
 
 ### Major
 
-- [/] options screen
+- [x] options screen
   - [x] should add a slider for the volume?
   - [-] a checkbox for enabling disabling sound?
 - [x] campaign visualization screen.
@@ -22,6 +22,7 @@ If that fails, you might need some system packages. If you're on linux, see how 
 - [x] add button for resetting level
 - [ ] diagonal constraint
 - [x] rail user constraint (clickable corners)
+- [ ] split blockages and stations
 - [ ] animation
   - [ ] lightness = sin(t) or circling movement for unsatisfied constraints when hovering on the right panel
     - [ ] stations and bridges

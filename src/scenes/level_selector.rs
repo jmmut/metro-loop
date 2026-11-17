@@ -2,7 +2,7 @@ use crate::level_history::{GameTrack, Solved};
 use crate::logic::pixel_grid::{Coord, option_equals_cell};
 use crate::render::{RenderRail, cell_top_left, render_rail};
 use crate::scenes::play::default_pixel_to_coord;
-use crate::scenes::play::panel::{get_icon_rect, render_tick_or_cross};
+use crate::scenes::play::panel::{get_tick_or_cross_rect, render_tick_or_cross};
 use crate::theme::{Theme, new_imm_button, new_text, render_text, render_tooltip};
 use crate::{
     AnyError, BACKGROUND, DISABLED_CELL, ENABLED_CELL, HOVERED_CELL, NextStage, PANEL_BACKGROUND,
@@ -70,7 +70,7 @@ pub async fn level_selector(
                 let title = new_text(&level_name, anchor, 1.0, theme);
                 render_text(&title, &TEXT_STYLE);
 
-                let icon_rect = get_icon_rect(&title);
+                let icon_rect = get_tick_or_cross_rect(&title);
                 let solved = game_track.is_solved(coord.row(), coord.column());
                 render_tick_or_cross(icon_rect, solved, theme);
                 if icon_rect.contains(mouse_pos) || title.rect().contains(mouse_pos) {

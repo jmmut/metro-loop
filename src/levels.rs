@@ -552,7 +552,8 @@ mod tests {
         assert_eq!(
             compute_satisfaction(&level.initial_grid, &level.constraints),
             Satisfaction {
-                stations: Goal::new(2, 10),
+                stations: Goal::new(2, 6),
+                bridges: Goal::new(0, 4),
                 cell_count: Goal::new(2, 2),
                 reachable: Goal::new(6, 6),
             }

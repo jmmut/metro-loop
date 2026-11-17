@@ -100,12 +100,13 @@ impl Goal {
         self.actual == self.expected
     }
     pub fn format(&self) -> String {
-        format!("{} out of {}", self.actual, self.expected)
+        format!("{} correct out of {}", self.actual, self.expected)
     }
 }
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub struct Satisfaction {
     pub stations: Goal,
+    pub bridges: Goal,
     pub cell_count: Goal,
     pub reachable: Goal,
 }
@@ -169,7 +170,7 @@ fn count_cells(grid: &Grid) -> i32 {
 }
 
 pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfaction {
-    let stations = compute_rail_failures(grid, &constraints.rails);
+    let RailFailures { stations, bridges } = compute_rail_failures(grid, &constraints.rails);
     let cell_count = Goal {
         actual: count_cells(grid),
         expected: constraints.cell_count,
@@ -178,6 +179,7 @@ pub fn compute_satisfaction(grid: &Grid, constraints: &Constraints) -> Satisfact
     let reachable = count_unreachable_rails(grid);
     Satisfaction {
         stations,
+        bridges,
         cell_count,
         reachable,
     }
@@ -214,16 +216,42 @@ pub fn count_loops(grid: &Grid) -> i32 {
     active - adjacents
 }
 
-fn compute_rail_failures(grid: &Grid, rail_constraints: &Vec<RailCoord>) -> Goal {
-    let mut failures = 0;
+pub struct RailFailures {
+    stations: Goal,
+    bridges: Goal,
+}
+
+fn compute_rail_failures(grid: &Grid, rail_constraints: &Vec<RailCoord>) -> RailFailures {
+    let mut station_failures = 0;
+    let mut bridge_failures = 0;
+    let mut station_constraints = 0;
+    let mut bridge_constraints = 0;
     for constraint in rail_constraints {
-        if !matches_constraint_and_reachable(grid, constraint).0 {
-            failures += 1;
+        let success = matches_constraint_and_reachable(grid, constraint).0;
+        match constraint.type_() {
+            Constraint::Station(_) => {
+                station_constraints += 1;
+                if !success {
+                    station_failures += 1;
+                }
+            }
+            Constraint::Blockade => {
+                bridge_constraints += 1;
+                if !success {
+                    bridge_failures += 1;
+                }
+            }
         }
     }
-    Goal {
-        actual: rail_constraints.len() as i32 - failures,
-        expected: rail_constraints.len() as i32,
+    RailFailures {
+        stations: Goal {
+            actual: station_constraints - station_failures,
+            expected: station_constraints,
+        },
+        bridges: Goal {
+            actual: bridge_constraints - bridge_failures,
+            expected: bridge_constraints,
+        },
     }
 }
 

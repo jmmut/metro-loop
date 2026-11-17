@@ -207,7 +207,8 @@ impl SatisfactionPanel {
         } else {
             #[rustfmt::skip]
             let texts_and_tooltips = [
-                ((&satisfaction.stations.format(), satisfaction.stations.success()), "Satisfied bridges and stations"),
+                ((&satisfaction.stations.format(), satisfaction.stations.success()), "Satisfied stations"),
+                ((&satisfaction.bridges.format(), satisfaction.bridges.success()), "Satisfied bridges"),
                 ((&satisfaction.cell_count.format(), satisfaction.cell_count.success()), "Active blocks"),
                 ((&satisfaction.reachable.format(), satisfaction.reachable.success()), "Reachable rails"),
             ];
@@ -253,7 +254,11 @@ impl SatisfactionPanel {
             } => {
                 let mouse_pos = Vec2::from(mouse_position());
                 for (i, text) in texts.iter().enumerate() {
-                    if text.rect().contains(mouse_pos) || get_icon_rect(text).contains(mouse_pos) {
+                    let tick_or_cross_rect = get_tick_or_cross_rect(text);
+                    if text.rect().contains(mouse_pos)
+                        || tick_or_cross_rect.contains(mouse_pos)
+                        || get_icon_rect(&tick_or_cross_rect).contains(mouse_pos)
+                    {
                         let anchor = Anchor::bottom_right_v(mouse_pos);
                         let tooltip = new_text(tooltips[i].text(), anchor, 1.0, theme);
                         tooltips[i] = Tooltip::Renderable(tooltip);
@@ -279,21 +284,33 @@ impl SatisfactionPanel {
                 let mut cross_tick_rects = Vec::new();
                 for (i, text_rect) in texts.iter().enumerate() {
                     render_text(&text_rect, &TEXT_STYLE);
-                    let icon_rect = get_icon_rect(text_rect);
+                    let icon_rect = get_tick_or_cross_rect(text_rect);
                     cross_tick_rects.push(icon_rect);
                     render_tick_or_cross(icon_rect, successes[i], theme);
                 }
-                assert_eq!(cross_tick_rects.len(), 3);
-                let icon_size = cross_tick_rects[0].size();
+                assert_eq!(cross_tick_rects.len(), 4);
+                let station_rect = cross_tick_rects[0];
+                let bridge_rect = cross_tick_rects[1];
+                let enabled_rect = cross_tick_rects[2];
+                let isolated_rect = cross_tick_rects[3];
+
+                let icon_size = station_rect.size();
                 let margin_x = vec2(icon_size.x * 0.375, 0.0);
-                let anchor = Anchor::top_right_v(cross_tick_rects[0].point() - margin_x);
+                let anchor = Anchor::top_right_v(station_rect.point() - margin_x);
                 let icon_rect = anchor.get_rect(icon_size);
                 // let icon_rect = add_contour(icon_rect, Vec2::splat(theme.cell_pad()));
                 let width = vec2(icon_rect.w, 0.0);
                 let start = icon_rect.center() - width * 0.5;
                 draw_rail(start, start + width, theme, true);
                 draw_station(theme, true, SUCCESS, SUCCESS_DARK, start, width, false);
-                let start_2 = start - width * 1.2;
+
+                let icon_size = station_rect.size();
+                let margin_x = vec2(icon_size.x * 0.375, 0.0);
+                let anchor = Anchor::top_right_v(bridge_rect.point() - margin_x);
+                let icon_rect = anchor.get_rect(icon_size);
+                let width = vec2(icon_rect.w, 0.0);
+                let start_2 = icon_rect.center() - width * 0.5;
+                // let start_2 = start - width * 1.2;
                 draw_line_thickness(start_2, start_2 + width, theme.cell_pad(), BACKGROUND);
                 draw_blockade(
                     theme,
@@ -307,7 +324,7 @@ impl SatisfactionPanel {
                     false,
                 );
 
-                let anchor = Anchor::top_right_v(cross_tick_rects[1].point() - margin_x);
+                let anchor = Anchor::top_right_v(enabled_rect.point() - margin_x);
                 let icon_rect = anchor.get_rect(icon_size);
                 // let icon_rect = add_contour(icon_rect, -Vec2::splat(theme.cell_pad()));
                 draw_rect(icon_rect, TRIANGLE);
@@ -316,7 +333,7 @@ impl SatisfactionPanel {
                 draw_rect(cell_rect, ENABLED_CELL);
                 draw_rect_lines(cell_rect, 2.0, TRIANGLE_BORDER);
 
-                let anchor = Anchor::top_right_v(cross_tick_rects[2].point() - margin_x);
+                let anchor = Anchor::top_right_v(isolated_rect.point() - margin_x);
                 let icon_rect = anchor.get_rect(icon_size);
                 let length = vec2(icon_rect.w, 0.0);
                 let end = icon_rect.center() + length * 0.5;
@@ -342,10 +359,16 @@ impl SatisfactionPanel {
     }
 }
 
-pub fn get_icon_rect(text_rect: &TextRect) -> Rect {
+pub fn get_tick_or_cross_rect(text_rect: &TextRect) -> Rect {
     let icon_size = text_rect.rect().h;
     let anchor = Anchor::top_right_v(text_rect.rect().point());
     let icon_rect = anchor.get_rect(vec2(icon_size, icon_size));
+    icon_rect
+}
+pub fn get_icon_rect(tick_or_cross: &Rect) -> Rect {
+    let icon_size = tick_or_cross.h;
+    let anchor = Anchor::top_right_v(tick_or_cross.point());
+    let icon_rect = anchor.get_rect(vec2(icon_size * 1.5, icon_size));
     icon_rect
 }
 
@@ -357,8 +380,10 @@ impl Widget for SatisfactionPanel {
     fn rect(&self) -> Rect {
         match self {
             SatisfactionPanel::Solved { text } => text.rect(),
-            SatisfactionPanel::Unsolved { texts, .. } => get_icon_rect(texts.first().unwrap())
-                .combine_with(get_icon_rect(texts.last().unwrap())),
+            SatisfactionPanel::Unsolved { texts, .. } => {
+                get_tick_or_cross_rect(texts.first().unwrap())
+                    .combine_with(get_tick_or_cross_rect(texts.last().unwrap()))
+            }
         }
     }
 

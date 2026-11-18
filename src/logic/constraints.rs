@@ -157,7 +157,10 @@ pub struct Satisfaction {
 }
 impl Satisfaction {
     pub fn success(&self) -> bool {
-        self.stations.success() && self.cell_count.success() && self.reachable.success()
+        self.stations.success()
+            && self.bridges.success()
+            && self.cell_count.success()
+            && self.reachable.success()
     }
 }
 

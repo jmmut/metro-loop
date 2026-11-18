@@ -64,12 +64,12 @@ pub enum Tooltips {
 }
 
 pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextStage, AnyError> {
-    let mut screen = vec2(screen_width(), screen_height());
+    let screen = vec2(screen_width(), screen_height());
     let (mut state, mut panel) = setup(theme, game_track);
 
     let mut render_target_scale = 1.0;
     let mut slider_value = render_target_scale;
-    let mut render_target = reset_render_target(screen.x, screen.y, render_target_scale);
+    let render_target = reset_render_target(screen.x, screen.y, render_target_scale);
     let mut refresh_render = true;
     let mut resize = false;
     let mut debug_mouse = None;
@@ -79,10 +79,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         render_target_scale = slider_value;
         let now = now();
         let new_screen = vec2(screen_width(), screen_height());
-        if new_screen != screen {
-            resize = true;
-        }
-        if resize {
+        if new_screen != screen || resize {
             theme.layout = new_layout_v(screen);
             return Ok(NextStage::Campaign);
         }

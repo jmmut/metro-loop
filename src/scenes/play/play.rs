@@ -94,13 +94,14 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             render_cells(state.in_progress(), &hovered_cell, theme);
         }
         if refresh_render || !CACHE_TEXTURE {
+            update_panel_if_solved(&theme, &mut state, &mut panel);
             refresh_static_texture(
-                theme,
                 screen,
                 render_target_scale,
-                &mut state,
-                &mut panel,
-                &mut render_target,
+                theme,
+                &state,
+                &panel,
+                render_target,
                 &mut refresh_render,
             );
         }
@@ -204,26 +205,7 @@ fn handle_events(
     (pos, hovered_cell)
 }
 
-fn refresh_static_texture(
-    theme: &Theme,
-    screen: Vec2,
-    render_target_scale: f32,
-    state: &mut State,
-    panel: &mut Panel,
-    render_target: &mut Option<RenderTarget>,
-    refresh_render: &mut bool,
-) {
-    if let Some(render_target) = render_target {
-        *refresh_render = false;
-        set_camera(&Camera2D {
-            //     target: vec2(sw * 0.5, sh * 0.5),
-            target: screen * Vec2::splat(0.5 * render_target_scale),
-            zoom: 1.0 / screen / render_target_scale * 2.0,
-            render_target: Some(*render_target),
-            ..Default::default()
-        });
-        clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
-    }
+fn update_panel_if_solved(theme: &Theme, state: &mut State, panel: &mut Panel) {
     let satisfaction = compute_satisfaction(&state.game_track.in_progress, state.constraints());
     if satisfaction.success() {
         state.game_track.solved();
@@ -236,9 +218,30 @@ fn refresh_static_texture(
         }
     }
     panel.add_satisfaction(&satisfaction, &theme, &mut state.show_solution);
-    panel.render_static(theme);
-
     state.previous_satisfaction = Some(satisfaction);
+}
+
+fn refresh_static_texture(
+    screen: Vec2,
+    render_target_scale: f32,
+    theme: &Theme,
+    state: &State,
+    panel: &Panel,
+    render_target: Option<RenderTarget>,
+    refresh_render: &mut bool,
+) {
+    if let Some(render_target) = render_target {
+        *refresh_render = false;
+        set_camera(&Camera2D {
+            //     target: vec2(sw * 0.5, sh * 0.5),
+            target: screen * Vec2::splat(0.5 * render_target_scale),
+            zoom: 1.0 / screen / render_target_scale * 2.0,
+            render_target: Some(render_target),
+            ..Default::default()
+        });
+        clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
+    }
+    panel.render_static(theme);
 
     if state.show_solution {
         render_grid(&state.solution(), theme);

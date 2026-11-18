@@ -14,7 +14,7 @@ use crate::theme::{Theme, new_text, render_text, render_tooltip};
 use crate::{
     AnyError, BACKGROUND, BACKGROUND_2, CACHE_TEXTURE, DEFAULT_SHOW_SOLUTION, MAX_CELLS_COEF,
     NextStage, SHOW_FPS, SHOW_SLIDER, STEP_GENERATION, STYLE, TEXT_STYLE, TOOLTIP_DELAY, TRIANGLE,
-    new_layout,
+    new_layout_v,
 };
 use juquad::lazy::{Interactable, Renderable, WidgetTrait, set_positions};
 use juquad::widgets::anchor::{Anchor, Horizontal};
@@ -50,12 +50,12 @@ pub enum Tooltips {
 }
 
 pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextStage, AnyError> {
-    let (mut sw, mut sh) = (screen_width(), screen_height());
+    let mut screen = vec2(screen_width(), screen_height());
     let (mut state, mut panel) = setup(theme, game_track);
 
     let mut render_target_scale = 1.0;
     let mut slider_value = render_target_scale;
-    let mut render_target = reset_render_target(sw, sh, render_target_scale);
+    let mut render_target = reset_render_target(screen.x, screen.y, render_target_scale);
     let mut refresh_render = true;
     let mut resize = false;
     let mut debug_mouse = None;
@@ -64,50 +64,28 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
     loop {
         render_target_scale = slider_value;
         let now = now();
-        let (new_sw, new_sh) = (screen_width(), screen_height());
-        if new_sw != sw || new_sh != sh {
+        let new_screen = vec2(screen_width(), screen_height());
+        if new_screen != screen {
             resize = true;
         }
         if resize {
             resize = false;
             refresh_render = true;
-            sw = new_sw;
-            sh = new_sh;
-            theme.layout = new_layout(sw, sh)
+            screen = new_screen;
+            theme.layout = new_layout_v(screen)
                 .resize_grid(state.in_progress().rows(), state.in_progress().columns());
             panel = Panel::new_from(&panel, theme, &state, &state.game_track);
-            render_target = reset_render_target(sw, sh, render_target_scale);
-        }
-        if is_key_pressed(KeyCode::P) {
-            print_level(&state);
+            render_target = reset_render_target(screen.x, screen.y, render_target_scale);
         }
 
-        let mut pos = Vec2::from(mouse_position());
-        if is_key_pressed(KeyCode::M) {
-            update_mouse_debugging(&mut debug_mouse, &mut pos);
-        }
-        let hovered_cell = pixel_to_coord(pos, state.in_progress(), &theme);
-
-        // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
-        if is_mouse_button_pressed(MouseButton::Right) {
-            state.ui.tooltip_showing = None;
-            if !state.show_solution {
-                right_click_pressed = hovered_cell.clone();
-            }
-        }
-
-        if is_mouse_button_released(MouseButton::Right) {
-            handle_user_constraints(
-                hovered_cell,
-                now,
-                &mut state,
-                &mut refresh_render,
-                &mut right_click_pressed,
-            );
-        }
-        if is_mouse_button_pressed(MouseButton::Left) {
-            handle_user_cells(now, hovered_cell, &mut state, &mut refresh_render);
-        }
+        let (pos, hovered_cell) = handle_events(
+            now,
+            &theme,
+            &mut state,
+            &mut refresh_render,
+            &mut debug_mouse,
+            &mut right_click_pressed,
+        );
 
         clear_background(BACKGROUND);
         if state.show_solution {
@@ -116,46 +94,16 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             render_cells(state.in_progress(), &hovered_cell, theme);
         }
         if refresh_render || !CACHE_TEXTURE {
-            if let Some(render_target) = render_target {
-                refresh_render = false;
-                set_camera(&Camera2D {
-                    //     target: vec2(sw * 0.5, sh * 0.5),
-                    target: vec2(sw, sh) * Vec2::splat(0.5 * render_target_scale),
-                    zoom: vec2(
-                        1.0 / (sw) / render_target_scale as f32 * 2.0,
-                        1.0 / (sh) / render_target_scale as f32 * 2.0,
-                    ),
-                    render_target: Some(render_target),
-                    ..Default::default()
-                });
-                clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
-            }
-            let satisfaction =
-                compute_satisfaction(&state.game_track.in_progress, state.constraints());
-            if satisfaction.success() {
-                state.game_track.solved();
-                panel.allow_next();
-            }
-            if satisfaction.success() {
-                if !state.success_sound_played {
-                    state.success_sound_played = true;
-                    theme.resources.sounds.play_correct();
-                }
-            }
-            panel.add_satisfaction(&satisfaction, &theme, &mut state.show_solution);
-            panel.render_static(theme);
-
-            state.previous_satisfaction = Some(satisfaction);
-
-            if state.show_solution {
-                render_grid(&state.solution(), theme);
-                render_constraints(&state.constraints(), &state.solution(), theme);
-            } else {
-                render_grid(&state.in_progress(), theme);
-                render_constraints(&state.constraints(), &state.in_progress(), theme);
-            }
+            refresh_static_texture(
+                theme,
+                screen,
+                render_target_scale,
+                &mut state,
+                &mut panel,
+                &mut render_target,
+                &mut refresh_render,
+            );
         }
-
         if let Some(render_target) = render_target {
             set_default_camera();
             draw_texture(render_target.texture, 0., 0., WHITE);
@@ -215,7 +163,93 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
     }
 }
 
-fn handle_user_cells(
+fn handle_events(
+    now: f64,
+    theme: &Theme,
+    mut state: &mut State,
+    mut refresh_render: &mut bool,
+    mut debug_mouse: &mut Option<Vec2>,
+    mut right_click_pressed: &mut Option<Coord>,
+) -> (Vec2, Option<Coord>) {
+    if is_key_pressed(KeyCode::P) {
+        print_level(&state);
+    }
+
+    let mut pos = Vec2::from(mouse_position());
+    if is_key_pressed(KeyCode::M) {
+        update_mouse_debugging(&mut debug_mouse, &mut pos);
+    }
+    let hovered_cell = pixel_to_coord(pos, state.in_progress(), &theme);
+
+    // draw_text(&format!("pos clicked: {:?}", grid_indexes), 0.0, 16.0, 16.0, BLACK);
+    if is_mouse_button_pressed(MouseButton::Right) {
+        state.ui.tooltip_showing = None;
+        if !state.show_solution {
+            *right_click_pressed = hovered_cell.clone();
+        }
+    }
+
+    if is_mouse_button_released(MouseButton::Right) {
+        handle_constraints_clicked(
+            hovered_cell,
+            now,
+            &mut state,
+            &mut refresh_render,
+            &mut right_click_pressed,
+        );
+    }
+    if is_mouse_button_pressed(MouseButton::Left) {
+        handle_cells_clicked(now, hovered_cell, &mut state, &mut refresh_render);
+    }
+    (pos, hovered_cell)
+}
+
+fn refresh_static_texture(
+    theme: &Theme,
+    screen: Vec2,
+    render_target_scale: f32,
+    state: &mut State,
+    panel: &mut Panel,
+    render_target: &mut Option<RenderTarget>,
+    refresh_render: &mut bool,
+) {
+    if let Some(render_target) = render_target {
+        *refresh_render = false;
+        set_camera(&Camera2D {
+            //     target: vec2(sw * 0.5, sh * 0.5),
+            target: screen * Vec2::splat(0.5 * render_target_scale),
+            zoom: 1.0 / screen / render_target_scale * 2.0,
+            render_target: Some(*render_target),
+            ..Default::default()
+        });
+        clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
+    }
+    let satisfaction = compute_satisfaction(&state.game_track.in_progress, state.constraints());
+    if satisfaction.success() {
+        state.game_track.solved();
+        panel.allow_next();
+    }
+    if satisfaction.success() {
+        if !state.success_sound_played {
+            state.success_sound_played = true;
+            theme.resources.sounds.play_correct();
+        }
+    }
+    panel.add_satisfaction(&satisfaction, &theme, &mut state.show_solution);
+    panel.render_static(theme);
+
+    state.previous_satisfaction = Some(satisfaction);
+
+    if state.show_solution {
+        render_grid(&state.solution(), theme);
+        render_constraints(&state.constraints(), &state.solution(), theme);
+    } else {
+        render_grid(&state.in_progress(), theme);
+        render_constraints(&state.constraints(), &state.in_progress(), theme);
+    }
+}
+
+fn handle_cells_clicked(
     now: f64,
     hovered_cell: Option<Coord>,
     state: &mut State,
@@ -244,7 +278,7 @@ fn handle_user_cells(
     }
 }
 
-fn handle_user_constraints(
+fn handle_constraints_clicked(
     hovered_cell: Option<Coord>,
     now: f64,
     state: &mut State,

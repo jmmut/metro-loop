@@ -126,6 +126,9 @@ pub const DEFAULT_WINDOW_TITLE: &str = "Metro Loop";
 
 pub type AnyError = Box<dyn std::error::Error>;
 
+pub fn new_layout_v(screen: Vec2) -> Layout {
+    new_layout(screen.x, screen.y)
+}
 pub fn new_layout(screen_width: f32, screen_height: f32) -> Layout {
     const FONT_SIZE: f32 = 16.0;
     const CELL_WIDTH: f32 = 50.0;

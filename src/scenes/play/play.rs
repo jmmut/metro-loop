@@ -83,13 +83,8 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             resize = true;
         }
         if resize {
-            resize = false;
-            refresh_render = true;
-            screen = new_screen;
-            theme.layout = new_layout_v(screen)
-                .resize_grid(state.in_progress().rows(), state.in_progress().columns());
-            panel = Panel::new_from(&panel, theme, &state, &state.game_track);
-            render_target = reset_render_target(screen.x, screen.y, render_target_scale);
+            theme.layout = new_layout_v(screen);
+            return Ok(NextStage::Campaign);
         }
 
         let (pos, hovered_cell) = handle_events(

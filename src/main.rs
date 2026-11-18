@@ -24,7 +24,7 @@ async fn main() -> Result<(), AnyError> {
             NextStage::Options => scenes::options(&mut theme).await?,
             NextStage::Quit => return Ok(()),
         };
-        next_frame().await
+        next_frame().await // necessary to stop using events from the previous scene
     }
 }
 

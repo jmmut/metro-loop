@@ -43,6 +43,20 @@ pub type ShowingSinceSeconds = f64;
 pub struct UiState {
     tooltip_showing: Option<(Tooltips, ShowingSinceSeconds)>,
 }
+impl UiState {
+    pub fn update(&mut self, now: f64) {
+        if let Some((_tooltip, showing_since)) = &self.tooltip_showing {
+            if showing_since + TOOLTIP_DELAY < now {
+                self.tooltip_showing = None;
+            }
+        }
+    }
+    pub fn render(&self, pos: Vec2, theme: &Theme) {
+        if let Some((tooltip, _showing_since)) = &self.tooltip_showing {
+            tooltip.render(pos, &theme);
+        }
+    }
+}
 pub enum Tooltips {
     FixedCell,
     UserFixedCell,
@@ -86,33 +100,6 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             &mut debug_mouse,
             &mut right_click_pressed,
         );
-
-        clear_background(BACKGROUND);
-        if state.show_solution {
-            render_cells(state.solution(), &hovered_cell, theme);
-        } else {
-            render_cells(state.in_progress(), &hovered_cell, theme);
-        }
-        if refresh_render || !CACHE_TEXTURE {
-            update_panel_if_solved(&theme, &mut state, &mut panel);
-            refresh_static_texture(
-                screen,
-                render_target_scale,
-                theme,
-                &state,
-                &panel,
-                render_target,
-                &mut refresh_render,
-            );
-        }
-        if let Some(render_target) = render_target {
-            set_default_camera();
-            draw_texture(render_target.texture, 0., 0., WHITE);
-        }
-
-        if panel.main_menu.interaction().is_clicked() || is_key_pressed(KeyCode::Escape) {
-            return Ok(NextStage::LevelSelector);
-        }
         panel.interact(theme);
         if is_key_pressed(KeyCode::N) || panel.next_game.interaction().is_clicked() {
             state.game_track.next(theme).await;
@@ -129,21 +116,46 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             refresh_render = true;
             (state, panel) = reset(theme, state).await;
         }
+        state.ui.update(now);
+
+        if refresh_render || !CACHE_TEXTURE {
+            update_panel_if_solved(&theme, &mut state, &mut panel);
+            refresh_static_texture(
+                screen,
+                render_target_scale,
+                theme,
+                &state,
+                &panel,
+                render_target,
+                &mut refresh_render,
+            );
+            set_default_camera();
+        }
+        clear_background(BACKGROUND);
+        if state.show_solution {
+            render_cells(state.solution(), &hovered_cell, theme);
+        } else {
+            render_cells(state.in_progress(), &hovered_cell, theme);
+        }
+        if let Some(render_target) = render_target {
+            draw_texture(render_target.texture, 0., 0., WHITE);
+        }
         if let Some(coord) = right_click_pressed {
-            draw_diamond(coord, theme);
+            draw_diamond(coord, &theme);
         }
         if is_mouse_button_down(MouseButton::Right) {
             if let Some(coord) = hovered_cell {
-                draw_diamond(coord, theme)
+                draw_diamond(coord, &theme)
             }
         }
+        panel.render_interactive();
+        state.ui.render(pos, &theme);
+
         if SHOW_FPS {
             let text = format!("FPS: {}", get_fps());
             let text = new_text(&text, Anchor::top_left(0.0, 0.0), 1.0, &theme);
             render_text(&text, &TEXT_STYLE);
         }
-        panel.render_interactive();
-
         if SHOW_SLIDER {
             use_debug_slider(
                 theme,
@@ -153,12 +165,9 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                 &mut resize,
             );
         }
-        if let Some((tooltip, since)) = &state.ui.tooltip_showing {
-            if since + TOOLTIP_DELAY < now {
-                state.ui.tooltip_showing = None;
-            } else {
-                tooltip.render(pos, &theme);
-            }
+
+        if panel.main_menu.interaction().is_clicked() || is_key_pressed(KeyCode::Escape) {
+            return Ok(NextStage::LevelSelector);
         }
         next_frame().await
     }
@@ -327,7 +336,7 @@ fn print_level(state: &State) {
     println!("{}", level);
 }
 
-fn draw_diamond(coord: Coord, theme: &mut Theme) {
+fn draw_diamond(coord: Coord, theme: &Theme) {
     let cell_spot = CellSpot::new(coord.into());
     if cell_spot.is_corner() {
         let corner = cell_spot.corner();

@@ -1,6 +1,6 @@
 use crate::level_history::{GameTrack, Solved};
 use crate::logic::pixel_grid::{Coord, option_equals_cell};
-use crate::render::{RenderRail, cell_top_left, render_rail};
+use crate::render::{cell_top_left, render_rail, Animation, RenderRail};
 use crate::scenes::play::default_pixel_to_coord;
 use crate::scenes::play::panel::{get_tick_or_cross_rect, render_tick_or_cross};
 use crate::theme::{Theme, new_imm_button, new_text, render_text, render_tooltip};
@@ -126,6 +126,7 @@ fn render_rails_on_selected_level(coord: Coord, is_solved: bool, theme: &Theme) 
                 coord: IVec2::new(i_column, i_row),
             },
             theme,
+            &Animation::new_disabled(),
         );
         let color = if level_solved { RAIL } else { UNREACHABLE_RAIL };
 

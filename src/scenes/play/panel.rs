@@ -1,9 +1,6 @@
 use crate::level_history::GameTrack;
 use crate::logic::constraints::{Satisfaction, Wording, compute_satisfaction};
-use crate::render::{
-    draw_blockade, draw_line_thickness, draw_rail, draw_station, get_success_color, render_cross,
-    render_tick,
-};
+use crate::render::{draw_blockade, draw_line_thickness, draw_rail, draw_station, get_success_color, render_cross, render_tick, Animation};
 use crate::scenes::level_selector::new_rendered_tooltip_at;
 use crate::scenes::play::State;
 use crate::theme::{
@@ -391,7 +388,7 @@ impl SatisfactionPanel {
                 let icon_rect = anchor.get_rect(icon_size);
                 let length = vec2(icon_rect.w, 0.0);
                 let end = icon_rect.center() + length * 0.5;
-                draw_rail(end - length, end, theme, isolated_success);
+                draw_rail(end - length, end, theme, isolated_success, &Animation::new_disabled());
             }
         }
     }

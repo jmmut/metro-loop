@@ -6,9 +6,7 @@ use crate::logic::grid::{
     in_expanded_range_inner, in_range, is_system_fixed_v,
 };
 use crate::logic::pixel_grid::{CellSpot, Coord, manhattan_distance};
-use crate::render::{
-    cell_top_left_coord, draw_lines_thickness, render_cells, render_constraints, render_grid,
-};
+use crate::render::{cell_top_left_coord, draw_lines_thickness, render_cells, render_constraints, render_grid, Animation};
 use crate::scenes::play::panel::Panel;
 use crate::theme::{Theme, new_text, render_text, render_tooltip};
 use crate::{
@@ -35,7 +33,7 @@ use macroquad::rand::rand;
 pub struct State<'a> {
     game_track: &'a mut GameTrack,
     show_solution: bool,
-    previous_satisfaction: Option<Satisfaction>,
+    cached_satisfaction: Option<Satisfaction>,
     success_sound_played: bool,
     ui: UiState,
 }
@@ -73,6 +71,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
     let mut refresh_render = true;
     let mut resize = false;
     let mut debug_mouse = None;
+    let mut animation = Animation::new_disabled();
 
     let mut right_click_pressed = None;
     loop {
@@ -109,6 +108,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             (state, panel) = reset(theme, state).await;
         }
         state.ui.update(now);
+        animation.update(now);
 
         if refresh_render || !CACHE_TEXTURE {
             update_panel_if_solved(&theme, &mut state, &mut panel);
@@ -131,6 +131,12 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         }
         if let Some(render_target) = render_target {
             draw_texture(render_target.texture, 0., 0., WHITE);
+        }
+        if let Some(satisfaction) = state.cached_satisfaction && satisfaction.success() {
+            animation.set_enabled(true);
+            render_grid_and_constraints(&theme, &state, &animation);
+        } else {
+            animation.set_enabled(false);
         }
         if let Some(coord) = right_click_pressed {
             draw_diamond(coord, &theme);
@@ -162,6 +168,16 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             return Ok(NextStage::LevelSelector);
         }
         next_frame().await
+    }
+}
+
+fn render_grid_and_constraints(theme: &Theme, state: &State, animation: &Animation) {
+    if state.show_solution {
+        render_grid(&state.solution(), theme, animation);
+        render_constraints(&state.constraints(), &state.solution(), theme, animation);
+    } else {
+        render_grid(&state.in_progress(), theme, animation);
+        render_constraints(&state.constraints(), &state.in_progress(), theme, animation);
     }
 }
 
@@ -219,7 +235,7 @@ fn update_panel_if_solved(theme: &Theme, state: &mut State, panel: &mut Panel) {
         }
     }
     panel.add_satisfaction(&satisfaction, &theme, &mut state.show_solution);
-    state.previous_satisfaction = Some(satisfaction);
+    state.cached_satisfaction = Some(satisfaction);
 }
 
 fn refresh_static_texture(
@@ -243,14 +259,7 @@ fn refresh_static_texture(
         clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
     }
     panel.render_static(theme);
-
-    if state.show_solution {
-        render_grid(&state.solution(), theme);
-        render_constraints(&state.constraints(), &state.solution(), theme);
-    } else {
-        render_grid(&state.in_progress(), theme);
-        render_constraints(&state.constraints(), &state.in_progress(), theme);
-    }
+    render_grid_and_constraints(&theme, &state, &Animation::new_disabled());
 }
 
 fn handle_cells_clicked(
@@ -517,7 +526,7 @@ fn setup<'a>(theme: &mut Theme, game_track: &'a mut GameTrack) -> (State<'a>, Pa
     let state = State {
         game_track,
         show_solution,
-        previous_satisfaction: Some(satisfaction),
+        cached_satisfaction: Some(satisfaction),
         success_sound_played,
         ui: UiState {
             tooltip_showing: None,
@@ -622,7 +631,7 @@ pub async fn generate_grid(visualize: bool, theme: &Theme) -> Grid {
         }
         if visualize {
             clear_background(BACKGROUND_2);
-            render_grid(&solution, theme);
+            render_grid(&solution, theme, &Animation::new_disabled());
             next_frame().await;
         }
     }

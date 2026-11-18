@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use crate::logic::constraints::{Constraint, matches_constraint_and_reachable};
 use crate::logic::grid::{UserFix, get_cell, is_system_fixed};
 use crate::logic::intersection::{Crossing, Intersection};
@@ -7,7 +8,7 @@ use crate::*;
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::lazy::add_contour;
 use juquad::widgets::anchor::{Direction, Horizontal, Spot};
-use macroquad::math::f32;
+use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 
 #[derive(PartialEq)]
@@ -19,6 +20,35 @@ pub enum RenderRail {
         coord: IVec2,
     },
     None,
+}
+
+pub struct Animation {
+    enabled: bool,
+    now: f64,
+}
+impl Animation {
+    pub fn new_disabled() -> Self {
+        Self {
+            enabled: false,
+            now: 0.0,
+        }
+    }
+    pub fn update(&mut self, now: f64) {
+        self.now = now;
+    }
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+    }
+    pub fn get_variation(&self) -> f32 {
+        let period = 0.75;
+        let coef_0_to_1 = (self.now % period) / period;
+        let coef_0_to_2pi = coef_0_to_1 * 2.0 * PI;
+        let variation = (coef_0_to_2pi.sin() * 0.05) as f32;
+        variation
+    }
 }
 
 pub fn is_horizontal_center(horizontal: Horizontal) -> bool {
@@ -51,7 +81,7 @@ pub fn render_cells(grid: &Grid, hovered_cell: &Option<Coord>, theme: &Theme) {
         }
     }
 }
-pub fn render_grid(grid: &Grid, theme: &Theme) {
+pub fn render_grid(grid: &Grid, theme: &Theme, animation: &Animation) {
     // fix markers
     for i_row in 0..grid.rows() {
         for i_column in 0..grid.columns() {
@@ -98,7 +128,7 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
                     coord: ivec2(i_column, i_row),
                 }
             };
-            render_rail(rail, theme);
+            render_rail(rail, theme, animation);
         }
     }
 
@@ -122,7 +152,7 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
                     coord: ivec2(i_column, i_row),
                 }
             };
-            render_rail(rail, theme);
+            render_rail(rail, theme, animation);
         }
     }
     // intersections
@@ -184,7 +214,7 @@ pub fn render_grid(grid: &Grid, theme: &Theme) {
     }
 }
 
-pub fn render_rail(render_rail: RenderRail, theme: &Theme) {
+pub fn render_rail(render_rail: RenderRail, theme: &Theme, animation: &Animation) {
     match render_rail {
         RenderRail::None => {}
         RenderRail::Some {
@@ -197,21 +227,22 @@ pub fn render_rail(render_rail: RenderRail, theme: &Theme) {
             let end = coord + end;
             let start = top_left_rail_intersection(start.y, start.x, theme);
             let end = top_left_rail_intersection(end.y, end.x, theme);
-            draw_rail(start, end, theme, reachable);
+            draw_rail(start, end, theme, reachable, animation);
         }
     }
 }
 
-pub fn draw_rail(start: Vec2, end: Vec2, theme: &Theme, reachable: bool) {
+pub fn draw_rail(start: Vec2, end: Vec2, theme: &Theme, reachable: bool, animation: &Animation) {
     draw_rail_color(
         start,
         end,
         theme,
         reachable,
         if reachable { RAIL } else { UNREACHABLE_RAIL },
+        animation,
     )
 }
-pub fn draw_rail_color(start: Vec2, end: Vec2, theme: &Theme, reachable: bool, color: Color) {
+pub fn draw_rail_color(start: Vec2, end: Vec2, theme: &Theme, reachable: bool, mut color: Color, animation: &Animation) {
     draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
     let direction = (end - start).normalize();
     let border_start = start + direction * theme.cell_pad() * 0.5;
@@ -225,10 +256,16 @@ pub fn draw_rail_color(start: Vec2, end: Vec2, theme: &Theme, reachable: bool, c
     draw_line_v(right_border_start, right_border_end, TRIANGLE_BORDER);
 
     if reachable {
+        let mut color_border = TRIANGLE_BORDER;
+        if animation.is_enabled() {
+            let variation = animation.get_variation();
+            color = tweak_color(color, variation);
+            color_border = tweak_color(color_border, variation);
+        }
         calculate_and_draw_triangle(
             theme,
             color,
-            TRIANGLE_BORDER,
+            color_border,
             start,
             end - start,
             direction,
@@ -254,11 +291,16 @@ fn calculate_and_draw_triangle(
     draw_bordered_triangle(left, right, tip, color, color_border);
 }
 
-pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme) {
+pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme, animation: &Animation) {
     for constraint in &constraints.rails {
         let (success, reversed_rail, reachable) =
             matches_constraint_and_reachable(grid, constraint);
-        let (color, color_border) = get_success_color(success);
+        let (mut color, mut color_border) = get_success_color(success);
+        if animation.is_enabled() {
+            let variation = animation.get_variation();
+            color = tweak_color(color, variation);
+            color_border = tweak_color(color_border, variation);
+        }
 
         let (row, column) = constraint.row_column();
         let direction = constraint.vec2();
@@ -323,6 +365,15 @@ pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme)
             );
         }
     }
+}
+
+fn tweak_color(color: Color, variation: f32) -> Color {
+    Color::new(
+        (color.r + variation).clamp(0.0, 1.0),
+        (color.g + variation).clamp(0.0, 1.0),
+        (color.b + variation).clamp(0.0, 1.0),
+        color.a,
+    )
 }
 
 pub fn get_success_color(success: bool) -> (Color, Color) {

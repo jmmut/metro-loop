@@ -1,9 +1,11 @@
 use crate::level_history::GameTrack;
-use crate::logic::constraints::{Satisfaction, Wording};
+use crate::logic::constraints::{Satisfaction, Wording, compute_satisfaction};
 use crate::render::{
     draw_blockade, draw_line_thickness, draw_rail, draw_station, get_success_color, render_cross,
     render_tick,
 };
+use crate::scenes::level_selector::new_rendered_tooltip_at;
+use crate::scenes::play::State;
 use crate::theme::{
     Theme, labels_from_theme, new_button, new_text, new_text_group_generic, render_button,
     render_text, render_tooltip,
@@ -21,7 +23,6 @@ use juquad::widgets::button_group::LabelGroup;
 use juquad::widgets::text::TextRect;
 use macroquad::input::mouse_position;
 use macroquad::math::{Rect, Vec2, vec2};
-use crate::scenes::level_selector::new_rendered_tooltip_at;
 
 pub struct Panel {
     pub rect: Rect,
@@ -32,7 +33,7 @@ pub struct Panel {
     pub main_menu: Button,
     pub show_solution: Option<Button>,
     satisfaction: SatisfactionPanel,
-    allow_next: bool,
+    next_allowed: bool,
 }
 
 impl Panel {
@@ -41,6 +42,7 @@ impl Panel {
         satisfaction: Satisfaction,
         theme: &Theme,
         game_track: &GameTrack,
+        next_allowed: bool,
     ) -> Self {
         let button_margin_v = Vec2::splat(theme.button_margin());
         let _half_pad = vec2(theme.cell_pad() * 0.5, 0.0);
@@ -76,14 +78,26 @@ impl Panel {
             main_menu,
             show_solution: None,
             satisfaction: satisfaction_panel,
-            allow_next: false,
+            next_allowed,
         };
         s.add_satisfaction(&satisfaction, theme, &mut false);
         s
     }
+    pub fn new_from(other: &Panel, theme: &Theme, state: &State, game_track: &GameTrack) -> Self {
+        Panel::new(
+            theme.button_panel_rect(state.in_progress()),
+            compute_satisfaction(&game_track.in_progress, state.constraints()),
+            theme,
+            game_track,
+            other.next_allowed,
+        )
+    }
 
     pub fn allow_next(&mut self) {
-        self.allow_next = true;
+        self.next_allowed = true;
+    }
+    pub fn is_next_allowed(&self) -> bool {
+        self.next_allowed
     }
 
     pub fn add_satisfaction(
@@ -146,7 +160,7 @@ impl Panel {
     }
     pub fn buttons(&self) -> Vec<&Button> {
         let mut buttons = vec![&self.main_menu, &self.restart_game];
-        if self.allow_next {
+        if self.next_allowed {
             buttons.push(&self.next_game);
         }
         if let Some(button) = self.show_solution.as_ref() {
@@ -156,7 +170,7 @@ impl Panel {
     }
     pub fn buttons_mut(&mut self) -> Vec<&mut Button> {
         let mut buttons = vec![&mut self.main_menu, &mut self.restart_game];
-        if self.allow_next {
+        if self.next_allowed {
             buttons.push(&mut self.next_game);
         }
         if let Some(button) = self.show_solution.as_mut() {

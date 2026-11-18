@@ -104,6 +104,10 @@ impl GameTrack {
             *get(&self.solved, section, level)
         }
     }
+    pub fn is_current_solved(&self) -> bool {
+        let (section, level) = self.get_current_ids();
+        self.is_solved(section, level)
+    }
     pub fn is_random_index(&self, section: i32, level: i32) -> bool {
         section == self.solved.len() as i32 && level == 0
     }

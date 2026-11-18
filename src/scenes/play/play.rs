@@ -75,12 +75,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             sh = new_sh;
             theme.layout = new_layout(sw, sh)
                 .resize_grid(state.in_progress().rows(), state.in_progress().columns());
-            panel = Panel::new(
-                theme.button_panel_rect(state.in_progress()),
-                compute_satisfaction(&state.game_track.in_progress, state.constraints()),
-                theme,
-                state.game_track,
-            );
+            panel = Panel::new_from(&panel, theme, &state, &state.game_track);
             render_target = reset_render_target(sw, sh, render_target_scale);
         }
         if is_key_pressed(KeyCode::P) {
@@ -475,6 +470,7 @@ fn setup<'a>(theme: &mut Theme, game_track: &'a mut GameTrack) -> (State<'a>, Pa
         satisfaction,
         theme,
         &state.game_track,
+        state.game_track.is_current_solved(),
     );
     (state, panel)
 }

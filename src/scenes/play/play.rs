@@ -97,50 +97,16 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         }
 
         if is_mouse_button_released(MouseButton::Right) {
-            if let (Some(released_coord), Some(right_clicked_coord)) =
-                (hovered_cell.clone(), right_click_pressed)
-            {
-                right_click_pressed = None;
-                if state.show_solution {
-                    state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
-                } else {
-                    let released: IVec2 = released_coord.into();
-                    let pressed: IVec2 = right_clicked_coord.into();
-                    if is_system_fixed_v(released, state.in_progress()) && pressed == released {
-                        state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
-                    } else {
-                        add_user_constraint(
-                            right_clicked_coord,
-                            released_coord,
-                            &mut state,
-                            &mut refresh_render,
-                        );
-                    }
-                }
-            }
+            handle_user_constraints(
+                hovered_cell,
+                now,
+                &mut state,
+                &mut refresh_render,
+                &mut right_click_pressed,
+            );
         }
         if is_mouse_button_pressed(MouseButton::Left) {
-            state.ui.tooltip_showing = None;
-            if let Some(coord) = hovered_cell.clone() {
-                if state.show_solution {
-                    state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
-                } else {
-                    let clicked: IVec2 = coord.into();
-                    if is_system_fixed_v(clicked, state.in_progress()) {
-                        state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
-                    } else {
-                        let fixed = get_coord(&state.in_progress().fixed_cells, coord);
-                        if *fixed {
-                            state.ui.tooltip_showing = Some((Tooltips::UserFixedCell, now));
-                        } else {
-                            let cell = get_cell_coord_mut(&mut state.game_track.in_progress, coord);
-                            *cell = !*cell;
-                            state.game_track.in_progress.recalculate_rails();
-                            refresh_render = true;
-                        }
-                    }
-                }
-            }
+            handle_user_cells(now, hovered_cell, &mut state, &mut refresh_render);
         }
 
         clear_background(BACKGROUND);
@@ -246,6 +212,60 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             }
         }
         next_frame().await
+    }
+}
+
+fn handle_user_cells(
+    now: f64,
+    hovered_cell: Option<Coord>,
+    state: &mut State,
+    refresh_render: &mut bool,
+) {
+    state.ui.tooltip_showing = None;
+    if let Some(coord) = hovered_cell.clone() {
+        if state.show_solution {
+            state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
+        } else {
+            let clicked: IVec2 = coord.into();
+            if is_system_fixed_v(clicked, state.in_progress()) {
+                state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
+            } else {
+                let fixed = get_coord(&state.in_progress().fixed_cells, coord);
+                if *fixed {
+                    state.ui.tooltip_showing = Some((Tooltips::UserFixedCell, now));
+                } else {
+                    let cell = get_cell_coord_mut(&mut state.game_track.in_progress, coord);
+                    *cell = !*cell;
+                    state.game_track.in_progress.recalculate_rails();
+                    *refresh_render = true;
+                }
+            }
+        }
+    }
+}
+
+fn handle_user_constraints(
+    hovered_cell: Option<Coord>,
+    now: f64,
+    state: &mut State,
+    refresh_render: &mut bool,
+    right_click_pressed: &mut Option<Coord>,
+) {
+    if let (Some(released_coord), Some(right_clicked_coord)) =
+        (hovered_cell.clone(), *right_click_pressed)
+    {
+        *right_click_pressed = None;
+        if state.show_solution {
+            state.ui.tooltip_showing = Some((Tooltips::EditSolution, now));
+        } else {
+            let released: IVec2 = released_coord.into();
+            let pressed: IVec2 = right_clicked_coord.into();
+            if is_system_fixed_v(released, state.in_progress()) && pressed == released {
+                state.ui.tooltip_showing = Some((Tooltips::FixedCell, now));
+            } else {
+                add_user_constraint(right_clicked_coord, released_coord, state, refresh_render);
+            }
+        }
     }
 }
 

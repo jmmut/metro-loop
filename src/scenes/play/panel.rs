@@ -144,7 +144,12 @@ impl Panel {
         }
 
         let mouse_pos = Vec2::from(mouse_position());
-        new_rendered_tooltip_at(&self.level_subtitle, self.level_title.rect(), mouse_pos, theme);
+        new_rendered_tooltip_at(
+            &self.level_subtitle,
+            self.level_title.rect(),
+            mouse_pos,
+            theme,
+        );
         self.satisfaction.interact(theme);
     }
     pub fn render_static(&self, theme: &Theme) {

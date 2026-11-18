@@ -108,7 +108,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
             (state, panel) = reset(theme, state).await;
         }
         state.ui.update(now);
-        animation.update(now);
+        animation.update_render(now, &state.cached_satisfaction, &mut refresh_render);
 
         if refresh_render || !CACHE_TEXTURE {
             update_panel_if_solved(&theme, &mut state, &mut panel);
@@ -118,6 +118,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                 theme,
                 &state,
                 &panel,
+                &animation,
                 render_target,
                 &mut refresh_render,
             );
@@ -131,12 +132,6 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         }
         if let Some(render_target) = render_target {
             draw_texture(render_target.texture, 0., 0., WHITE);
-        }
-        if let Some(satisfaction) = state.cached_satisfaction && satisfaction.success() {
-            animation.set_enabled(true);
-            render_grid_and_constraints(&theme, &state, &animation);
-        } else {
-            animation.set_enabled(false);
         }
         if let Some(coord) = right_click_pressed {
             draw_diamond(coord, &theme);
@@ -244,6 +239,7 @@ fn refresh_static_texture(
     theme: &Theme,
     state: &State,
     panel: &Panel,
+    animation: &Animation,
     render_target: Option<RenderTarget>,
     refresh_render: &mut bool,
 ) {
@@ -259,7 +255,7 @@ fn refresh_static_texture(
         clear_background(Color::new(0.0, 0.0, 0.0, 0.0));
     }
     panel.render_static(theme);
-    render_grid_and_constraints(&theme, &state, &Animation::new_disabled());
+    render_grid_and_constraints(&theme, &state, animation);
 }
 
 fn handle_cells_clicked(

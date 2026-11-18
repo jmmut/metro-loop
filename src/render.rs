@@ -1,5 +1,5 @@
 use std::f64::consts::PI;
-use crate::logic::constraints::{Constraint, matches_constraint_and_reachable};
+use crate::logic::constraints::{matches_constraint_and_reachable, Constraint, Satisfaction};
 use crate::logic::grid::{UserFix, get_cell, is_system_fixed};
 use crate::logic::intersection::{Crossing, Intersection};
 use crate::logic::pixel_grid::{Coord, option_equals_cell};
@@ -10,6 +10,7 @@ use juquad::lazy::add_contour;
 use juquad::widgets::anchor::{Direction, Horizontal, Spot};
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
+use crate::scenes::play::State;
 
 #[derive(PartialEq)]
 pub enum RenderRail {
@@ -24,6 +25,7 @@ pub enum RenderRail {
 
 pub struct Animation {
     enabled: bool,
+    start: f64,
     now: f64,
 }
 impl Animation {
@@ -31,23 +33,44 @@ impl Animation {
         Self {
             enabled: false,
             now: 0.0,
+            start: 0.0,
         }
     }
     pub fn update(&mut self, now: f64) {
         self.now = now;
     }
+    pub fn update_render(&mut self, now: f64, satisfaction_opt: &Option<Satisfaction>, refresh_render: &mut bool) {
+        self.update(now);
+        if let Some(satisfaction) = satisfaction_opt && satisfaction.success() {
+            self.set_enabled(true);
+            *refresh_render = true;
+            // render_grid_and_constraints(&theme, &state, &animation);
+        } else {
+            if self.is_enabled() {
+                *refresh_render = true; // render one last time at non-variation levels
+            }
+            self.set_enabled(false);
+        }
+    }
     pub fn is_enabled(&self) -> bool {
         self.enabled
     }
     pub fn set_enabled(&mut self, enabled: bool) {
+        if !self.enabled && enabled {
+            self.start = self.now;
+        }
         self.enabled = enabled;
     }
     pub fn get_variation(&self) -> f32 {
-        let period = 0.75;
-        let coef_0_to_1 = (self.now % period) / period;
-        let coef_0_to_2pi = coef_0_to_1 * 2.0 * PI;
-        let variation = (coef_0_to_2pi.sin() * 0.05) as f32;
-        variation
+        if self.enabled {
+            let period = 0.75;
+            let coef_0_to_1 = ((self.now - self.start) % period) / period;
+            let coef_0_to_2pi = coef_0_to_1 * 2.0 * PI;
+            let variation = (coef_0_to_2pi.sin() * 0.05) as f32;
+            variation
+        } else {
+            0.0
+        }
     }
 }
 

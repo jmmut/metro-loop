@@ -16,41 +16,50 @@ If that fails, you might need some system packages. If you're on linux, see how 
 
 ### Major
 
+- [ ] question mark icon for explanations/tutorial
+- [ ] animation
+  - [ ] lightness = sin(t) or circling movement for unsatisfied constraints when hovering on the right panel
+    - [ ] stations and bridges
+    - [ ] unlinked rails
+    - can't animate missing blocks, can I?
+  - [x] lightness = sin(t) or lightness wave when puzzle is solved
 - [x] options screen
   - [x] should add a slider for the volume?
   - [-] a checkbox for enabling disabling sound?
+  - [ ] choose language
+- [ ] another row of levels showing strategies (>-<, ^>)
 - [x] campaign visualization screen.
   - [-] button for previous level? redundant?
 - [x] add button for resetting level
 - [ ] diagonal constraint
 - [x] rail user constraint (clickable corners)
 - [x] split blockages and stations
-- [ ] animation
-  - [ ] lightness = sin(t) or circling movement for unsatisfied constraints when hovering on the right panel
-    - [ ] stations and bridges
-    - [ ] unlinked rails
-    - can't animate missing blocks, can I?
-  - [ ] lightness = sin(t) or lightness wave when puzzle is solved
+- [ ] update to macroquad 0.4 could reduce cpu usage in linux
 
 ### Minor
 
+- [/] sound
+  - [ ] better sounds
+  - [ ] longer music
+  - [ ] better sound balance. Higher music, lower effects.
+- [ ] draw ghosts for right click dragging
 - [/] Select difficulty (should have easy/medium/hard?)
 - [ ] rendering details
   - [x] make constraint icons scale smoothly
   - [-] triangles should not have direction when inside constraints on unconnected rails. (decided to keep same icon for incorrect rails)
   - [ ] textures for + and -
-- [/] sound
-  - [ ] better sounds
-  - [ ] longer music
-  - [ ] better sound balance. Higher music, lower effects.
+- [ ] move NEXT below SOLVED and above RESTART, move CAMPAIGN to bottom center
 - [ ] contrasting font for the title?
 
 - [x] fix hover
-- [ ] draw ghosts for right click dragging
-- [ ] move NEXT below SOLVED and above RESTART, move CAMPAIGN to bottom center
-- [ ] music off by default
+- [x] music off by default
+- [ ] in level selector, subtitle in a text box, not tooltip
+- [ ] separate the menu button out in a subpanel
+
+## Unsolved problems
+
+- [ ] didn't see level was solved
 - [ ] name for bridges (ui is not clear, icons don't explain anything)
-- [ ] didn't see level was solved,
 
 ## Bugs
 

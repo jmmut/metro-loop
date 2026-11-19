@@ -7,9 +7,9 @@ default-run = "metro-loop"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-macroquad = { version = "=0.3.24", default-features = false }
+macroquad = { version = "=0.4.16", default-features = false }
 #quad-snd = "=0.2.8"
-juquad = { git = "https://github.com/jmmut/juquad.git", tag = "0.13.4" }
+juquad = { git = "https://github.com/jmmut/juquad.git", tag = "0.21.1" }
 #juquad = { path = "../juquad/" }
 
 [profile.release]

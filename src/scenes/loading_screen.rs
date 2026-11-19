@@ -9,9 +9,9 @@ use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::resource_loader::{Progress, ResourceLoader};
 use juquad::widgets::StateStyle;
 use juquad::widgets::anchor::Anchor;
+use macroquad::Error;
 use macroquad::audio::{Sound, load_sound_from_bytes, stop_sound};
 use macroquad::color::DARKGRAY;
-use macroquad::file::FileError;
 use macroquad::math::Rect;
 use macroquad::prelude::{
     Vec2, clear_background, load_ttf_font_from_bytes, next_frame, screen_height, screen_width,
@@ -30,8 +30,8 @@ pub struct Resources {
 trait ResourceLoaderTrait {
     fn get_progress(&self) -> Progress;
 }
-impl<In, Func: Fn(In) -> Fut, Fut: Future<Output = Result<Sound, FileError>>> ResourceLoaderTrait
-    for ResourceLoader<In, Sound, FileError, Func, Fut>
+impl<In, Func: Fn(In) -> Fut, Fut: Future<Output = Result<Sound, Error>>> ResourceLoaderTrait
+    for ResourceLoader<In, Sound, Error, Func, Fut>
 {
     fn get_progress(&self) -> Progress {
         ResourceLoader::get_progress(self)
@@ -120,7 +120,7 @@ impl<SoundLoader: ResourceLoaderTrait> LoadingSounds<SoundLoader> {
     }
     pub fn add_other(&mut self, mut other_sounds: Vec<Sound>) -> Result<(), AnyError> {
         if let LoadingSounds::IntroLoaded(intro, _) = self {
-            other_sounds.push(*intro);
+            other_sounds.push(intro.clone());
             let sounds = Sounds::new(other_sounds);
             *self = LoadingSounds::Loaded(sounds);
             Ok(())
@@ -205,8 +205,8 @@ pub async fn loading_screen(sound_enabled: bool) -> Result<Theme, AnyError> {
         if let LoadingSounds::NotLoaded { loader_1, .. } = &mut loading.sounds {
             let sound_progress = loader_1.get_progress();
             if let Some(loaded) = loader_1.get_resources()? {
-                let intro = loaded[0];
-                Sounds::play_looped(intro, DEFAULT_VOLUME);
+                let intro = loaded[0].clone();
+                Sounds::play_looped(&intro, DEFAULT_VOLUME);
                 loading.sounds.add_intro(intro)?;
                 progress += sound_progress.total_to_load;
             } else {
@@ -215,8 +215,8 @@ pub async fn loading_screen(sound_enabled: bool) -> Result<Theme, AnyError> {
         } else if let LoadingSounds::IntroLoaded(intro, sound_loader_2) = &mut loading.sounds {
             let sound_progress = sound_loader_2.get_progress();
             if let Some(loaded) = sound_loader_2.get_resources()? {
-                Sounds::play_looped(loaded[2], DEFAULT_VOLUME);
-                Sounds::stop(*intro);
+                Sounds::play_looped(&loaded[2], DEFAULT_VOLUME);
+                Sounds::stop(&intro);
                 loading.sounds.add_other(loaded)?;
                 progress += sound_progress.total_to_load;
             } else {

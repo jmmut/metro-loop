@@ -122,7 +122,7 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
                 &state,
                 &panel,
                 &animation,
-                render_target,
+                &render_target,
                 &mut refresh_render,
             );
             set_default_camera();
@@ -133,8 +133,8 @@ pub async fn play(theme: &mut Theme, game_track: &mut GameTrack) -> Result<NextS
         } else {
             render_cells(state.in_progress(), &hovered_cell, theme);
         }
-        if let Some(render_target) = render_target {
-            draw_texture(render_target.texture, 0., 0., WHITE);
+        if let Some(render_target) = &render_target {
+            draw_texture(&render_target.texture, 0., 0., WHITE);
         }
         if let Some(coord) = right_click_pressed {
             draw_diamond(coord, &theme);
@@ -243,7 +243,7 @@ fn refresh_static_texture(
     state: &State,
     panel: &Panel,
     animation: &Animation,
-    render_target: Option<RenderTarget>,
+    render_target: &Option<RenderTarget>,
     refresh_render: &mut bool,
 ) {
     if let Some(render_target) = render_target {
@@ -252,7 +252,7 @@ fn refresh_static_texture(
             //     target: vec2(sw * 0.5, sh * 0.5),
             target: screen * Vec2::splat(0.5 * render_target_scale),
             zoom: 1.0 / screen / render_target_scale * 2.0,
-            render_target: Some(render_target),
+            render_target: Some(render_target.clone()),
             ..Default::default()
         });
         clear_background(Color::new(0.0, 0.0, 0.0, 0.0));

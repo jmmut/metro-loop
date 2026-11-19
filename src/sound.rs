@@ -1,5 +1,5 @@
 use crate::DEFAULT_VOLUME;
-use macroquad::audio::{PlaySoundParams, Sound, play_sound, set_sound_volume, stop_sound};
+use macroquad::audio::{PlaySoundParams, Sound, set_sound_volume};
 
 #[derive(Debug)]
 pub struct Sounds {
@@ -15,7 +15,7 @@ struct AvailableSounds {
     pub music_background_intro: SoundConfig,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 struct SoundConfig {
     sound: Sound,
     volume_coef: f32,
@@ -27,7 +27,7 @@ impl SoundConfig {
 }
 
 impl Sounds {
-    pub fn new(sounds: Vec<Sound>) -> Self {
+    pub fn new(mut sounds: Vec<Sound>) -> Self {
         let n = size_of::<AvailableSounds>() / size_of::<SoundConfig>();
         if sounds.len() == 0 {
             Self {
@@ -42,31 +42,35 @@ impl Sounds {
                 sounds.len(),
                 n
             );
-
+            assert_eq!(sounds.len(), 4, "expected 4 sounds but got {:?}", sounds);
+            let bg_intro = sounds.pop().unwrap();
+            let bg = sounds.pop().unwrap();
+            let correct = sounds.pop().unwrap();
+            let incorrect = sounds.pop().unwrap();
             Self {
                 available: Some(AvailableSounds {
-                    _sound_incorrect: SoundConfig::new(sounds[0], 0.2),
-                    sound_correct: SoundConfig::new(sounds[1], 0.1),
-                    music_background: SoundConfig::new(sounds[2], 1.0),
-                    music_background_intro: SoundConfig::new(sounds[3], 1.0),
+                    _sound_incorrect: SoundConfig::new(incorrect, 0.2),
+                    sound_correct: SoundConfig::new(correct, 0.1),
+                    music_background: SoundConfig::new(bg, 1.0),
+                    music_background_intro: SoundConfig::new(bg_intro, 1.0),
                 }),
                 volume: DEFAULT_VOLUME,
             }
         }
     }
-    pub fn list(&self) -> Vec<Sound> {
+    pub fn list(&self) -> Vec<&Sound> {
         self.list_sound_configs()
             .into_iter()
-            .map(|sound_config| sound_config.sound)
+            .map(|sound_config| &sound_config.sound)
             .collect()
     }
-    fn list_sound_configs(&self) -> Vec<SoundConfig> {
+    fn list_sound_configs(&self) -> Vec<&SoundConfig> {
         if let Some(available) = &self.available {
             vec![
-                available.sound_correct,
-                available._sound_incorrect,
-                available.music_background,
-                available.music_background_intro,
+                &available.sound_correct,
+                &available._sound_incorrect,
+                &available.music_background,
+                &available.music_background_intro,
             ]
         } else {
             Vec::new()
@@ -82,43 +86,43 @@ impl Sounds {
 
     pub fn play_correct(&self) {
         if let Some(available) = &self.available {
-            self.play_config(available.sound_correct)
+            self.play_config(&available.sound_correct)
         }
     }
     pub fn play_background(&self) {
         if let Some(available) = &self.available {
-            self.play_config_looped(available.music_background)
+            self.play_config_looped(&available.music_background)
         }
     }
     pub fn play_background_intro(&self) {
         if let Some(available) = &self.available {
-            self.play_config_looped(available.music_background_intro)
+            self.play_config_looped(&available.music_background_intro)
         }
     }
 
-    fn play_config(&self, sound_config: SoundConfig) {
-        Self::play(sound_config.sound, self.volume * sound_config.volume_coef)
+    fn play_config(&self, sound_config: &SoundConfig) {
+        Self::play(&sound_config.sound, self.volume * sound_config.volume_coef)
     }
-    fn play_config_looped(&self, sound_config: SoundConfig) {
-        Self::play_looped(sound_config.sound, self.volume * sound_config.volume_coef)
+    fn play_config_looped(&self, sound_config: &SoundConfig) {
+        Self::play_looped(&sound_config.sound, self.volume * sound_config.volume_coef)
     }
 
-    pub fn play(sound: Sound, volume: f32) {
+    pub fn play(sound: &Sound, volume: f32) {
         Self::play_params(sound, volume, false)
     }
-    pub fn play_looped(sound: Sound, volume: f32) {
+    pub fn play_looped(sound: &Sound, volume: f32) {
         Self::play_params(sound, volume, true)
     }
-    fn play_params(sound: Sound, volume: f32, looped: bool) {
-        play_sound(sound, PlaySoundParams { looped, volume });
+    fn play_params(sound: &Sound, volume: f32, looped: bool) {
+        macroquad::audio::play_sound(sound, PlaySoundParams { looped, volume });
     }
 
     pub fn stop_background(&self) {
         if let Some(available) = &self.available {
-            Self::stop(available.music_background.sound)
+            Self::stop(&available.music_background.sound)
         }
     }
-    pub fn stop(sound: Sound) {
-        stop_sound(sound)
+    pub fn stop(sound: &Sound) {
+        macroquad::audio::stop_sound(&sound)
     }
 }

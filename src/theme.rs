@@ -2,6 +2,7 @@ use crate::logic::grid::Grid;
 use crate::scenes::loading_screen::Resources;
 use crate::{NUM_COLUMNS, NUM_ROWS, STYLE};
 use juquad::draw::{draw_rect, draw_rect_lines};
+use juquad::lazy::text::mq_measure_text;
 use juquad::widgets::Widget;
 use juquad::widgets::anchor::{Anchor, Horizontal};
 use juquad::widgets::button::Button;
@@ -214,7 +215,7 @@ pub fn new_imm_button(text: &str, anchor: Anchor, theme: &Theme) -> (Rect, Inter
 pub fn labels_from_theme(theme: &Theme) -> LabelGroup {
     LabelGroup {
         font_size: 1.0,
-        font: Some(theme.resources.font),
+        font: Some(theme.resources.font.clone()),
         alignment: Horizontal::Center,
         direction: Direction::Bottom,
         anchor: Default::default(),
@@ -274,7 +275,7 @@ pub fn new_text(text: &str, anchor: Anchor, size_coef: f32, theme: &Theme) -> Te
         anchor,
         size_coef,
         &theme.layout,
-        Some(theme.resources.font),
+        Some(&theme.resources.font),
     )
 }
 pub fn new_text_unloaded(text: &str, anchor: Anchor, size_coef: f32, layout: &Layout) -> TextRect {
@@ -285,19 +286,23 @@ fn new_text_internal(
     anchor: Anchor,
     size_coef: f32,
     layout: &Layout,
-    font: Option<Font>,
+    font: Option<&Font>,
 ) -> TextRect {
     TextRect::new_generic(
         text,
         anchor,
         layout.font_size() * size_coef,
         font,
-        macroquad::prelude::measure_text,
+        mq_measure_text,
     )
 }
 #[allow(unused)]
 pub fn new_text_group(anchor: Anchor, theme: &Theme) -> LabelGroup {
-    LabelGroup::new_with_font(theme.font_size(), Some(theme.resources.font), anchor)
+    LabelGroup::new_with_font(
+        theme.font_size(),
+        Some(theme.resources.font.clone()),
+        anchor,
+    )
 }
 pub fn new_text_group_generic(anchor: Anchor, theme: &Theme, labels: LabelGroup) -> LabelGroup {
     LabelGroup {

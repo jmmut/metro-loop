@@ -8,7 +8,6 @@ use crate::*;
 use juquad::draw::{draw_rect, draw_rect_lines};
 use juquad::lazy::add_contour;
 use juquad::widgets::anchor::{Direction, Horizontal, Spot};
-use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
 use std::f64::consts::PI;
 

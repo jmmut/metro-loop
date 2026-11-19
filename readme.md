@@ -34,7 +34,7 @@ If that fails, you might need some system packages. If you're on linux, see how 
 - [ ] diagonal constraint
 - [x] rail user constraint (clickable corners)
 - [x] split blockages and stations
-- [ ] update to macroquad 0.4 could reduce cpu usage in linux
+- [x] update to macroquad 0.4 could reduce cpu usage in linux
 
 ### Minor
 

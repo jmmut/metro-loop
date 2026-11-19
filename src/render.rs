@@ -2,7 +2,6 @@ use crate::logic::constraints::{Constraint, Satisfaction, matches_constraint_and
 use crate::logic::grid::{UserFix, get_cell, is_system_fixed};
 use crate::logic::intersection::{Crossing, Intersection};
 use crate::logic::pixel_grid::{Coord, option_equals_cell};
-use crate::scenes::play::State;
 use crate::theme::Theme;
 use crate::*;
 use juquad::draw::{draw_rect, draw_rect_lines};
@@ -10,6 +9,9 @@ use juquad::lazy::add_contour;
 use juquad::widgets::anchor::{Direction, Horizontal, Spot};
 use macroquad::prelude::*;
 use std::f64::consts::PI;
+
+const RAIL_VARIATION: f32 = 2.0;
+const CONSTRAINT_VARIATION: f32 = 1.0;
 
 #[derive(PartialEq)]
 pub enum RenderRail {
@@ -194,7 +196,7 @@ pub fn render_grid(grid: &Grid, theme: &Theme, animation: &Animation) {
                 // above,
                 crossing,
             } = grid.intersections.get(i_row, i_column);
-            let color = if grid.reachable_rails.get_horiz(i_row, i_column)
+            let mut color = if grid.reachable_rails.get_horiz(i_row, i_column)
                 || grid.reachable_rails.get_vert(i_row, i_column)
                 || grid.reachable_rails.get_vert(i_row - 1, i_column)
                 || grid.reachable_rails.get_horiz(i_row, i_column - 1)
@@ -209,16 +211,22 @@ pub fn render_grid(grid: &Grid, theme: &Theme, animation: &Animation) {
             let bottom_left = top_left + vec2(0.0, theme.cell_pad());
             let intersection_rect =
                 Rect::new(top_left.x, top_left.y, theme.cell_pad(), theme.cell_pad());
+            let mut color_border = TRIANGLE_BORDER;
+            if animation.is_enabled() {
+                let variation = animation.get_variation() * RAIL_VARIATION;
+                color = tweak_color(color, variation);
+                color_border = tweak_color(color_border, variation);
+            }
             match crossing {
                 Crossing::None => {}
                 Crossing::Single => draw_rect(intersection_rect, color),
                 Crossing::TopLeftToBottomRight => {
                     draw_rect(intersection_rect, color);
-                    draw_line_v(top_left, bottom_right, TRIANGLE_BORDER);
+                    draw_line_v(top_left, bottom_right, color_border);
                 }
                 Crossing::TopRightToBottomLeft => {
                     draw_rect(intersection_rect, color);
-                    draw_line_v(top_right, bottom_left, TRIANGLE_BORDER);
+                    draw_line_v(top_right, bottom_left, color_border);
                 }
                 Crossing::VerticalOnTop => {
                     draw_rect(intersection_rect, color);
@@ -226,8 +234,8 @@ pub fn render_grid(grid: &Grid, theme: &Theme, animation: &Animation) {
                     let bottom_left = bottom_left + vec2(-0.5, 0.0);
                     let top_right = top_right + vec2(0.5, 0.0);
                     let bottom_right = bottom_right + vec2(0.5, 0.0);
-                    draw_line_v(top_right, bottom_right, TRIANGLE_BORDER);
-                    draw_line_v(top_left, bottom_left, TRIANGLE_BORDER);
+                    draw_line_v(top_right, bottom_right, color_border);
+                    draw_line_v(top_left, bottom_left, color_border);
                 }
                 Crossing::HorizontalOnTop => {
                     draw_rect(intersection_rect, color);
@@ -235,8 +243,8 @@ pub fn render_grid(grid: &Grid, theme: &Theme, animation: &Animation) {
                     let bottom_left = bottom_left + vec2(0.0, 0.5);
                     let top_right = top_right + vec2(0.0, -0.5);
                     let bottom_right = bottom_right + vec2(0.0, 0.5);
-                    draw_line_v(top_right, top_left, TRIANGLE_BORDER);
-                    draw_line_v(bottom_right, bottom_left, TRIANGLE_BORDER);
+                    draw_line_v(top_right, top_left, color_border);
+                    draw_line_v(bottom_right, bottom_left, color_border);
                 }
             }
         }
@@ -271,6 +279,7 @@ pub fn draw_rail(start: Vec2, end: Vec2, theme: &Theme, reachable: bool, animati
         animation,
     )
 }
+
 pub fn draw_rail_color(
     start: Vec2,
     end: Vec2,
@@ -279,6 +288,12 @@ pub fn draw_rail_color(
     mut color: Color,
     animation: &Animation,
 ) {
+    let mut color_border = TRIANGLE_BORDER;
+    if animation.is_enabled() {
+        let variation = animation.get_variation() * RAIL_VARIATION;
+        color = tweak_color(color, variation);
+        color_border = tweak_color(color_border, variation);
+    }
     draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
     let direction = (end - start).normalize();
     let border_start = start + direction * theme.cell_pad() * 0.5;
@@ -288,16 +303,10 @@ pub fn draw_rail_color(
     let border_end = end - direction * theme.cell_pad() * 0.5;
     let left_border_end = border_end + leftwards * (theme.cell_pad() * 0.5 + 0.5);
     let right_border_end = border_end - leftwards * (theme.cell_pad() * 0.5 + 0.5);
-    draw_line_v(left_border_start, left_border_end, TRIANGLE_BORDER);
-    draw_line_v(right_border_start, right_border_end, TRIANGLE_BORDER);
+    draw_line_v(left_border_start, left_border_end, color_border);
+    draw_line_v(right_border_start, right_border_end, color_border);
 
     if reachable {
-        let mut color_border = TRIANGLE_BORDER;
-        if animation.is_enabled() {
-            let variation = animation.get_variation();
-            color = tweak_color(color, variation);
-            color_border = tweak_color(color_border, variation);
-        }
         calculate_and_draw_triangle(
             theme,
             color,
@@ -338,7 +347,7 @@ pub fn render_constraints(
             matches_constraint_and_reachable(grid, constraint);
         let (mut color, mut color_border) = get_success_color(success);
         if animation.is_enabled() {
-            let variation = animation.get_variation();
+            let variation = animation.get_variation() * CONSTRAINT_VARIATION;
             color = tweak_color(color, variation);
             color_border = tweak_color(color_border, variation);
         }

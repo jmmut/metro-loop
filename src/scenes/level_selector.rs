@@ -1,6 +1,6 @@
 use crate::level_history::{GameTrack, Solved};
 use crate::logic::pixel_grid::{Coord, option_equals_cell};
-use crate::render::{cell_top_left, render_rail, Animation, RenderRail};
+use crate::render::{Animation, RenderRail, cell_top_left, render_rail};
 use crate::scenes::play::default_pixel_to_coord;
 use crate::scenes::play::panel::{get_tick_or_cross_rect, render_tick_or_cross};
 use crate::theme::{Theme, new_imm_button, new_text, render_text, render_tooltip};

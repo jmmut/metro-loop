@@ -1,8 +1,8 @@
-use std::f64::consts::PI;
-use crate::logic::constraints::{matches_constraint_and_reachable, Constraint, Satisfaction};
+use crate::logic::constraints::{Constraint, Satisfaction, matches_constraint_and_reachable};
 use crate::logic::grid::{UserFix, get_cell, is_system_fixed};
 use crate::logic::intersection::{Crossing, Intersection};
 use crate::logic::pixel_grid::{Coord, option_equals_cell};
+use crate::scenes::play::State;
 use crate::theme::Theme;
 use crate::*;
 use juquad::draw::{draw_rect, draw_rect_lines};
@@ -10,7 +10,7 @@ use juquad::lazy::add_contour;
 use juquad::widgets::anchor::{Direction, Horizontal, Spot};
 use macroquad::miniquad::date::now;
 use macroquad::prelude::*;
-use crate::scenes::play::State;
+use std::f64::consts::PI;
 
 #[derive(PartialEq)]
 pub enum RenderRail {
@@ -39,9 +39,16 @@ impl Animation {
     pub fn update(&mut self, now: f64) {
         self.now = now;
     }
-    pub fn update_render(&mut self, now: f64, satisfaction_opt: &Option<Satisfaction>, refresh_render: &mut bool) {
+    pub fn update_render(
+        &mut self,
+        now: f64,
+        satisfaction_opt: &Option<Satisfaction>,
+        refresh_render: &mut bool,
+    ) {
         self.update(now);
-        if let Some(satisfaction) = satisfaction_opt && satisfaction.success() {
+        if let Some(satisfaction) = satisfaction_opt
+            && satisfaction.success()
+        {
             self.set_enabled(true);
             *refresh_render = true;
             // render_grid_and_constraints(&theme, &state, &animation);
@@ -265,7 +272,14 @@ pub fn draw_rail(start: Vec2, end: Vec2, theme: &Theme, reachable: bool, animati
         animation,
     )
 }
-pub fn draw_rail_color(start: Vec2, end: Vec2, theme: &Theme, reachable: bool, mut color: Color, animation: &Animation) {
+pub fn draw_rail_color(
+    start: Vec2,
+    end: Vec2,
+    theme: &Theme,
+    reachable: bool,
+    mut color: Color,
+    animation: &Animation,
+) {
     draw_line(start.x, start.y, end.x, end.y, theme.cell_pad(), color);
     let direction = (end - start).normalize();
     let border_start = start + direction * theme.cell_pad() * 0.5;
@@ -314,7 +328,12 @@ fn calculate_and_draw_triangle(
     draw_bordered_triangle(left, right, tip, color, color_border);
 }
 
-pub fn render_constraints(constraints: &Constraints, grid: &Grid, theme: &Theme, animation: &Animation) {
+pub fn render_constraints(
+    constraints: &Constraints,
+    grid: &Grid,
+    theme: &Theme,
+    animation: &Animation,
+) {
     for constraint in &constraints.rails {
         let (success, reversed_rail, reachable) =
             matches_constraint_and_reachable(grid, constraint);

@@ -6,7 +6,10 @@ use crate::logic::grid::{
     in_expanded_range_inner, in_range, is_system_fixed_v,
 };
 use crate::logic::pixel_grid::{CellSpot, Coord, manhattan_distance};
-use crate::render::{cell_top_left_coord, draw_lines_thickness, render_cells, render_constraints, render_grid, Animation};
+use crate::render::{
+    Animation, cell_top_left_coord, draw_lines_thickness, render_cells, render_constraints,
+    render_grid,
+};
 use crate::scenes::play::panel::Panel;
 use crate::theme::{Theme, new_text, render_text, render_tooltip};
 use crate::{
